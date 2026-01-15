@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 사용자 테이블
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  passwordHash String  @map("password_hash")
+  nickname    String
+  gender      String?
+  birthyear   Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  testResults   TestResult[]
+  unifiedCards  UnifiedCard[]
+  datingState   DatingState?
+
+  @@map("users")
+}
+
+// 테스트 결과 테이블
+model TestResult {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  testType    Int      @map("test_type") // 1~5
+  rawAnswers  Json     @map("raw_answers")
+  scores      Json     // 각 테스트별 점수 (JSON)
+  label       String   // 결과 라벨 (예: "불안형", "위로형 소비러")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, testType])
+  @@map("test_results")
+}
+
+// 통합 카드 테이블
+model UnifiedCard {
+  id                 String   @id @default(uuid())
+  userId             String   @map("user_id")
+  cardPayload        Json     @map("card_payload") // 통합 카드 데이터
+  visibilitySettings Json     @map("visibility_settings") // 공개 설정
+  shareSlug          String   @unique @map("share_slug")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("unified_cards")
+}
+
+// 연애 준비 상태 테이블
+model DatingState {
+  userId          String   @id @map("user_id")
+  readinessScore  Int      @map("readiness_score") // 0~100
+  modeLabel       String   @map("mode_label") // "적극 추천", "천천히 추천", "회복 권장"
+  blockedReason   String?  @map("blocked_reason")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dating_state")
+}
