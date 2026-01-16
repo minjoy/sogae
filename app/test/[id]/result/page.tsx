@@ -77,7 +77,7 @@ export default function TestResultPage() {
         if (data.success) {
           const testResult = data.results.find((r: Record<string, any>) => r.testType === testId);
           setResult(testResult);
-          // 5개 테스트 완료 확인
+          // 로그인 사용자만 5개 테스트 완료 확인
           setAllTestsCompleted(data.results.length >= 5);
         }
       } else {
@@ -85,8 +85,8 @@ export default function TestResultPage() {
         const guestResults = JSON.parse(localStorage.getItem('guestResults') || '[]');
         const guestResult = guestResults.find((r: Record<string, any>) => r.testType === testId);
 
-        // 5개 테스트 완료 확인
-        setAllTestsCompleted(guestResults.length >= 5);
+        // 비회원은 "모든 테스트 완료" 표시하지 않음
+        setAllTestsCompleted(false);
 
         if (guestResult && guestResult.answers) {
           // 점수 계산
