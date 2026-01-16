@@ -7,8 +7,8 @@ const signupSchema = z.object({
   email: z.string().email('유효한 이메일을 입력해주세요'),
   password: z.string().min(8, '비밀번호는 최소 8자 이상이어야 합니다'),
   nickname: z.string().min(2, '닉네임은 최소 2자 이상이어야 합니다'),
-  gender: z.string().optional(),
-  birthyear: z.number().optional(),
+  gender: z.enum(['M', 'F'], { errorMap: () => ({ message: '성별을 선택해주세요' }) }),
+  birthyear: z.number().min(1900, '올바른 출생연도를 입력해주세요'),
 });
 
 export async function POST(request: NextRequest) {
