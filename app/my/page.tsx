@@ -10,6 +10,7 @@ export default function MyPage() {
   const [results, setResults] = useState<Record<string, any>[]>([]);
   const [user, setUser] = useState<Record<string, any> | null>(null);
   const [cards, setCards] = useState<Record<string, any>[]>([]);
+  const [activeCard, setActiveCard] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -79,6 +80,9 @@ export default function MyPage() {
 
       if (data.success) {
         setCards(data.cards);
+        // 활성 카드 찾기 (isActive === true)
+        const active = data.cards.find((c: Record<string, any>) => c.isActive);
+        setActiveCard(active || null);
       }
     } catch (error) {
       console.error('Failed to fetch cards:', error);
@@ -148,6 +152,25 @@ export default function MyPage() {
   const completedTests = results.length;
   const allTestsCompleted = completedTests === 5;
 
+  // 카드 생성 이후 테스트 결과가 변경되었는지 확인
+  const hasResultsChanged = () => {
+    if (!activeCard) return true; // 카드가 없으면 생성 필요
+
+    const cardCreatedAt = new Date(activeCard.createdAt);
+
+    // 카드 생성 이후 업데이트된 테스트 결과가 있는지 확인
+    const hasNewerResults = results.some((result) => {
+      if (!result.createdAt) return false;
+      const resultCreatedAt = new Date(result.createdAt);
+      return resultCreatedAt > cardCreatedAt;
+    });
+
+    return hasNewerResults;
+  };
+
+  const shouldShowViewCard = allTestsCompleted && activeCard && !hasResultsChanged();
+  const shouldShowGenerateCard = allTestsCompleted && (!activeCard || hasResultsChanged());
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -192,17 +215,30 @@ export default function MyPage() {
                 />
               </div>
 
-              {allTestsCompleted ? (
+              {shouldShowViewCard ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                  <div className="text-4xl mb-3">✨</div>
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">
+                    나만의 사용설명서가 준비되어 있어요!
+                  </h3>
+                  <p className="text-green-700 mb-4">
+                    내 카드를 확인하고 친구들과 공유해보세요
+                  </p>
+                  <Button onClick={() => router.push(`/card/${activeCard!.shareSlug}`)}>
+                    카드 보기
+                  </Button>
+                </div>
+              ) : shouldShowGenerateCard ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
                   <div className="text-4xl mb-3">🎉</div>
                   <h3 className="text-lg font-semibold text-green-900 mb-2">
-                    모든 테스트를 완료했습니다!
+                    {activeCard ? '테스트 결과가 업데이트되었어요!' : '모든 테스트를 완료했습니다!'}
                   </h3>
                   <p className="text-green-700 mb-4">
-                    이제 나만의 사용설명서 카드를 만들 수 있어요
+                    {activeCard ? '새로운 결과로 카드를 다시 만들어보세요' : '이제 나만의 사용설명서 카드를 만들 수 있어요'}
                   </p>
                   <Button onClick={handleGenerateCard} isLoading={isGenerating}>
-                    카드 생성하기
+                    {activeCard ? '카드 새로 만들기' : '카드 생성하기'}
                   </Button>
                 </div>
               ) : (
