@@ -27,7 +27,7 @@ export default function TestResultPage() {
   useEffect(() => {
     if (result && testDef) {
       const title = `${testDef.title} 결과 | 나지연`;
-      const description = `나의 ${testDef.title}: ${result.scores?.primaryLabel || ''} - ${testDef.desc}`;
+      const description = `나의 ${testDef.title}: ${result.scores?.primaryLabel || ''} - ${testDef.description}`;
       const url = window.location.href;
 
       // 기본 메타태그
