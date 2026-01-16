@@ -117,10 +117,10 @@ export default function SignupPage() {
   const years = Array.from({ length: 76 }, (_, i) => currentYear - 18 - i);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-warm-50 via-primary-50 to-white flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-warm-50 via-primary-50 to-white flex items-center justify-center px-4 py-4">
       <div className="max-w-md w-full">
         {/* 로고 */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
             <span className="text-4xl">💝</span>
             <div>

@@ -1,14 +1,27 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 export default function Footer() {
   const pathname = usePathname();
+  const [isCopied, setIsCopied] = useState(false);
 
   // /test로 시작하는 경로에서는 Footer 숨김
   if (pathname?.startsWith('/test')) {
     return null;
   }
+
+  const handleCopyAccount = async () => {
+    try {
+      await navigator.clipboard.writeText('074-105458-01-014');
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+      alert('계좌번호를 복사하지 못했습니다.');
+    }
+  };
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-auto">
@@ -27,9 +40,17 @@ export default function Footer() {
 
           <div>
             <h4 className="font-semibold text-gray-900 mb-2">💌 더 나은 서비스를 위해</h4>
-            <p className="text-sm text-gray-600 mb-1">
-              ☕ 후원 계좌: 기업은행 074-105458-01-014
-            </p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm text-gray-600">
+                ☕ 후원 계좌: 기업은행 074-105458-01-014
+              </p>
+              <button
+                onClick={handleCopyAccount}
+                className="px-2 py-1 text-xs bg-primary-100 text-primary-700 rounded hover:bg-primary-200 transition-colors font-medium"
+              >
+                {isCopied ? '✓ 복사됨' : '복사'}
+              </button>
+            </div>
             <p className="text-xs text-gray-500 mb-1">
               예금주: 강민종
             </p>
