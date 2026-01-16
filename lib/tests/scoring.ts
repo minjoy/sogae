@@ -287,11 +287,10 @@ function generateWorkModeResult(primary: SubscaleScore, secondary: SubscaleScore
 function generateConflictStyleResult(subscales: SubscaleScore[]) {
   const avoid = subscales.find((s) => s.subscale === 'AVOID');
   const attack = subscales.find((s) => s.subscale === 'ATTACK');
-  const _persuade = subscales.find((s) => s.subscale === 'PERSUADE');
   const accom = subscales.find((s) => s.subscale === 'ACCOM');
 
   const primary = subscales[0];
-  let secondaryLabel = undefined;
+  const secondaryLabel = undefined;
   let comment = '';
   let recommendations: string[] = [];
 

@@ -108,7 +108,7 @@ export default function Home() {
               솔직하게
             </h3>
             <p className="text-gray-600 leading-relaxed">
-              "지금은 연애할 때가 아니에요"<br />
+              &ldquo;지금은 연애할 때가 아니에요&rdquo;<br />
               진실된 조언을 드려요
             </p>
           </div>

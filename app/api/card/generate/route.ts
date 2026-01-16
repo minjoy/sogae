@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { calculateReadiness } from '@/lib/tests/readiness';
-import { scoreTest } from '@/lib/tests/scoring';
 import { randomBytes } from 'crypto';
 import {
   determineAttachmentStyle,
@@ -37,11 +36,11 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
     }
 
     // TestScore 객체로 변환
-    const testScores: { [testType: number]: any } = {};
+    const testScores: { [testType: number]: Record<string, any> } = {};
     results.forEach((result, index) => {
       if (result) {
         const testType = index + 1;
-        const scores = result.scores as any;
+        const scores = result.scores as Record<string, any>;
         testScores[testType] = {
           testType,
           subscales: scores.subscales,
@@ -60,8 +59,8 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
     const test1Subscales = testScores[1].subscales;
     const test4Subscales = testScores[4].subscales;
 
-    const anxSubscale = test1Subscales.find((s: any) => s.subscale === 'ANX');
-    const avdSubscale = test1Subscales.find((s: any) => s.subscale === 'AVD');
+    const anxSubscale = test1Subscales.find((s: Record<string, any>) => s.subscale === 'ANX');
+    const avdSubscale = test1Subscales.find((s: Record<string, any>) => s.subscale === 'AVD');
     const burnoutScore = testScores[5].subscales[0].score;
 
     const typeComponents: TypeComponents = {

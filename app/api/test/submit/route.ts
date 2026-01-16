@@ -28,12 +28,12 @@ async function handleSubmit(request: AuthenticatedRequest) {
       data: {
         userId,
         testType: validatedData.testType,
-        rawAnswers: validatedData.answers as any,
+        rawAnswers: validatedData.answers as Record<string, any>,
         scores: {
           subscales: score.subscales,
           primaryLabel: score.primaryLabel,
           secondaryLabel: score.secondaryLabel,
-        } as any,
+        } as Record<string, any>,
         label: score.primaryLabel,
       },
     });

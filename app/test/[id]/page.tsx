@@ -119,9 +119,10 @@ export default function TestPage() {
         // 결과 페이지로 이동
         router.push(`/test/${testId}/result`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Submit error:', error);
-      setError(error.message || '제출 중 오류가 발생했습니다');
+      const message = error instanceof Error ? error.message : '제출 중 오류가 발생했습니다';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }

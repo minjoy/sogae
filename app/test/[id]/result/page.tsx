@@ -36,7 +36,7 @@ export default function TestResultPage() {
         const data = await response.json();
 
         if (data.success) {
-          const testResult = data.results.find((r: any) => r.testType === testId);
+          const testResult = data.results.find((r: Record<string, any>) => r.testType === testId);
           setResult(testResult);
         }
       } else {
@@ -94,7 +94,7 @@ export default function TestResultPage() {
     );
   }
 
-  const scores = result.scores as any;
+  const scores = result.scores as Record<string, any>;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -145,7 +145,7 @@ export default function TestResultPage() {
                 세부 점수 분석
               </h3>
               <div className="space-y-5">
-                {scores.subscales.map((subscale: any, index: number) => (
+                {scores.subscales.map((subscale: Record<string, any>, index: number) => (
                   <div key={index}>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-semibold text-gray-800">

@@ -231,7 +231,7 @@ export default function CardPage() {
             <div className="space-y-2">
               {card.phraseForPartner?.map((phrase: string, index: number) => (
                 <p key={index} className="text-gray-700 italic">
-                  "{phrase}"
+                  &ldquo;{phrase}&rdquo;
                 </p>
               ))}
             </div>

@@ -45,7 +45,6 @@ const tests = [
 export default function TestListPage() {
   const router = useRouter();
   const [completedTests, setCompletedTests] = useState<number[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadCompletedTests();
@@ -66,7 +65,7 @@ export default function TestListPage() {
         const data = await response.json();
 
         if (data.success) {
-          setCompletedTests(data.results.map((r: any) => r.testType));
+          setCompletedTests(data.results.map((r: Record<string, any>) => r.testType));
         }
       } else {
         // 비회원: localStorage에서 가져오기
@@ -75,8 +74,6 @@ export default function TestListPage() {
       }
     } catch (error) {
       console.error('Failed to load completed tests:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

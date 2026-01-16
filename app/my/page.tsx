@@ -89,9 +89,10 @@ export default function MyPage() {
 
       // 카드 페이지로 이동
       router.push(`/card/${data.card.shareSlug}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Card generation error:', error);
-      alert(error.message || '카드 생성 중 오류가 발생했습니다');
+      const message = error instanceof Error ? error.message : '카드 생성 중 오류가 발생했습니다';
+      alert(message);
     } finally {
       setIsGenerating(false);
     }
