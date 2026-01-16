@@ -39,6 +39,8 @@ export default function CardPage() {
   };
 
   const handleShare = async () => {
+    if (!card) return;
+
     const url = window.location.href;
 
     if (navigator.share) {
