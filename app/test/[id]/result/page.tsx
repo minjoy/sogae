@@ -14,6 +14,7 @@ export default function TestResultPage() {
   const [result, setResult] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [allTestsCompleted, setAllTestsCompleted] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const testDef = ALL_TESTS[testId];
 
@@ -21,6 +22,41 @@ export default function TestResultPage() {
     fetchResult();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 메타태그 동적 업데이트
+  useEffect(() => {
+    if (result && testDef) {
+      const title = `${testDef.title} 결과 | 나지연`;
+      const description = `나의 ${testDef.title}: ${result.scores?.primaryLabel || ''} - ${testDef.desc}`;
+      const url = window.location.href;
+
+      // 기본 메타태그
+      document.title = title;
+      updateMetaTag('name', 'description', description);
+
+      // Open Graph
+      updateMetaTag('property', 'og:title', title);
+      updateMetaTag('property', 'og:description', description);
+      updateMetaTag('property', 'og:url', url);
+      updateMetaTag('property', 'og:type', 'article');
+      updateMetaTag('property', 'og:site_name', '나지연 - 나, 지금 연애할 때?');
+
+      // Twitter Card
+      updateMetaTag('name', 'twitter:card', 'summary_large_image');
+      updateMetaTag('name', 'twitter:title', title);
+      updateMetaTag('name', 'twitter:description', description);
+    }
+  }, [result, testDef]);
+
+  const updateMetaTag = (attr: string, key: string, content: string) => {
+    let element = document.querySelector(`meta[${attr}="${key}"]`);
+    if (!element) {
+      element = document.createElement('meta');
+      element.setAttribute(attr, key);
+      document.head.appendChild(element);
+    }
+    element.setAttribute('content', content);
+  };
 
   const fetchResult = async () => {
     try {
@@ -71,6 +107,33 @@ export default function TestResultPage() {
       console.error('Failed to fetch result:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+
+    if (navigator.share) {
+      // 모바일에서 네이티브 공유 기능 사용
+      try {
+        await navigator.share({
+          title: `${testDef.title} 결과`,
+          text: `나의 ${testDef.title} 결과를 확인해보세요!`,
+          url: url,
+        });
+      } catch (error) {
+        console.error('Share failed:', error);
+      }
+    } else {
+      // 데스크톱에서 클립보드 복사
+      try {
+        await navigator.clipboard.writeText(url);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (error) {
+        console.error('Copy failed:', error);
+        alert('링크를 복사하지 못했습니다.');
+      }
     }
   };
 
@@ -221,13 +284,28 @@ export default function TestResultPage() {
         )}
 
         {/* 액션 버튼 */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex gap-3 mb-8">
           <Button
             variant="outline"
             onClick={() => router.push('/test')}
             className="flex-1"
           >
             다른 테스트 하기
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleShare}
+            className="flex-1 relative"
+          >
+            {isCopied ? (
+              <>
+                <span className="mr-1">✓</span> 링크 복사됨
+              </>
+            ) : (
+              <>
+                <span className="mr-1">🔗</span> 공유하기
+              </>
+            )}
           </Button>
           <Button
             onClick={() => router.push('/my')}

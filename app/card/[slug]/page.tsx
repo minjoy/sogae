@@ -24,6 +24,41 @@ export default function CardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
+  // 메타태그 동적 업데이트
+  useEffect(() => {
+    if (card) {
+      const title = `${card.nickname}님의 나 사용설명서 | 나지연`;
+      const description = `${card.personalityType?.name || ''} - 나를 이해하면, 관계가 쉬워진다`;
+      const url = window.location.href;
+
+      // 기본 메타태그
+      document.title = title;
+      updateMetaTag('name', 'description', description);
+
+      // Open Graph
+      updateMetaTag('property', 'og:title', title);
+      updateMetaTag('property', 'og:description', description);
+      updateMetaTag('property', 'og:url', url);
+      updateMetaTag('property', 'og:type', 'profile');
+      updateMetaTag('property', 'og:site_name', '나지연 - 나, 지금 연애할 때?');
+
+      // Twitter Card
+      updateMetaTag('name', 'twitter:card', 'summary_large_image');
+      updateMetaTag('name', 'twitter:title', title);
+      updateMetaTag('name', 'twitter:description', description);
+    }
+  }, [card]);
+
+  const updateMetaTag = (attr: string, key: string, content: string) => {
+    let element = document.querySelector(`meta[${attr}="${key}"]`);
+    if (!element) {
+      element = document.createElement('meta');
+      element.setAttribute(attr, key);
+      document.head.appendChild(element);
+    }
+    element.setAttribute('content', content);
+  };
+
   const fetchCard = async () => {
     try {
       const response = await fetch(`/api/card/${slug}`);

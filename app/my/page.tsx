@@ -172,115 +172,84 @@ export default function MyPage() {
           )}
         </div>
 
-        {/* 진행 상황 */}
+        {/* 진행 상황 or 회원가입 유도 */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              테스트 진행 상황
-            </h2>
-            <span className="text-2xl font-bold text-blue-600">
-              {completedTests}/5
-            </span>
-          </div>
+          {user ? (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  테스트 진행 상황
+                </h2>
+                <span className="text-2xl font-bold text-blue-600">
+                  {completedTests}/5
+                </span>
+              </div>
 
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
-            <div
-              className="bg-blue-600 h-3 rounded-full transition-all"
-              style={{ width: `${(completedTests / 5) * 100}%` }}
-            />
-          </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+                <div
+                  className="bg-blue-600 h-3 rounded-full transition-all"
+                  style={{ width: `${(completedTests / 5) * 100}%` }}
+                />
+              </div>
 
-          {allTestsCompleted ? (
-            <div className="space-y-4">
-              {!user && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="text-2xl">⚠️</div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-yellow-900 mb-1">
-                        주의! 카드 생성을 위해 회원가입이 필요합니다
-                      </h4>
-                      <p className="text-sm text-yellow-800 mb-3">
-                        비회원은 나만의 사용설명서 카드를 생성하거나 저장할 수 없습니다.
-                        지금 무료로 회원가입하고 영구적으로 저장하세요!
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="border-yellow-600 text-yellow-700 hover:bg-yellow-100"
-                          onClick={() => router.push('/signup')}
-                        >
-                          무료 회원가입
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="border-yellow-600 text-yellow-700 hover:bg-yellow-100"
-                          onClick={() => router.push('/login')}
-                        >
-                          로그인
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+              {allTestsCompleted ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                  <div className="text-4xl mb-3">🎉</div>
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">
+                    모든 테스트를 완료했습니다!
+                  </h3>
+                  <p className="text-green-700 mb-4">
+                    이제 나만의 사용설명서 카드를 만들 수 있어요
+                  </p>
+                  <Button onClick={handleGenerateCard} isLoading={isGenerating}>
+                    카드 생성하기
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+                  <p className="text-blue-900 mb-4">
+                    {5 - completedTests}개의 테스트가 남았어요
+                  </p>
+                  <Button onClick={() => router.push('/test')}>
+                    테스트 계속하기
+                  </Button>
                 </div>
               )}
-              <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-                <div className="text-4xl mb-3">🎉</div>
-                <h3 className="text-lg font-semibold text-green-900 mb-2">
-                  모든 테스트를 완료했습니다!
-                </h3>
-                <p className="text-green-700 mb-4">
-                  {user ? '이제 나만의 사용설명서 카드를 만들 수 있어요' : '회원가입 후 나만의 사용설명서 카드를 만들 수 있어요'}
-                </p>
-                <Button onClick={handleGenerateCard} isLoading={isGenerating}>
-                  카드 생성하기
+            </>
+          ) : (
+            <div className="text-center">
+              <div className="text-5xl mb-4">🔐</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                회원가입하고 나만의 사용설명서를 영구 보관하세요
+              </h3>
+              <p className="text-gray-600 mb-6">
+                무료 회원가입 시 모든 테스트 결과를 저장하고<br />
+                언제든지 확인할 수 있습니다
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  onClick={() => router.push('/signup')}
+                  variant="primary"
+                  className="px-8 py-3 text-lg"
+                >
+                  무료 회원가입
+                </Button>
+                <Button
+                  onClick={() => router.push('/login')}
+                  variant="outline"
+                  className="px-8 py-3 text-lg"
+                >
+                  로그인
                 </Button>
               </div>
-            </div>
-          ) : (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-              <p className="text-blue-900 mb-4">
-                {5 - completedTests}개의 테스트가 남았어요
-              </p>
-              <Button onClick={() => router.push('/test')}>
-                테스트 계속하기
-              </Button>
             </div>
           )}
         </div>
 
-        {/* 비회원 가입 유도 */}
-        {!user && (
-          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center text-white shadow-xl mb-8">
-            <div className="text-5xl mb-4">💝</div>
-            <h3 className="text-2xl md:text-3xl font-bold mb-3">
-              지금 가입하고<br />나만의 사용설명서를 만드세요
-            </h3>
-            <p className="text-lg mb-6 opacity-90">
-              5개 테스트를 모두 완료하면<br />
-              심리학 기반의 <strong>나 사용설명서 카드</strong>를 무료로 받아볼 수 있어요
-            </p>
-            <div className="flex gap-3 justify-center">
-              <Button
-                variant="secondary"
-                className="bg-white text-primary-600 hover:bg-gray-50 px-8 py-3 text-lg"
-                onClick={() => router.push('/signup')}
-              >
-                무료 회원가입하기
-              </Button>
-              <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white/10 px-8 py-3 text-lg"
-                onClick={() => router.push('/login')}
-              >
-                로그인
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* 테스트 결과 목록 */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">테스트 결과</h2>
+        {/* 테스트 결과 목록 - 로그인 시에만 표시 */}
+        {user && (
+          <>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">테스트 결과</h2>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {[1, 2, 3, 4, 5].map((testType) => {
@@ -342,6 +311,8 @@ export default function MyPage() {
             );
           })}
         </div>
+          </>
+        )}
 
         {/* 나만의 사용설명서 카드 히스토리 */}
         {user && cards.length > 0 && (

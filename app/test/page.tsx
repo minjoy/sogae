@@ -45,6 +45,7 @@ const tests = [
 export default function TestListPage() {
   const router = useRouter();
   const [completedTests, setCompletedTests] = useState<number[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     loadCompletedTests();
@@ -55,6 +56,7 @@ export default function TestListPage() {
       const token = localStorage.getItem('token');
 
       if (token) {
+        setIsLoggedIn(true);
         // 로그인 사용자: API에서 가져오기
         const response = await fetch('/api/test/results', {
           headers: {
@@ -68,9 +70,7 @@ export default function TestListPage() {
           setCompletedTests(data.results.map((r: Record<string, any>) => r.testType));
         }
       } else {
-        // 비회원: localStorage에서 가져오기
-        const guestResults = JSON.parse(localStorage.getItem('guestResults') || '[]');
-        setCompletedTests(guestResults.map((r: Record<string, any>) => r.testType));
+        setIsLoggedIn(false);
       }
     } catch (error) {
       console.error('Failed to load completed tests:', error);
@@ -92,34 +92,62 @@ export default function TestListPage() {
             각 테스트는 1~2분이면 완료됩니다
           </p>
 
-          {/* 진행 상황 */}
+          {/* 진행 상황 or 회원가입 유도 */}
           <div className="max-w-xl mx-auto bg-white rounded-2xl p-6 shadow-sm mb-8">
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-sm font-semibold text-gray-700">
-                진행 상황
-              </span>
-              <span className="text-2xl font-bold text-primary-600">
-                {completedCount} / 5
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-              <div
-                className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
+            {isLoggedIn ? (
+              <>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-semibold text-gray-700">
+                    진행 상황
+                  </span>
+                  <span className="text-2xl font-bold text-primary-600">
+                    {completedCount} / 5
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                  <div
+                    className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
 
-            {completedCount === 5 ? (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <p className="text-green-800 font-semibold">
-                  🎉 모든 테스트 완료! 이제 통합 카드를 만들 수 있어요
-                </p>
-              </div>
+                {completedCount === 5 ? (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <p className="text-green-800 font-semibold">
+                      🎉 모든 테스트 완료! 이제 통합 카드를 만들 수 있어요
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <p className="text-blue-900 text-sm">
+                      <strong>{5 - completedCount}개</strong> 남았어요! 완료하면 <strong>나만의 사용설명서 카드</strong>를 받아볼 수 있어요
+                    </p>
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <p className="text-blue-900 text-sm">
-                  <strong>{5 - completedCount}개</strong> 남았어요! 완료하면 <strong>나만의 사용설명서 카드</strong>를 받아볼 수 있어요
+              <div className="text-center">
+                <div className="text-4xl mb-3">🎯</div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  회원가입하고 나만의 사용설명서를 저장하세요
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  무료 회원가입 시 진행 상황 저장, 히스토리 관리, 영구 보관이 가능합니다
                 </p>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    onClick={() => router.push('/signup')}
+                    variant="primary"
+                  >
+                    무료 회원가입
+                  </Button>
+                  <Button
+                    onClick={() => router.push('/login')}
+                    variant="outline"
+                  >
+                    로그인
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -128,7 +156,7 @@ export default function TestListPage() {
         {/* 테스트 목록 */}
         <div className="space-y-4 mb-8">
           {tests.map((test) => {
-            const isCompleted = completedTests.includes(test.id);
+            const isCompleted = isLoggedIn && completedTests.includes(test.id);
 
             return (
               <div
