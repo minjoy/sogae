@@ -13,13 +13,6 @@ export default function Header() {
     setIsLoggedIn(!!token);
   }, [pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/');
-    setIsLoggedIn(false);
-  };
-
   // /test 경로인지 확인
   const isTestPage = pathname?.startsWith('/test');
 
@@ -37,20 +30,12 @@ export default function Header() {
 
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
-              <>
-                <button
-                  onClick={() => router.push('/my')}
-                  className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
-                >
-                  마이페이지
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  로그아웃
-                </button>
-              </>
+              <button
+                onClick={() => router.push('/my')}
+                className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
+              >
+                마이페이지
+              </button>
             ) : (
               <>
                 <button

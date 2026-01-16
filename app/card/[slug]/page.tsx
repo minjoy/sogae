@@ -14,6 +14,7 @@ export default function CardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     // 로그인 상태 확인
@@ -85,24 +86,13 @@ export default function CardPage() {
 
     const url = window.location.href;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${card.nickname}님의 나 사용설명서`,
-          text: '나를 이해하면, 관계가 쉬워진다',
-          url: url,
-        });
-      } catch (error) {
-        console.error('Share failed:', error);
-      }
-    } else {
-      // 클립보드 복사
-      try {
-        await navigator.clipboard.writeText(url);
-        alert('링크가 복사되었습니다!');
-      } catch (error) {
-        console.error('Copy failed:', error);
-      }
+    try {
+      await navigator.clipboard.writeText(url);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+      alert('링크 복사에 실패했습니다.');
     }
   };
 
@@ -351,7 +341,7 @@ export default function CardPage() {
         {/* 액션 버튼 */}
         <div className="flex gap-4 mb-8">
           <Button variant="outline" onClick={handleShare} className="flex-1">
-            📤 공유하기
+            {isCopied ? '✓ 복사됨!' : '📤 공유하기'}
           </Button>
           <Button
             onClick={() => router.push(isLoggedIn ? '/my' : '/')}

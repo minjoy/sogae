@@ -103,6 +103,9 @@ export default function SignupPage() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
+      // 비회원 테스트 데이터 삭제
+      localStorage.removeItem('guestResults');
+
       // 테스트 페이지로 이동
       router.push('/test');
     } catch (error) {
