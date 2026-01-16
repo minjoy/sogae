@@ -16,16 +16,13 @@ export default function MyPage() {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
 
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    if (userData) {
+    if (token && userData) {
       setUser(JSON.parse(userData));
+      fetchResults();
+    } else {
+      // 비회원: localStorage에서 결과 불러오기
+      loadGuestResults();
     }
-
-    fetchResults();
   }, [router]);
 
   const fetchResults = async () => {
@@ -44,6 +41,24 @@ export default function MyPage() {
       }
     } catch (error) {
       console.error('Failed to fetch results:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadGuestResults = () => {
+    try {
+      const guestResults = JSON.parse(localStorage.getItem('guestResults') || '[]');
+
+      // localStorage 결과를 API 결과 형식으로 변환
+      const convertedResults = guestResults.map((r: Record<string, any>) => ({
+        testType: r.testType,
+        label: ALL_TESTS[r.testType]?.title || '',
+      }));
+
+      setResults(convertedResults);
+    } catch (error) {
+      console.error('Failed to load guest results:', error);
     } finally {
       setIsLoading(false);
     }
@@ -109,13 +124,21 @@ export default function MyPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">
-              마이페이지
+              {user ? '마이페이지' : '테스트 진행 상황'}
             </h1>
-            <p className="text-gray-600">안녕하세요, {user?.nickname}님</p>
+            <p className="text-gray-600">
+              {user ? `안녕하세요, ${user.nickname}님` : '회원가입하고 결과를 저장하세요'}
+            </p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            로그아웃
-          </Button>
+          {user ? (
+            <Button variant="outline" onClick={handleLogout}>
+              로그아웃
+            </Button>
+          ) : (
+            <Button onClick={() => router.push('/signup')}>
+              회원가입
+            </Button>
+          )}
         </div>
 
         {/* 진행 상황 */}
@@ -160,6 +183,36 @@ export default function MyPage() {
             </div>
           )}
         </div>
+
+        {/* 비회원 가입 유도 */}
+        {!user && (
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center text-white shadow-xl mb-8">
+            <div className="text-5xl mb-4">💝</div>
+            <h3 className="text-2xl md:text-3xl font-bold mb-3">
+              지금 가입하고<br />나만의 사용설명서를 만드세요
+            </h3>
+            <p className="text-lg mb-6 opacity-90">
+              5개 테스트를 모두 완료하면<br />
+              심리학 기반의 <strong>나 사용설명서 카드</strong>를 무료로 받아볼 수 있어요
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                variant="secondary"
+                className="bg-white text-primary-600 hover:bg-gray-50 px-8 py-3 text-lg"
+                onClick={() => router.push('/signup')}
+              >
+                무료 회원가입하기
+              </Button>
+              <Button
+                variant="outline"
+                className="border-white text-white hover:bg-white/10 px-8 py-3 text-lg"
+                onClick={() => router.push('/login')}
+              >
+                로그인
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* 테스트 결과 목록 */}
         <h2 className="text-2xl font-bold text-gray-900 mb-6">테스트 결과</h2>

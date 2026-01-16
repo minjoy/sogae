@@ -18,11 +18,8 @@ export default function TestPage() {
   const testDef = ALL_TESTS[testId];
 
   useEffect(() => {
-    // 로그인 확인
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/login');
-    }
+    // 비회원도 테스트 가능
+    // 로그인 확인은 제거
   }, [router]);
 
   if (!testDef) {
@@ -78,26 +75,50 @@ export default function TestPage() {
         value,
       }));
 
-      const response = await fetch('/api/test/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      if (token) {
+        // 로그인된 사용자: API에 제출
+        const response = await fetch('/api/test/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            testType: testId,
+            answers: answerArray,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || '테스트 제출 실패');
+        }
+
+        // 결과 페이지로 이동
+        router.push(`/test/${testId}/result`);
+      } else {
+        // 비회원: localStorage에 저장
+        const guestResults = JSON.parse(localStorage.getItem('guestResults') || '[]');
+
+        // 클라이언트에서 간단히 점수 계산 (임시)
+        const totalScore = answerArray.reduce((sum, ans) => sum + ans.value, 0);
+        const avgScore = totalScore / answerArray.length;
+
+        // 기존 결과 제거하고 새 결과 추가
+        const filteredResults = guestResults.filter((r: Record<string, any>) => r.testType !== testId);
+        filteredResults.push({
           testType: testId,
           answers: answerArray,
-        }),
-      });
+          avgScore,
+          completedAt: new Date().toISOString(),
+        });
 
-      const data = await response.json();
+        localStorage.setItem('guestResults', JSON.stringify(filteredResults));
 
-      if (!response.ok) {
-        throw new Error(data.error || '테스트 제출 실패');
+        // 결과 페이지로 이동
+        router.push(`/test/${testId}/result`);
       }
-
-      // 결과 페이지로 이동
-      router.push(`/test/${testId}/result`);
     } catch (error: any) {
       console.error('Submit error:', error);
       setError(error.message || '제출 중 오류가 발생했습니다');

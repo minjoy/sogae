@@ -23,17 +23,38 @@ export default function TestResultPage() {
   const fetchResult = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/test/results', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
 
-      const data = await response.json();
+      if (token) {
+        // 로그인된 사용자: API에서 가져오기
+        const response = await fetch('/api/test/results', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
 
-      if (data.success) {
-        const testResult = data.results.find((r: any) => r.testType === testId);
-        setResult(testResult);
+        const data = await response.json();
+
+        if (data.success) {
+          const testResult = data.results.find((r: any) => r.testType === testId);
+          setResult(testResult);
+        }
+      } else {
+        // 비회원: localStorage에서 가져오기
+        const guestResults = JSON.parse(localStorage.getItem('guestResults') || '[]');
+        const guestResult = guestResults.find((r: Record<string, any>) => r.testType === testId);
+
+        if (guestResult) {
+          // 간단한 결과 변환 (실제 점수 계산은 추후 개선)
+          setResult({
+            testType: testId,
+            label: testDef?.title || '',
+            scores: {
+              primaryLabel: '결과 분석 중',
+              subscales: [],
+            },
+            avgScore: guestResult.avgScore,
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to fetch result:', error);
@@ -134,6 +155,36 @@ export default function TestResultPage() {
             마이페이지
           </Button>
         </div>
+
+        {/* 비회원 가입 유도 */}
+        {!localStorage.getItem('token') && (
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center text-white shadow-xl mb-8">
+            <div className="text-4xl mb-4">💝</div>
+            <h3 className="text-2xl font-bold mb-3">
+              결과를 저장하고<br />더 자세히 알아보세요
+            </h3>
+            <p className="text-lg mb-6 opacity-90">
+              회원가입하면 5개 테스트 결과를 통합한<br />
+              <strong>나만의 사용설명서 카드</strong>를 만들 수 있어요
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                variant="secondary"
+                className="bg-white text-primary-600 hover:bg-gray-50"
+                onClick={() => router.push('/signup')}
+              >
+                무료 회원가입
+              </Button>
+              <Button
+                variant="outline"
+                className="border-white text-white hover:bg-white/10"
+                onClick={() => router.push('/login')}
+              >
+                로그인
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* 안내 */}
         <div className="bg-blue-50 rounded-xl p-6 text-center">
