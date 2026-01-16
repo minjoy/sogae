@@ -1,9 +1,14 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
-  const router = useRouter();
+  const pathname = usePathname();
+
+  // /test로 시작하는 경로에서는 Footer 숨김
+  if (pathname?.startsWith('/test')) {
+    return null;
+  }
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-auto">
