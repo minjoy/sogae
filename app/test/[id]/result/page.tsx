@@ -326,6 +326,9 @@ export default function TestResultPage() {
             <h3 className="text-xl md:text-2xl font-bold mb-3 text-center">
               5개 테스트 완료 시<br />나만의 마음 사용설명서 카드를 받아요!
             </h3>
+            <p className="text-sm md:text-base text-white/90 mb-4 text-center">
+              💭 감정 · 💰 소비 · ⚡ 일 · 💬 대화 · 🔋 에너지
+            </p>
 
             <div className="bg-white/10 backdrop-blur rounded-xl p-4 mb-4">
               <p className="text-sm md:text-base mb-3 font-semibold">📋 카드에 담기는 내용</p>
@@ -354,7 +357,7 @@ export default function TestResultPage() {
             </div>
 
             <p className="text-sm opacity-90 mb-4 text-center">
-              💝 회원가입하고 영구적으로 저장하세요
+              💝 회원가입하고 관리하세요
             </p>
 
             <div className="flex gap-3 justify-center">

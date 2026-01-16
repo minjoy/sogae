@@ -206,7 +206,7 @@ export default function SignupPage() {
                 name="birthyear"
                 value={formData.birthyear}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all text-gray-900 font-semibold ${
                   errors.birthyear ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
