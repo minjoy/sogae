@@ -138,23 +138,30 @@ export default function TestPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto px-4 py-4 md:py-6 max-w-2xl">
         {/* 헤더 */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => router.push('/test')}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              ← 뒤로
-            </button>
-            <div className="text-sm text-gray-600">
-              {currentQuestion + 1} / {testDef.questions.length}
-            </div>
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={() => router.push('/test')}
+            className="text-gray-600 hover:text-gray-900 text-sm"
+          >
+            ← 뒤로
+          </button>
+          <div className="text-sm text-gray-600">
+            {currentQuestion + 1} / {testDef.questions.length}
           </div>
+        </div>
+
+        {/* 테스트 정보 */}
+        <div className="text-center mb-4">
+          <div className="text-4xl md:text-5xl mb-2">{testDef.emoji}</div>
+          <h1 className="text-lg md:text-xl font-bold text-gray-900 mb-1">
+            {testDef.title}
+          </h1>
+          <p className="text-sm text-gray-600 mb-3">{testDef.description}</p>
 
           {/* 프로그레스 바 */}
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-2 max-w-md mx-auto">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -162,38 +169,29 @@ export default function TestPage() {
           </div>
         </div>
 
-        {/* 테스트 정보 */}
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">{testDef.emoji}</div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            {testDef.title}
-          </h1>
-          <p className="text-gray-600">{testDef.description}</p>
-        </div>
-
         {/* 질문 카드 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-8 text-center leading-relaxed">
+        <div className="bg-white rounded-2xl shadow-lg p-5 md:p-6 mb-4">
+          <h2 className="text-base md:text-lg font-semibold text-gray-900 mb-5 text-center leading-relaxed">
             {question.text}
           </h2>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {[1, 2, 3, 4, 5].map((value) => (
               <button
                 key={value}
                 onClick={() => handleAnswer(value)}
-                className={`w-full px-6 py-4 rounded-xl border-2 transition-all text-left ${
+                className={`w-full px-4 py-3 rounded-xl border-2 transition-all text-left ${
                   answers[question.id] === value
                     ? 'border-blue-600 bg-blue-50 shadow-md'
                     : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900">
+                  <span className="text-sm md:text-base font-medium text-gray-900">
                     {scaleLabels[value - 1]}
                   </span>
                   <div
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       answers[question.id] === value
                         ? 'border-blue-600 bg-blue-600'
                         : 'border-gray-300'
@@ -209,14 +207,14 @@ export default function TestPage() {
           </div>
 
           {error && (
-            <div className="mt-4 bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
+            <div className="mt-3 bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm">
               {error}
             </div>
           )}
         </div>
 
         {/* 버튼 */}
-        <div className="flex gap-4">
+        <div className="flex gap-3 mb-3">
           {currentQuestion > 0 && (
             <Button
               variant="outline"
@@ -236,7 +234,7 @@ export default function TestPage() {
         </div>
 
         {/* 안내 문구 */}
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className="text-center text-xs md:text-sm text-gray-500">
           💡 지난 3개월을 기준으로 솔직하게 답변해주세요
         </p>
       </div>
