@@ -8,7 +8,7 @@ import Button from '@/components/Button';
 export default function TestPage() {
   const router = useRouter();
   const params = useParams();
-  const testId = parseInt(params.id as string);
+  const testId = parseInt(params?.id as string);
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<{ [key: number]: number }>({});

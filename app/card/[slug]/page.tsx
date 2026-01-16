@@ -2,19 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Button from '@/components/Button';
 
 export default function CardPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = params.slug as string;
+  const slug = params?.slug as string;
 
-  const [card, setCard] = useState<any>(null);
+  const [card, setCard] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchCard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const fetchCard = async () => {
@@ -222,12 +224,12 @@ export default function CardPage() {
           <p className="text-sm text-gray-600 mb-2">
             이 결과는 참고용이며, 전문 상담을 대체하지 않습니다.
           </p>
-          <a
+          <Link
             href="/"
             className="text-sm text-blue-600 hover:underline font-semibold"
           >
             소개 - 나를 이해하면, 관계가 쉬워진다
-          </a>
+          </Link>
         </div>
       </div>
     </div>

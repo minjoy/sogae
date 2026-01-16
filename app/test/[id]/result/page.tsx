@@ -8,15 +8,16 @@ import Button from '@/components/Button';
 export default function TestResultPage() {
   const router = useRouter();
   const params = useParams();
-  const testId = parseInt(params.id as string);
+  const testId = parseInt(params?.id as string);
 
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const testDef = ALL_TESTS[testId];
 
   useEffect(() => {
     fetchResult();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchResult = async () => {

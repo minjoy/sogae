@@ -7,8 +7,8 @@ import Button from '@/components/Button';
 
 export default function MyPage() {
   const router = useRouter();
-  const [results, setResults] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [results, setResults] = useState<Record<string, any>[]>([]);
+  const [user, setUser] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 

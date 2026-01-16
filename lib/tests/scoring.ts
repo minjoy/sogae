@@ -215,12 +215,10 @@ function generateSpendingResult(primary: SubscaleScore, secondary: SubscaleScore
     recs: [],
   };
 
-  let primaryLabel = primary.name;
-  let secondaryLabel = undefined;
-
-  if (secondary && Math.abs(primary.score - secondary.score) < 0.3) {
-    secondaryLabel = secondary.name;
-  }
+  const primaryLabel = primary.name;
+  const secondaryLabel = (secondary && Math.abs(primary.score - secondary.score) < 0.3)
+    ? secondary.name
+    : undefined;
 
   return {
     primaryLabel,
@@ -272,12 +270,10 @@ function generateWorkModeResult(primary: SubscaleScore, secondary: SubscaleScore
     recs: [],
   };
 
-  let primaryLabel = primary.name;
-  let secondaryLabel = undefined;
-
-  if (secondary && Math.abs(primary.score - secondary.score) < 0.3) {
-    secondaryLabel = secondary.name;
-  }
+  const primaryLabel = primary.name;
+  const secondaryLabel = (secondary && Math.abs(primary.score - secondary.score) < 0.3)
+    ? secondary.name
+    : undefined;
 
   return {
     primaryLabel,
@@ -291,7 +287,7 @@ function generateWorkModeResult(primary: SubscaleScore, secondary: SubscaleScore
 function generateConflictStyleResult(subscales: SubscaleScore[]) {
   const avoid = subscales.find((s) => s.subscale === 'AVOID');
   const attack = subscales.find((s) => s.subscale === 'ATTACK');
-  const persuade = subscales.find((s) => s.subscale === 'PERSUADE');
+  const _persuade = subscales.find((s) => s.subscale === 'PERSUADE');
   const accom = subscales.find((s) => s.subscale === 'ACCOM');
 
   const primary = subscales[0];

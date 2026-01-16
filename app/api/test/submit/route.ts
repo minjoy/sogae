@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
-import { scoreTest, TestAnswer } from '@/lib/tests/scoring';
+import { scoreTest } from '@/lib/tests/scoring';
 import { z } from 'zod';
 
 const submitSchema = z.object({
@@ -28,12 +28,12 @@ async function handleSubmit(request: AuthenticatedRequest) {
       data: {
         userId,
         testType: validatedData.testType,
-        rawAnswers: validatedData.answers,
+        rawAnswers: validatedData.answers as any,
         scores: {
           subscales: score.subscales,
           primaryLabel: score.primaryLabel,
           secondaryLabel: score.secondaryLabel,
-        },
+        } as any,
         label: score.primaryLabel,
       },
     });

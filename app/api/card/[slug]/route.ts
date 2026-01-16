@@ -3,10 +3,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+    const { slug } = await context.params;
 
     const card = await prisma.unifiedCard.findUnique({
       where: {
@@ -30,8 +30,12 @@ export async function GET(
     }
 
     // 공개 설정에 따라 데이터 필터링
-    const visibilitySettings = card.visibilitySettings as any;
-    const cardPayload = card.cardPayload as any;
+    const visibilitySettings = card.visibilitySettings as {
+      showNickname?: boolean;
+      showScores?: boolean;
+      hiddenTests?: number[];
+    };
+    const cardPayload = card.cardPayload as Record<string, unknown>;
 
     const publicCard = {
       ...cardPayload,
