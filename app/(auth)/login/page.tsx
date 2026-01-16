@@ -69,12 +69,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center px-4 py-4">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">로그인</h1>
           <p className="text-gray-600">다시 만나서 반가워요</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white rounded-2xl shadow-lg p-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="이메일"
