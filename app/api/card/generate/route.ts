@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { calculateReadiness } from '@/lib/tests/readiness';
+import { TestScore } from '@/lib/tests/scoring';
 import { randomBytes } from 'crypto';
 import {
   determineAttachmentStyle,
@@ -36,18 +37,18 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
     }
 
     // TestScore 객체로 변환
-    const testScores: { [testType: number]: Record<string, any> } = {};
+    const testScores: { [testType: number]: TestScore } = {};
     results.forEach((result, index) => {
       if (result) {
         const testType = index + 1;
         const scores = result.scores as Record<string, any>;
         testScores[testType] = {
           testType,
-          subscales: scores.subscales,
-          primaryLabel: scores.primaryLabel,
+          subscales: scores.subscales || [],
+          primaryLabel: scores.primaryLabel || '',
           secondaryLabel: scores.secondaryLabel,
-          comment: '',
-          recommendations: [],
+          comment: scores.comment || '',
+          recommendations: scores.recommendations || [],
         };
       }
     });
