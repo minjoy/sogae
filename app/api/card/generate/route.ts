@@ -4,6 +4,15 @@ import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 import { calculateReadiness } from '@/lib/tests/readiness';
 import { scoreTest } from '@/lib/tests/scoring';
 import { randomBytes } from 'crypto';
+import {
+  determineAttachmentStyle,
+  determineEnergyLevel,
+  determineConflictStyle,
+  determineLifestyleMode,
+  determineSpendingPattern,
+  generatePersonalityType,
+  type TypeComponents,
+} from '@/lib/types/personality-types';
 
 async function handleGenerateCard(request: AuthenticatedRequest) {
   try {
@@ -47,6 +56,27 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
     // 연애 준비 상태 계산
     const readiness = calculateReadiness(testScores);
 
+    // 성격 유형 결정
+    const test1Subscales = testScores[1].subscales;
+    const test4Subscales = testScores[4].subscales;
+
+    const anxSubscale = test1Subscales.find((s: any) => s.subscale === 'ANX');
+    const avdSubscale = test1Subscales.find((s: any) => s.subscale === 'AVD');
+    const burnoutScore = testScores[5].subscales[0].score;
+
+    const typeComponents: TypeComponents = {
+      attachment: determineAttachmentStyle(
+        anxSubscale?.score || 3.0,
+        avdSubscale?.score || 3.0
+      ),
+      energy: determineEnergyLevel(burnoutScore),
+      conflict: determineConflictStyle(test4Subscales[0].subscale),
+      lifestyle: determineLifestyleMode(testScores[3].subscales[0].subscale),
+      spending: determineSpendingPattern(testScores[2].subscales[0].subscale),
+    };
+
+    const personalityType = generatePersonalityType(typeComponents);
+
     // 사용자 정보 가져오기
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -55,7 +85,15 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
 
     // 통합 카드 데이터 생성
     const cardPayload = {
-      summaryTitle: `${results[0]!.label} × ${results[1]!.label}`,
+      // 성격 유형 정보
+      personalityType: {
+        code: personalityType.code,
+        name: personalityType.name,
+        emoji: personalityType.emoji,
+        summary: personalityType.summary,
+        description: personalityType.description,
+      },
+      summaryTitle: personalityType.name,
       emotionLabel: results[0]!.label,
       spendingLabel: results[1]!.label,
       workLabel: results[2]!.label,
@@ -65,18 +103,10 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
       datingEmoji: readiness.emoji,
       datingScore: readiness.score,
       nickname: user?.nickname,
-      doList: [
-        '감정을 솔직하게 표현할 수 있는 환경',
-        '충분한 개인 시간과 공간 존중',
-      ],
-      dontList: [
-        '갑작스러운 계획 변경',
-        '감정을 무시하거나 억누르는 분위기',
-      ],
-      phraseForPartner: [
-        '나는 이런 사람이에요',
-        '함께 성장할 수 있는 관계를 원해요',
-      ],
+      // 성격 유형 기반 맞춤 조언
+      doList: personalityType.strengths.slice(0, 3),
+      dontList: personalityType.challenges.slice(0, 3),
+      phraseForPartner: personalityType.relationshipTips.slice(0, 3),
     };
 
     // 공유 슬러그 생성
