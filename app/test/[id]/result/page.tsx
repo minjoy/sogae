@@ -321,19 +321,46 @@ export default function TestResultPage() {
 
         {/* 비회원 가입 유도 */}
         {!localStorage.getItem('token') && (
-          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center text-white shadow-xl mb-8">
-            <div className="text-4xl mb-4">💝</div>
-            <h3 className="text-2xl font-bold mb-3">
-              결과를 저장하고<br />더 자세히 알아보세요
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 md:p-8 text-white shadow-xl mb-8">
+            <div className="text-5xl mb-4 text-center">✨</div>
+            <h3 className="text-xl md:text-2xl font-bold mb-3 text-center">
+              5개 테스트 완료 시<br />나만의 마음 사용설명서 카드를 받아요!
             </h3>
-            <p className="text-lg mb-6 opacity-90">
-              회원가입하면 5개 테스트 결과를 통합한<br />
-              <strong>나만의 사용설명서 카드</strong>를 만들 수 있어요
+
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4 mb-4">
+              <p className="text-sm md:text-base mb-3 font-semibold">📋 카드에 담기는 내용</p>
+              <ul className="space-y-2 text-xs md:text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-300">✓</span>
+                  <span>나만의 4글자 MBTI식 성격코드 (예: SHCP)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-300">✓</span>
+                  <span>5가지 테스트 통합 분석 결과</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-300">✓</span>
+                  <span>나에게 어울리는 관계 유형 매칭</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-300">✓</span>
+                  <span>연애 준비 상태 & 구체적인 연애 조언</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-300">✓</span>
+                  <span>친구/파트너와 공유할 수 있는 링크</span>
+                </li>
+              </ul>
+            </div>
+
+            <p className="text-sm opacity-90 mb-4 text-center">
+              💝 회원가입하고 영구적으로 저장하세요
             </p>
+
             <div className="flex gap-3 justify-center">
               <Button
                 variant="secondary"
-                className="bg-white text-primary-600 hover:bg-gray-50"
+                className="bg-white text-primary-600 hover:bg-gray-50 font-semibold"
                 onClick={() => router.push('/signup')}
               >
                 무료 회원가입

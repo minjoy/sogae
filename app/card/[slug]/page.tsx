@@ -274,19 +274,51 @@ export default function CardPage() {
             </ul>
           </div>
 
-          {/* 파트너에게 */}
-          <div className="p-6 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center">
-              <span className="text-xl mr-2">💌</span>
-              파트너에게
+          {/* 연애 조언 */}
+          <div className="p-6 bg-gradient-to-br from-pink-50 to-purple-50 border-b border-gray-200">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+              <span className="text-xl mr-2">💕</span>
+              {card.showScores && card.datingScore >= 55 ? '연애 조언' : '지금 나에게 필요한 것'}
             </h3>
-            <div className="space-y-2">
-              {card.phraseForPartner?.map((phrase: string, index: number) => (
-                <p key={index} className="text-gray-700 italic">
-                  &ldquo;{phrase}&rdquo;
+            {card.showScores && card.datingScore >= 55 ? (
+              <div className="space-y-3">
+                <div className="bg-white/60 backdrop-blur rounded-lg p-4">
+                  <p className="text-sm text-gray-800 leading-relaxed mb-2">
+                    현재 당신은 연애를 시작할 수 있는 좋은 상태입니다.
+                    {card.datingScore >= 80
+                      ? ' 마음의 에너지가 충분하고, 건강한 관계를 만들어갈 준비가 되어 있어요.'
+                      : ' 천천히 관계를 발전시켜 나가면서 서로를 알아가는 것을 추천해요.'
+                    }
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    💡 상대방에게 나의 특성을 솔직하게 공유하고, 서로의 차이를 존중하는 관계를 만들어보세요.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="bg-white/60 backdrop-blur rounded-lg p-4">
+                  <p className="text-sm text-gray-800 leading-relaxed mb-3 font-semibold">
+                    지금은 나를 돌보는 시간이 필요해요
+                  </p>
+                  <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                    현재 마음의 에너지가 충분하지 않은 상태입니다. 무리하게 연애를 시작하기보다는, 먼저 나 자신을 회복하고 재충전하는 시간을 가져보세요.
+                  </p>
+                  <div className="bg-blue-50 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-gray-800 mb-2">추천 활동:</p>
+                    <ul className="text-xs text-gray-700 space-y-1">
+                      <li>• 충분한 휴식과 수면으로 에너지 회복하기</li>
+                      <li>• 좋아하는 취미나 관심사에 시간 투자하기</li>
+                      <li>• 친한 친구들과 가벼운 만남 갖기</li>
+                      <li>• 필요하다면 전문가 상담 고려하기</li>
+                    </ul>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 text-center">
+                  당신이 충분히 회복된 후, 더 건강하고 행복한 연애를 시작할 수 있을 거예요 💚
                 </p>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* 어울리는 연애 상대 */}
@@ -314,13 +346,6 @@ export default function CardPage() {
             </div>
           )}
 
-          {/* 후원 계좌 */}
-          <div className="p-6 bg-warm-50 text-center border-t border-gray-200">
-            <p className="text-xs text-gray-500 mb-2">이 서비스가 도움이 되셨나요?</p>
-            <p className="text-sm text-gray-700 font-semibold mb-1">☕ 후원 계좌</p>
-            <p className="text-sm text-gray-600">기업은행 074-105458-01-014</p>
-            <p className="text-xs text-gray-500">예금주: 강민종</p>
-          </div>
         </div>
 
         {/* 액션 버튼 */}
