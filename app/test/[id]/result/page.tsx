@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ALL_TESTS } from '@/lib/tests/test-data';
+import { scoreTest } from '@/lib/tests/scoring';
 import Button from '@/components/Button';
 
 export default function TestResultPage() {
@@ -39,20 +40,24 @@ export default function TestResultPage() {
           setResult(testResult);
         }
       } else {
-        // 비회원: localStorage에서 가져오기
+        // 비회원: localStorage에서 가져오기 및 점수 계산
         const guestResults = JSON.parse(localStorage.getItem('guestResults') || '[]');
         const guestResult = guestResults.find((r: Record<string, any>) => r.testType === testId);
 
-        if (guestResult) {
-          // 간단한 결과 변환 (실제 점수 계산은 추후 개선)
+        if (guestResult && guestResult.answers) {
+          // 점수 계산
+          const calculatedScore = scoreTest(testId, guestResult.answers);
+
           setResult({
             testType: testId,
-            label: testDef?.title || '',
+            label: calculatedScore.primaryLabel,
             scores: {
-              primaryLabel: '결과 분석 중',
-              subscales: [],
+              primaryLabel: calculatedScore.primaryLabel,
+              secondaryLabel: calculatedScore.secondaryLabel,
+              subscales: calculatedScore.subscales,
             },
-            avgScore: guestResult.avgScore,
+            comment: calculatedScore.comment,
+            recommendations: calculatedScore.recommendations,
           });
         }
       }
@@ -103,40 +108,89 @@ export default function TestResultPage() {
         </div>
 
         {/* 결과 카드 */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
-          <div className="text-center mb-8">
-            <div className="inline-block bg-blue-100 text-blue-800 px-6 py-3 rounded-full text-2xl font-bold mb-4">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+          {/* 타입 배지 */}
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-8 text-center text-white">
+            <div className="text-6xl mb-4">{testDef.emoji}</div>
+            <div className="inline-block bg-white/20 backdrop-blur px-6 py-3 rounded-full text-2xl font-bold mb-2">
               {scores.primaryLabel}
             </div>
             {scores.secondaryLabel && (
-              <div className="inline-block bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-lg ml-2">
+              <div className="inline-block bg-white/10 px-4 py-2 rounded-full text-lg ml-2">
                 {scores.secondaryLabel}
               </div>
             )}
           </div>
 
-          {/* 하위척도 점수 */}
-          <div className="space-y-4 mb-8">
-            <h3 className="font-semibold text-gray-900 mb-4">세부 점수</h3>
-            {scores.subscales?.map((subscale: any, index: number) => (
-              <div key={index}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    {subscale.name}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    {subscale.percentile}점
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full transition-all"
-                    style={{ width: `${subscale.percentile}%` }}
-                  />
+          {/* 코멘트 */}
+          {result.comment && (
+            <div className="p-8 border-b border-gray-100">
+              <div className="flex items-start gap-3 mb-4">
+                <span className="text-2xl">💬</span>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">전문가 코멘트</h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    {result.comment}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* 하위척도 점수 */}
+          {scores.subscales && scores.subscales.length > 0 && (
+            <div className="p-8 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                <span className="text-xl">📊</span>
+                세부 점수 분석
+              </h3>
+              <div className="space-y-5">
+                {scores.subscales.map((subscale: any, index: number) => (
+                  <div key={index}>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-semibold text-gray-800">
+                        {subscale.name}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">
+                          {subscale.score.toFixed(1)} / 5.0
+                        </span>
+                        <span className="inline-block bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-bold">
+                          {subscale.percentile}점
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all duration-500"
+                        style={{ width: `${subscale.percentile}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 추천사항 */}
+          {result.recommendations && result.recommendations.length > 0 && (
+            <div className="p-8 bg-blue-50">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-xl">💡</span>
+                실천 가이드
+              </h3>
+              <ul className="space-y-3">
+                {result.recommendations.map((rec: string, index: number) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <span className="inline-block w-6 h-6 bg-primary-500 text-white rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold mt-0.5">
+                      {index + 1}
+                    </span>
+                    <span className="text-gray-700 leading-relaxed flex-1">{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* 액션 버튼 */}
