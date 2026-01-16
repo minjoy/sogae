@@ -32,7 +32,7 @@ export default function Header() {
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <span className="text-2xl">💝</span>
-            <span className="text-xl font-bold text-primary-600">나지연</span>
+            <span className="text-xl font-bold text-primary-600">나마진</span>
           </button>
 
           <div className="flex items-center gap-3">

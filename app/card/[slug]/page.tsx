@@ -27,8 +27,8 @@ export default function CardPage() {
   // 메타태그 동적 업데이트
   useEffect(() => {
     if (card) {
-      const title = `${card.nickname}님의 나 사용설명서 | 나지연`;
-      const description = `${card.personalityType?.name || ''} - 나를 이해하면, 관계가 쉬워진다`;
+      const title = `${card.nickname}님의 마음 사용설명서 | 나마진`;
+      const description = `${card.personalityType?.name || ''} - 마음이 준비되면 시작하는 건강한 관계`;
       const url = window.location.href;
 
       // 기본 메타태그
@@ -40,12 +40,14 @@ export default function CardPage() {
       updateMetaTag('property', 'og:description', description);
       updateMetaTag('property', 'og:url', url);
       updateMetaTag('property', 'og:type', 'profile');
-      updateMetaTag('property', 'og:site_name', '나지연 - 나, 지금 연애할 때?');
+      updateMetaTag('property', 'og:site_name', '나마진 - 나의 마음 진단');
+      updateMetaTag('property', 'og:image', window.location.origin + '/images/og-card.png');
 
       // Twitter Card
       updateMetaTag('name', 'twitter:card', 'summary_large_image');
       updateMetaTag('name', 'twitter:title', title);
       updateMetaTag('name', 'twitter:description', description);
+      updateMetaTag('name', 'twitter:image', window.location.origin + '/images/og-card.png');
     }
   }, [card]);
 

@@ -124,12 +124,12 @@ export default function SignupPage() {
           <div className="flex items-center justify-center gap-2 mb-4">
             <span className="text-4xl">💝</span>
             <div>
-              <div className="text-3xl font-bold text-primary-600">나지연</div>
-              <div className="text-xs text-gray-500">나, 지금 연애할 때?</div>
+              <div className="text-3xl font-bold text-primary-600">나마진</div>
+              <div className="text-xs text-gray-500">나의 마음 진단</div>
             </div>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">마음을 알아가는 첫 걸음</h1>
-          <p className="text-gray-600">진짜 나를 만나러 가볼까요?</p>
+          <p className="text-gray-600">마음이 준비되면 시작하는 건강한 연애</p>
         </div>
 
         <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-primary-100">

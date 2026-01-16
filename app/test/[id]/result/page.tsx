@@ -26,7 +26,7 @@ export default function TestResultPage() {
   // 메타태그 동적 업데이트
   useEffect(() => {
     if (result && testDef) {
-      const title = `${testDef.title} 결과 | 나지연`;
+      const title = `${testDef.title} 결과 | 나마진`;
       const description = `나의 ${testDef.title}: ${result.scores?.primaryLabel || ''} - ${testDef.description}`;
       const url = window.location.href;
 
@@ -39,12 +39,14 @@ export default function TestResultPage() {
       updateMetaTag('property', 'og:description', description);
       updateMetaTag('property', 'og:url', url);
       updateMetaTag('property', 'og:type', 'article');
-      updateMetaTag('property', 'og:site_name', '나지연 - 나, 지금 연애할 때?');
+      updateMetaTag('property', 'og:site_name', '나마진 - 나의 마음 진단');
+      updateMetaTag('property', 'og:image', window.location.origin + '/images/og-test-result.png');
 
       // Twitter Card
       updateMetaTag('name', 'twitter:card', 'summary_large_image');
       updateMetaTag('name', 'twitter:title', title);
       updateMetaTag('name', 'twitter:description', description);
+      updateMetaTag('name', 'twitter:image', window.location.origin + '/images/og-test-result.png');
     }
   }, [result, testDef]);
 
@@ -284,35 +286,37 @@ export default function TestResultPage() {
         )}
 
         {/* 액션 버튼 */}
-        <div className="flex gap-3 mb-8">
-          <Button
-            variant="outline"
+        <div className="grid grid-cols-3 gap-2 mb-8">
+          <button
             onClick={() => router.push('/test')}
-            className="flex-1"
+            className="flex flex-col items-center justify-center gap-1 py-3 px-2 bg-white border-2 border-gray-300 rounded-xl hover:border-primary-500 hover:bg-primary-50 transition-all"
           >
-            다른 테스트 하기
-          </Button>
-          <Button
-            variant="primary"
+            <span className="text-2xl">📝</span>
+            <span className="text-xs font-semibold text-gray-700">다른 테스트</span>
+          </button>
+          <button
             onClick={handleShare}
-            className="flex-1 relative"
+            className="flex flex-col items-center justify-center gap-1 py-3 px-2 bg-primary-600 rounded-xl hover:bg-primary-700 transition-all"
           >
             {isCopied ? (
               <>
-                <span className="mr-1">✓</span> 링크 복사됨
+                <span className="text-2xl">✓</span>
+                <span className="text-xs font-semibold text-white">복사 완료</span>
               </>
             ) : (
               <>
-                <span className="mr-1">🔗</span> 공유하기
+                <span className="text-2xl">🔗</span>
+                <span className="text-xs font-semibold text-white">공유하기</span>
               </>
             )}
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={() => router.push('/my')}
-            className="flex-1"
+            className="flex flex-col items-center justify-center gap-1 py-3 px-2 bg-white border-2 border-gray-300 rounded-xl hover:border-primary-500 hover:bg-primary-50 transition-all"
           >
-            마이페이지
-          </Button>
+            <span className="text-2xl">👤</span>
+            <span className="text-xs font-semibold text-gray-700">마이페이지</span>
+          </button>
         </div>
 
         {/* 비회원 가입 유도 */}

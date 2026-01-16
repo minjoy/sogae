@@ -3,13 +3,21 @@ import "./globals.css";
 import Header from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "나지연 - 나, 지금 연애할 때?",
-  description: "지금의 나를 제대로 알고 있나요? 5가지 심리 테스트로 진짜 나의 마음을 발견하고, 연애 준비 상태를 확인하세요.",
-  keywords: "심리테스트, 연애준비, 자기분석, MBTI, 마음진단, 번아웃체크, 감정패턴",
+  title: "나마진 - 나의 마음 진단",
+  description: "지금의 나를 제대로 알고 있나요? 5가지 심리 테스트로 진짜 나의 마음을 발견하고, 마음 준비가 된 후 건강한 연애를 시작하세요.",
+  keywords: "심리테스트, 마음진단, 자기분석, MBTI, 연애준비, 번아웃체크, 감정패턴",
   openGraph: {
-    title: "나지연 - 나, 지금 연애할 때?",
-    description: "지금의 나를 제대로 알고 있나요? 5분이면 완성되는 나만의 마음 진단",
+    title: "나마진 - 나의 마음 진단",
+    description: "마음 준비가 됐을 때 시작하는 건강한 연애. 5분이면 완성되는 나만의 마음 사용설명서",
     type: "website",
+    images: [
+      {
+        url: "/images/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "나마진 - 나의 마음 진단",
+      },
+    ],
   },
 };
 

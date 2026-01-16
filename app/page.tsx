@@ -36,7 +36,7 @@ export default function Home() {
             혹시, 나도 모르는 나의 마음이 있을까요?
           </p>
           <p className="text-lg text-gray-500 mb-10">
-            연애를 시작하기 전에 꼭 알아야 할 것들
+            마음 준비가 됐을 때 시작하는 건강한 연애
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
@@ -79,7 +79,7 @@ export default function Home() {
               솔직하게
             </h3>
             <p className="text-gray-600 leading-relaxed">
-              &ldquo;지금은 연애할 때가 아니에요&rdquo;<br />
+              &ldquo;마음이 준비되면 시작하세요&rdquo;<br />
               진실된 조언을 드려요
             </p>
           </div>
@@ -139,7 +139,7 @@ export default function Home() {
               {
                 title: "번아웃 체크",
                 emoji: "🔋",
-                desc: "지금 연애할 에너지가 남아있나요?",
+                desc: "마음의 에너지, 지금 충분한가요?",
                 color: "from-orange-50 to-orange-100"
               },
             ].map((test, idx) => (
@@ -186,10 +186,10 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-2xl">💝</span>
-                <span className="text-xl font-bold text-primary-600">나지연</span>
+                <span className="text-xl font-bold text-primary-600">나마진</span>
               </div>
               <p className="text-sm text-gray-600 mb-4">
-                나를 이해하면, 관계가 쉬워집니다.<br />
+                나를 진단하고, 마음이 준비되면 시작하세요.<br />
                 진심 어린 마음으로 여러분의 행복을 응원해요.
               </p>
             </div>
@@ -212,7 +212,7 @@ export default function Home() {
             <p className="mb-2">
               이 결과는 참고용이며, 전문 심리 상담이나 의료 진단을 대체하지 않습니다.
             </p>
-            <p>© 2026 나지연. All rights reserved.</p>
+            <p>© 2026 나마진. All rights reserved.</p>
           </div>
         </div>
       </footer>
