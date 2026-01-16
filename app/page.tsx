@@ -20,35 +20,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-warm-50 via-primary-50 to-white">
-      {/* 네비게이션 */}
-      <nav className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-3xl">💝</span>
-            <div>
-              <div className="text-2xl font-bold text-primary-600">나지연</div>
-              <div className="text-xs text-gray-500">나, 지금 연애할 때?</div>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            {isLoggedIn ? (
-              <Button onClick={() => router.push('/my')} variant="outline">
-                내 마음 보기
-              </Button>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => router.push('/login')}>
-                  로그인
-                </Button>
-                <Button onClick={() => router.push('/signup')}>
-                  시작하기
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
       {/* 히어로 섹션 */}
       <main className="container mx-auto px-4 py-12 md:py-20 max-w-5xl">
         <div className="text-center mb-16">

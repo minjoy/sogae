@@ -91,10 +91,16 @@ export default function MyPage() {
       return;
     }
 
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('카드를 생성하려면 로그인이 필요합니다.\n회원가입하고 나만의 사용설명서를 만들어보세요!');
+      router.push('/signup');
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
-      const token = localStorage.getItem('token');
       const response = await fetch('/api/card/generate', {
         method: 'POST',
         headers: {
@@ -105,14 +111,17 @@ export default function MyPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '카드 생성 실패');
+        if (response.status === 401) {
+          throw new Error('로그인이 필요합니다. 다시 로그인해주세요.');
+        }
+        throw new Error(data.error || '카드 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
       }
 
       // 카드 페이지로 이동
       router.push(`/card/${data.card.shareSlug}`);
     } catch (error) {
       console.error('Card generation error:', error);
-      const message = error instanceof Error ? error.message : '카드 생성 중 오류가 발생했습니다';
+      const message = error instanceof Error ? error.message : '카드 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
       alert(message);
     } finally {
       setIsGenerating(false);
@@ -182,17 +191,51 @@ export default function MyPage() {
           </div>
 
           {allTestsCompleted ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-              <div className="text-4xl mb-3">🎉</div>
-              <h3 className="text-lg font-semibold text-green-900 mb-2">
-                모든 테스트를 완료했습니다!
-              </h3>
-              <p className="text-green-700 mb-4">
-                이제 나만의 사용설명서 카드를 만들 수 있어요
-              </p>
-              <Button onClick={handleGenerateCard} isLoading={isGenerating}>
-                카드 생성하기
-              </Button>
+            <div className="space-y-4">
+              {!user && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">⚠️</div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-yellow-900 mb-1">
+                        주의! 카드 생성을 위해 회원가입이 필요합니다
+                      </h4>
+                      <p className="text-sm text-yellow-800 mb-3">
+                        비회원은 나만의 사용설명서 카드를 생성하거나 저장할 수 없습니다.
+                        지금 무료로 회원가입하고 영구적으로 저장하세요!
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="border-yellow-600 text-yellow-700 hover:bg-yellow-100"
+                          onClick={() => router.push('/signup')}
+                        >
+                          무료 회원가입
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="border-yellow-600 text-yellow-700 hover:bg-yellow-100"
+                          onClick={() => router.push('/login')}
+                        >
+                          로그인
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                <div className="text-4xl mb-3">🎉</div>
+                <h3 className="text-lg font-semibold text-green-900 mb-2">
+                  모든 테스트를 완료했습니다!
+                </h3>
+                <p className="text-green-700 mb-4">
+                  {user ? '이제 나만의 사용설명서 카드를 만들 수 있어요' : '회원가입 후 나만의 사용설명서 카드를 만들 수 있어요'}
+                </p>
+                <Button onClick={handleGenerateCard} isLoading={isGenerating}>
+                  카드 생성하기
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
@@ -239,7 +282,7 @@ export default function MyPage() {
         {/* 테스트 결과 목록 */}
         <h2 className="text-2xl font-bold text-gray-900 mb-6">테스트 결과</h2>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
           {[1, 2, 3, 4, 5].map((testType) => {
             const testDef = ALL_TESTS[testType];
             const result = results.find((r) => r.testType === testType);
@@ -248,11 +291,11 @@ export default function MyPage() {
             return (
               <div
                 key={testType}
-                className={`bg-white rounded-xl p-6 shadow-sm border ${
+                className={`bg-white rounded-xl p-4 md:p-5 shadow-sm border-2 ${
                   isCompleted
-                    ? 'border-green-200 cursor-pointer hover:shadow-md'
-                    : 'border-gray-200'
-                } transition-all`}
+                    ? 'border-green-200 cursor-pointer hover:shadow-lg hover:scale-105'
+                    : 'border-gray-200 cursor-pointer hover:shadow-md'
+                } transition-all duration-200`}
                 onClick={() => {
                   if (isCompleted) {
                     router.push(`/test/${testType}/result`);
@@ -261,30 +304,40 @@ export default function MyPage() {
                   }
                 }}
               >
-                <div className="text-4xl mb-3">{testDef.emoji}</div>
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  {testDef.title}
-                </h3>
+                <div className="flex flex-col items-center text-center">
+                  <div className="text-3xl md:text-4xl mb-2 relative">
+                    {testDef.emoji}
+                    {isCompleted && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs">✓</span>
+                      </div>
+                    )}
+                  </div>
 
-                {isCompleted ? (
-                  <div>
-                    <div className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium mb-2">
-                      완료
+                  <h3 className="font-bold text-gray-900 text-sm md:text-base mb-2 line-clamp-2">
+                    {testDef.title}
+                  </h3>
+
+                  {isCompleted ? (
+                    <div className="w-full">
+                      <div className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold mb-2">
+                        완료
+                      </div>
+                      <p className="text-xs text-gray-600 line-clamp-2 min-h-[2rem]">
+                        {result.label}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      {result.label}
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="inline-block bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-medium mb-2">
-                      미완료
+                  ) : (
+                    <div className="w-full">
+                      <div className="inline-block bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium mb-2">
+                        미완료
+                      </div>
+                      <p className="text-xs text-gray-500 min-h-[2rem]">
+                        {testDef.duration}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      {testDef.duration}
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}

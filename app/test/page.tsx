@@ -140,7 +140,8 @@ export default function TestListPage() {
                 }`}
                 onClick={() => router.push(`/test/${test.id}`)}
               >
-                <div className="flex items-center justify-between">
+                {/* Desktop Layout */}
+                <div className="hidden md:flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="text-5xl relative">
                       {test.emoji}
@@ -170,6 +171,40 @@ export default function TestListPage() {
                       {isCompleted ? '다시하기' : '시작하기'}
                     </Button>
                   </div>
+                </div>
+
+                {/* Mobile Layout */}
+                <div className="md:hidden">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="text-5xl relative flex-shrink-0">
+                      {test.emoji}
+                      {isCompleted && (
+                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">✓</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-xl font-semibold text-gray-900">
+                          {test.title}
+                        </h3>
+                        {isCompleted && (
+                          <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
+                            완료
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-1">{test.desc}</p>
+                      <div className="text-xs text-gray-500">{test.duration}</div>
+                    </div>
+                  </div>
+                  <Button
+                    variant={isCompleted ? 'outline' : 'primary'}
+                    className="w-full"
+                  >
+                    {isCompleted ? '다시하기' : '시작하기'}
+                  </Button>
                 </div>
               </div>
             );

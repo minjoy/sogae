@@ -20,6 +20,9 @@ export default function Header() {
     setIsLoggedIn(false);
   };
 
+  // /test 경로인지 확인
+  const isTestPage = pathname?.startsWith('/test');
+
   return (
     <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 z-50">
       <div className="container mx-auto px-4 py-3 max-w-7xl">
@@ -56,12 +59,14 @@ export default function Header() {
                 >
                   로그인
                 </button>
-                <button
-                  onClick={() => router.push('/test')}
-                  className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-                >
-                  시작하기
-                </button>
+                {!isTestPage && (
+                  <button
+                    onClick={() => router.push('/test')}
+                    className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+                  >
+                    시작하기
+                  </button>
+                )}
               </>
             )}
           </div>
