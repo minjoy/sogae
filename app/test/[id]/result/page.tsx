@@ -13,6 +13,7 @@ export default function TestResultPage() {
 
   const [result, setResult] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [allTestsCompleted, setAllTestsCompleted] = useState(false);
 
   const testDef = ALL_TESTS[testId];
 
@@ -38,11 +39,16 @@ export default function TestResultPage() {
         if (data.success) {
           const testResult = data.results.find((r: Record<string, any>) => r.testType === testId);
           setResult(testResult);
+          // 5개 테스트 완료 확인
+          setAllTestsCompleted(data.results.length >= 5);
         }
       } else {
         // 비회원: localStorage에서 가져오기 및 점수 계산
         const guestResults = JSON.parse(localStorage.getItem('guestResults') || '[]');
         const guestResult = guestResults.find((r: Record<string, any>) => r.testType === testId);
+
+        // 5개 테스트 완료 확인
+        setAllTestsCompleted(guestResults.length >= 5);
 
         if (guestResult && guestResult.answers) {
           // 점수 계산
@@ -192,6 +198,27 @@ export default function TestResultPage() {
             </div>
           )}
         </div>
+
+        {/* 5개 테스트 완료 시 사용설명서 안내 */}
+        {allTestsCompleted && (
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center text-white shadow-xl mb-8">
+            <div className="text-6xl mb-4">🎉</div>
+            <h3 className="text-2xl md:text-3xl font-bold mb-3">
+              모든 테스트 완료!
+            </h3>
+            <p className="text-lg mb-6 opacity-90">
+              5가지 테스트 결과를 종합한<br />
+              <strong>나만의 사용설명서 카드</strong>를 확인해보세요
+            </p>
+            <Button
+              variant="secondary"
+              className="bg-white text-primary-600 hover:bg-gray-50 px-8 py-3 text-lg font-semibold"
+              onClick={() => router.push('/my')}
+            >
+              나만의 사용설명서 보러가기 →
+            </Button>
+          </div>
+        )}
 
         {/* 액션 버튼 */}
         <div className="flex gap-4 mb-8">

@@ -9,6 +9,7 @@ export default function MyPage() {
   const router = useRouter();
   const [results, setResults] = useState<Record<string, any>[]>([]);
   const [user, setUser] = useState<Record<string, any> | null>(null);
+  const [cards, setCards] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -19,6 +20,7 @@ export default function MyPage() {
     if (token && userData) {
       setUser(JSON.parse(userData));
       fetchResults();
+      fetchCards();
     } else {
       // 비회원: localStorage에서 결과 불러오기
       loadGuestResults();
@@ -61,6 +63,25 @@ export default function MyPage() {
       console.error('Failed to load guest results:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchCards = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/card/list', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCards(data.cards);
+      }
+    } catch (error) {
+      console.error('Failed to fetch cards:', error);
     }
   };
 
@@ -268,6 +289,62 @@ export default function MyPage() {
             );
           })}
         </div>
+
+        {/* 나만의 사용설명서 카드 히스토리 */}
+        {user && cards.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">나만의 사용설명서 히스토리</h2>
+            <div className="space-y-4">
+              {cards.map((card) => (
+                <div
+                  key={card.id}
+                  className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200"
+                  onClick={() => router.push(`/card/${card.shareSlug}`)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        {card.personalityType && (
+                          <>
+                            <span className="text-3xl">{card.personalityType.emoji}</span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="inline-block bg-primary-100 text-primary-700 px-2 py-1 rounded text-xs font-bold">
+                                  {card.personalityType.code}
+                                </span>
+                                <h3 className="font-semibold text-gray-900">
+                                  {card.personalityType.name}
+                                </h3>
+                              </div>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {card.datingMode}
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 mb-1">
+                        {new Date(card.createdAt).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(card.createdAt).toLocaleTimeString('ko-KR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 안내 문구 */}
         <div className="mt-8 bg-gray-50 rounded-xl p-6">

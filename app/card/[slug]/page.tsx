@@ -13,8 +13,13 @@ export default function CardPage() {
   const [card, setCard] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    // 로그인 상태 확인
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+
     fetchCard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
@@ -127,13 +132,21 @@ export default function CardPage() {
           <div
             className={`p-6 border-b-2 ${getReadinessColor(card.datingEmoji)}`}
           >
+            <h3 className="text-xs font-semibold text-center opacity-60 mb-4">
+              나의 연애 준비상태
+            </h3>
             <div className="text-center">
               <div className="text-4xl mb-2">{card.datingEmoji}</div>
-              <h3 className="text-lg font-bold mb-1">{card.datingMode}</h3>
+              <h3 className="text-lg font-bold mb-2">{card.datingMode}</h3>
               {card.showScores && (
-                <p className="text-sm opacity-75">
-                  준비 점수: {card.datingScore}점
-                </p>
+                <div className="text-sm opacity-75">
+                  <p className="font-semibold mb-1">준비 점수: {card.datingScore}점</p>
+                  <p className="text-xs">
+                    {card.datingScore >= 80 && '(80점 이상: 연애 시작에 매우 좋은 상태)'}
+                    {card.datingScore >= 55 && card.datingScore < 80 && '(55-79점: 천천히 진행하며 관계 발전 가능)'}
+                    {card.datingScore < 55 && '(0-54점: 회복과 재충전이 우선 필요한 시기)'}
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -225,7 +238,7 @@ export default function CardPage() {
           </div>
 
           {/* 파트너에게 */}
-          <div className="p-6 bg-gray-50">
+          <div className="p-6 bg-gray-50 border-b border-gray-200">
             <h3 className="text-sm font-semibold text-gray-600 mb-3 flex items-center">
               <span className="text-xl mr-2">💌</span>
               파트너에게
@@ -238,6 +251,39 @@ export default function CardPage() {
               ))}
             </div>
           </div>
+
+          {/* 어울리는 연애 상대 */}
+          {card.personalityType?.compatibleTypes && card.personalityType.compatibleTypes.length > 0 && (
+            <div className="p-6 bg-blue-50">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="text-xl mr-2">💕</span>
+                나와 잘 어울리는 연애 상대
+              </h3>
+              <div className="space-y-4">
+                {card.personalityType.compatibleTypes.map((compatible: any, index: number) => (
+                  <div key={index} className="bg-white rounded-xl p-4 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="inline-block bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-xs font-bold">
+                        {compatible.code}
+                      </div>
+                      <h4 className="font-semibold text-gray-900">{compatible.name}</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {compatible.reason}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 후원 계좌 */}
+          <div className="p-6 bg-warm-50 text-center border-t border-gray-200">
+            <p className="text-xs text-gray-500 mb-2">이 서비스가 도움이 되셨나요?</p>
+            <p className="text-sm text-gray-700 font-semibold mb-1">☕ 후원 계좌</p>
+            <p className="text-sm text-gray-600">기업은행 074-105458-01-014</p>
+            <p className="text-xs text-gray-500">예금주: 강민종</p>
+          </div>
         </div>
 
         {/* 액션 버튼 */}
@@ -245,8 +291,11 @@ export default function CardPage() {
           <Button variant="outline" onClick={handleShare} className="flex-1">
             📤 공유하기
           </Button>
-          <Button onClick={() => router.push('/')} className="flex-1">
-            나도 만들기
+          <Button
+            onClick={() => router.push(isLoggedIn ? '/my' : '/')}
+            className="flex-1"
+          >
+            {isLoggedIn ? '마이페이지' : '나도 만들기'}
           </Button>
         </div>
 

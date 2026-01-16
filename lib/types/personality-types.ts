@@ -3,15 +3,22 @@
  * 5가지 테스트 결과를 종합하여 고유한 성격 유형 생성
  */
 
+export interface CompatibleType {
+  code: string;
+  name: string;
+  reason: string;
+}
+
 export interface PersonalityType {
-  code: string; // 예: "SEC-HIG-COL"
-  name: string; // 예: "활력 넘치는 안정형"
+  code: string; // 예: "SHCP"
+  name: string; // 예: "활력 넘치는 안정 대화형"
   emoji: string;
   summary: string;
   description: string;
   strengths: string[];
   challenges: string[];
   relationshipTips: string[];
+  compatibleTypes: CompatibleType[]; // 어울리는 연애 상대
 }
 
 /**
@@ -124,54 +131,63 @@ export function determineSpendingPattern(primarySpending: string): SpendingPatte
 }
 
 /**
- * 유형 코드 생성
+ * 유형 코드 생성 (MBTI 스타일 4자리)
  */
 export function generateTypeCode(components: TypeComponents): string {
-  const shortCodes = {
-    // Attachment
-    SECURE: 'SEC',
-    ANXIOUS: 'ANX',
-    AVOIDANT: 'AVD',
-    MIXED: 'MIX',
-    // Energy
-    HIGH: 'HI',
-    MODERATE: 'MD',
-    LOW: 'LO',
-    // Conflict
-    COLLABORATIVE: 'CO',
-    ASSERTIVE: 'AS',
-    ACCOMMODATING: 'AC',
-    AVOIDING: 'AV',
+  const codes = {
+    // 1번째 자리: 애착 스타일
+    SECURE: 'S',
+    ANXIOUS: 'A',
+    AVOIDANT: 'V',
+    MIXED: 'M',
+    // 2번째 자리: 에너지 레벨
+    HIGH: 'H',
+    MODERATE: 'B', // Balanced
+    LOW: 'L',
+    // 3번째 자리: 갈등 스타일
+    COLLABORATIVE: 'C',
+    ASSERTIVE: 'S',
+    ACCOMMODATING: 'P', // Passive
+    AVOIDING: 'D', // Detach
+    // 4번째 자리: 생활 방식 (추가)
   };
 
-  return `${shortCodes[components.attachment]}-${shortCodes[components.energy]}-${shortCodes[components.conflict]}`;
+  const lifestyleCodes = {
+    PLANNER: 'P',
+    EXPLORER: 'E',
+    IMPROVISER: 'I',
+    DEADLINE: 'R', // Rush
+  };
+
+  return `${codes[components.attachment]}${codes[components.energy]}${codes[components.conflict]}${lifestyleCodes[components.lifestyle]}`;
 }
 
 /**
- * 유형 이름 생성 (한국어)
+ * 유형 이름 생성 (한국어, 마지막에만 "형")
  */
 export function generateTypeName(components: TypeComponents): string {
   const attachmentNames = {
-    SECURE: '안정형',
-    ANXIOUS: '확인형',
-    AVOIDANT: '독립형',
-    MIXED: '밀당형',
+    SECURE: '안정',
+    ANXIOUS: '확인',
+    AVOIDANT: '독립',
+    MIXED: '밀당',
   };
 
   const energyNames = {
-    HIGH: '활력',
-    MODERATE: '균형',
-    LOW: '회복기',
+    HIGH: '활력 넘치는',
+    MODERATE: '균형 잡힌',
+    LOW: '회복 중인',
   };
 
   const conflictNames = {
-    COLLABORATIVE: '대화형',
-    ASSERTIVE: '솔직형',
-    ACCOMMODATING: '배려형',
-    AVOIDING: '정리형',
+    COLLABORATIVE: '대화',
+    ASSERTIVE: '솔직',
+    ACCOMMODATING: '배려',
+    AVOIDING: '정리',
   };
 
-  return `${energyNames[components.energy]} 넘치는 ${attachmentNames[components.attachment]} ${conflictNames[components.conflict]}`;
+  // "활력 넘치는 안정 대화형" 형태
+  return `${energyNames[components.energy]} ${attachmentNames[components.attachment]} ${conflictNames[components.conflict]}형`;
 }
 
 /**
@@ -210,6 +226,7 @@ export function generatePersonalityType(components: TypeComponents): Personality
   const strengths = generateStrengths(components);
   const challenges = generateChallenges(components);
   const relationshipTips = generateRelationshipTips(components);
+  const compatibleTypes = generateCompatibleTypes(components);
 
   return {
     code,
@@ -220,6 +237,7 @@ export function generatePersonalityType(components: TypeComponents): Personality
     strengths,
     challenges,
     relationshipTips,
+    compatibleTypes,
   };
 }
 
@@ -241,22 +259,41 @@ function generateSummary(components: TypeComponents): string {
 }
 
 function generateTypeDescription(components: TypeComponents): string {
-  // 간단한 기본 설명 - 실제로는 더 풍부하게 작성
-  return `당신은 ${generateTypeName(components)}입니다. 관계에서는 ${
-    components.attachment === 'SECURE'
-      ? '안정적이고 신뢰를 바탕으로 행동하며'
-      : components.attachment === 'ANXIOUS'
-      ? '확인과 소통을 중요하게 여기며'
-      : components.attachment === 'AVOIDANT'
-      ? '개인 공간과 독립성을 존중받기를 원하며'
-      : '친밀함과 거리 사이의 균형을 찾으려 하며'
-  }, 현재는 ${
-    components.energy === 'HIGH'
-      ? '높은 에너지 레벨을 유지하고 있습니다'
-      : components.energy === 'MODERATE'
-      ? '적절한 에너지 밸런스를 유지하고 있습니다'
-      : '에너지 회복이 필요한 시기입니다'
-  }.`;
+  // 애착 스타일별 구체적 설명
+  let attachmentDesc = '';
+  if (components.attachment === 'SECURE') {
+    attachmentDesc = '당신은 관계에서 안정감을 느끼는 사람입니다. 상대방을 믿고, 적절한 거리와 친밀함을 자연스럽게 조절할 줄 압니다. 갈등이 생겨도 당황하지 않고 대화로 풀어갈 수 있으며, 상대의 독립성도 존중합니다.';
+  } else if (components.attachment === 'ANXIOUS') {
+    attachmentDesc = '당신은 관계에서 확인과 안심을 필요로 하는 사람입니다. 상대방의 마음을 자주 확인하고 싶어하며, 연락이 뜸하면 불안해집니다. 이는 사랑이 깊다는 증거이기도 하지만, 때로는 상대에게 부담을 줄 수 있습니다.';
+  } else if (components.attachment === 'AVOIDANT') {
+    attachmentDesc = '당신은 독립성과 개인 공간을 중요하게 여기는 사람입니다. 너무 빨리 가까워지면 부담스럽고, 혼자만의 시간이 필요합니다. 감정 표현이 어색할 수 있지만, 이것이 사랑하지 않는다는 뜻은 아닙니다.';
+  } else {
+    attachmentDesc = '당신은 가까워지고 싶지만 동시에 부담스러운 복잡한 감정을 느끼는 사람입니다. 밀고 당기기 패턴이 나타날 수 있으며, 스스로도 혼란스러울 때가 많습니다. 이런 자신을 이해하고 설명할 수 있다면 관계가 훨씬 편해집니다.';
+  }
+
+  // 에너지 레벨별 설명
+  let energyDesc = '';
+  if (components.energy === 'HIGH') {
+    energyDesc = ' 현재 에너지가 충만한 상태로, 새로운 관계를 시작하거나 깊게 발전시키기 좋은 시기입니다.';
+  } else if (components.energy === 'MODERATE') {
+    energyDesc = ' 현재 적절한 에너지 밸런스를 유지하고 있어, 관계에 안정적으로 집중할 수 있습니다.';
+  } else {
+    energyDesc = ' 지금은 에너지가 많이 소진된 상태입니다. 새로운 관계보다는 회복과 재충전이 우선이며, 기존 관계도 천천히 진행하는 것이 좋습니다.';
+  }
+
+  // 갈등 스타일별 설명
+  let conflictDesc = '';
+  if (components.conflict === 'COLLABORATIVE') {
+    conflictDesc = ' 문제가 생기면 대화로 풀어가려는 협력형입니다. 상대의 입장도 이해하려 노력하며, 서로 만족하는 해결책을 찾습니다.';
+  } else if (components.conflict === 'ASSERTIVE') {
+    conflictDesc = ' 문제가 생기면 솔직하게 표현하는 직설형입니다. 명확한 소통을 선호하지만, 때로는 톤이 강해 보일 수 있습니다.';
+  } else if (components.conflict === 'ACCOMMODATING') {
+    conflictDesc = ' 문제가 생기면 상대를 배려해 양보하는 편입니다. 관계를 부드럽게 유지하지만, 자신의 욕구를 억압할 위험이 있습니다.';
+  } else {
+    conflictDesc = ' 문제가 생기면 일단 회피하고 혼자 정리하려는 편입니다. 시간이 필요하지만, 대화를 미루면 오해가 쌓일 수 있습니다.';
+  }
+
+  return attachmentDesc + energyDesc + conflictDesc;
 }
 
 function generateStrengths(components: TypeComponents): string[] {
@@ -350,4 +387,108 @@ function generateRelationshipTips(components: TypeComponents): string[] {
   }
 
   return tips;
+}
+
+/**
+ * 어울리는 연애 상대 유형 생성
+ */
+function generateCompatibleTypes(components: TypeComponents): CompatibleType[] {
+  const compatible: CompatibleType[] = [];
+
+  // 애착 스타일 기반 매칭
+  if (components.attachment === 'ANXIOUS') {
+    // 불안형은 안정형과 잘 맞음
+    const partnerCode = generateTypeCode({
+      attachment: 'SECURE',
+      energy: components.energy === 'LOW' ? 'MODERATE' : components.energy,
+      conflict: 'COLLABORATIVE',
+      lifestyle: components.lifestyle,
+      spending: components.spending,
+    });
+    compatible.push({
+      code: partnerCode,
+      name: '균형 잡힌 안정 대화형',
+      reason: '당신의 불안을 이해하고 안정감을 줄 수 있는 상대입니다. 확인 욕구에 귀찮아하지 않고, 꾸준히 안심시켜줄 수 있습니다.',
+    });
+  } else if (components.attachment === 'AVOIDANT') {
+    // 회피형도 안정형과 잘 맞음
+    const partnerCode = generateTypeCode({
+      attachment: 'SECURE',
+      energy: 'MODERATE',
+      conflict: 'COLLABORATIVE',
+      lifestyle: components.lifestyle,
+      spending: components.spending,
+    });
+    compatible.push({
+      code: partnerCode,
+      name: '균형 잡힌 안정 대화형',
+      reason: '당신의 독립성을 존중하면서도 적절한 친밀감을 유지할 수 있는 상대입니다. 거리 조절을 자연스럽게 할 수 있습니다.',
+    });
+  } else if (components.attachment === 'MIXED') {
+    // 혼합형은 안정형이 필수
+    const partnerCode = generateTypeCode({
+      attachment: 'SECURE',
+      energy: 'MODERATE',
+      conflict: 'COLLABORATIVE',
+      lifestyle: 'EXPLORER',
+      spending: components.spending,
+    });
+    compatible.push({
+      code: partnerCode,
+      name: '균형 잡힌 안정 대화형',
+      reason: '당신의 밀고 당기기를 이해하고 일관된 태도로 안정감을 줄 수 있는 상대입니다. 변화에도 흔들리지 않습니다.',
+    });
+  } else {
+    // 안정형은 다양한 타입과 잘 맞음
+    const partnerCode1 = generateTypeCode({
+      attachment: 'SECURE',
+      energy: components.energy,
+      conflict: components.conflict,
+      lifestyle: components.lifestyle,
+      spending: components.spending,
+    });
+    compatible.push({
+      code: partnerCode1,
+      name: generateTypeName({
+        attachment: 'SECURE',
+        energy: components.energy,
+        conflict: components.conflict,
+        lifestyle: components.lifestyle,
+        spending: components.spending,
+      }),
+      reason: '비슷한 성향을 가진 안정형 파트너로, 서로를 이해하고 존중하며 편안한 관계를 만들 수 있습니다.',
+    });
+
+    // 불안형도 추가 (안정형은 불안형을 잘 케어할 수 있음)
+    const partnerCode2 = generateTypeCode({
+      attachment: 'ANXIOUS',
+      energy: 'MODERATE',
+      conflict: 'COLLABORATIVE',
+      lifestyle: components.lifestyle,
+      spending: components.spending,
+    });
+    compatible.push({
+      code: partnerCode2,
+      name: '균형 잡힌 확인 대화형',
+      reason: '당신의 안정감이 상대의 불안을 달래줄 수 있습니다. 상대의 확인 욕구에 귀찮아하지 않고 따뜻하게 응답할 수 있습니다.',
+    });
+  }
+
+  // 에너지 레벨 고려한 추가 매칭
+  if (components.energy === 'LOW') {
+    const supportivePartner = generateTypeCode({
+      attachment: 'SECURE',
+      energy: 'MODERATE',
+      conflict: 'ACCOMMODATING',
+      lifestyle: 'PLANNER',
+      spending: 'CONTROL',
+    });
+    compatible.push({
+      code: supportivePartner,
+      name: '균형 잡힌 안정 배려형',
+      reason: '지금 당신에게 필요한 회복 시간을 존중하고, 페이스를 맞춰줄 수 있는 상대입니다. 무리하게 요구하지 않습니다.',
+    });
+  }
+
+  return compatible.slice(0, 3); // 최대 3개
 }

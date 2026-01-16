@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
   title: "나지연 - 나, 지금 연애할 때?",
@@ -20,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="antialiased bg-warm-50">
+        <Header />
         {children}
       </body>
     </html>

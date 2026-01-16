@@ -226,7 +226,10 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-gray-900 mb-3">💌 더 나은 서비스를 위해</h4>
               <p className="text-sm text-gray-600 mb-2">
-                후원 계좌: 카카오뱅크 3333-xx-xxxxx (나지연)
+                ☕ 후원 계좌: 기업은행 074-105458-01-014
+              </p>
+              <p className="text-xs text-gray-500 mb-1">
+                예금주: 강민종
               </p>
               <p className="text-xs text-gray-500">
                 여러분의 소중한 후원은 더 정확하고 따뜻한 서비스를 만드는 데 사용됩니다.
