@@ -14,22 +14,26 @@ export default function Home() {
   }, []);
 
   const handleStart = () => {
-    if (isLoggedIn) {
-      router.push('/test');
-    } else {
-      router.push('/signup');
-    }
+    // 로그인 없이도 테스트 시작 가능
+    router.push('/test');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-warm-50 via-primary-50 to-white">
+      {/* 네비게이션 */}
       <nav className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="flex justify-between items-center">
-          <div className="text-2xl font-bold text-blue-600">소개</div>
+          <div className="flex items-center gap-2">
+            <span className="text-3xl">💝</span>
+            <div>
+              <div className="text-2xl font-bold text-primary-600">나지연</div>
+              <div className="text-xs text-gray-500">나, 지금 연애할 때?</div>
+            </div>
+          </div>
           <div className="flex gap-3">
             {isLoggedIn ? (
-              <Button onClick={() => router.push('/my')}>
-                마이페이지
+              <Button onClick={() => router.push('/my')} variant="outline">
+                내 마음 보기
               </Button>
             ) : (
               <>
@@ -37,7 +41,7 @@ export default function Home() {
                   로그인
                 </Button>
                 <Button onClick={() => router.push('/signup')}>
-                  회원가입
+                  시작하기
                 </Button>
               </>
             )}
@@ -45,78 +49,198 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-16 max-w-4xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            나를 이해하면,<br />관계가 쉬워진다
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600">
-            5가지 테스트로 나를 이해하고, 관계를 준비하세요
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-12">
-          {[
-            { title: "감정 타입", emoji: "💭", desc: "불안/회피/몰입/완벽주의 패턴 파악" },
-            { title: "소비 성향", emoji: "💰", desc: "위로/인정/통제/충동 소비 이해" },
-            { title: "일 처리 방식", emoji: "⚡", desc: "계획/탐색/즉흥/마감 성향 분석" },
-            { title: "갈등 스타일", emoji: "💬", desc: "회피/공격/설득/수용 대화법 확인" },
-            { title: "번아웃 위험도", emoji: "🔋", desc: "현재 에너지 상태 측정" },
-          ].map((test, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="text-4xl mb-3">{test.emoji}</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {test.title}
-              </h3>
-              <p className="text-sm text-gray-600">{test.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center">
-          <Button onClick={handleStart} className="px-8 py-4 text-lg">
-            테스트 시작하기
-          </Button>
-          <p className="mt-4 text-sm text-gray-500">
-            5분이면 완성되는 나만의 사용설명서
-          </p>
-        </div>
-
-        <div className="mt-16 bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            어떻게 작동하나요?
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="text-4xl mb-3">📝</div>
-              <h3 className="font-semibold text-gray-900 mb-2">1. 테스트</h3>
-              <p className="text-sm text-gray-600">
-                5가지 테스트를 통해 나의 패턴을 파악
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl mb-3">💳</div>
-              <h3 className="font-semibold text-gray-900 mb-2">2. 카드 생성</h3>
-              <p className="text-sm text-gray-600">
-                결과를 통합한 나 사용설명서 카드 생성
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl mb-3">📤</div>
-              <h3 className="font-semibold text-gray-900 mb-2">3. 공유</h3>
-              <p className="text-sm text-gray-600">
-                링크로 간편하게 공유하고 관계 개선
-              </p>
-            </div>
+      {/* 히어로 섹션 */}
+      <main className="container mx-auto px-4 py-12 md:py-20 max-w-5xl">
+        <div className="text-center mb-16">
+          <div className="inline-block bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+            ✨ 이미 12,847명이 자신의 마음을 발견했어요
           </div>
+
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            지금의 나를<br />
+            <span className="text-primary-600">제대로 알고 있나요?</span>
+          </h1>
+
+          <p className="text-xl md:text-2xl text-gray-600 mb-4 leading-relaxed">
+            혹시, 나도 모르는 나의 마음이 있을까요?
+          </p>
+          <p className="text-lg text-gray-500 mb-10">
+            연애를 시작하기 전에 꼭 알아야 할 것들
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
+            <Button
+              onClick={handleStart}
+              className="px-10 py-5 text-lg shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all"
+            >
+              무료로 시작하기 →
+            </Button>
+            <p className="text-sm text-gray-500">
+              ⏱️ 5분이면 완성되는 나만의 마음 진단
+            </p>
+          </div>
+
+          <p className="text-sm text-primary-600 font-medium">
+            💝 회원가입 없이도 바로 시작할 수 있어요
+          </p>
+        </div>
+
+        {/* 주요 가치 제안 */}
+        <div className="grid md:grid-cols-3 gap-8 mb-20">
+          <div className="bg-white/80 backdrop-blur rounded-2xl p-8 shadow-lg border border-primary-100">
+            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-2xl mb-4">
+              🔍
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
+              나를 정확하게
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              심리학 기반의 5가지 테스트로 <br />
+              진짜 나의 모습을 발견해요
+            </p>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur rounded-2xl p-8 shadow-lg border border-primary-100">
+            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-2xl mb-4">
+              💌
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
+              솔직하게
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              "지금은 연애할 때가 아니에요"<br />
+              진실된 조언을 드려요
+            </p>
+          </div>
+
+          <div className="bg-white/80 backdrop-blur rounded-2xl p-8 shadow-lg border border-primary-100">
+            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-2xl mb-4">
+              🎁
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
+              따뜻하게
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              비난이 아닌 이해,<br />
+              케어하고 보호하는 마음으로
+            </p>
+          </div>
+        </div>
+
+        {/* 5가지 테스트 소개 */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              5가지 테스트로 알아보는<br />
+              <span className="text-primary-600">진짜 나의 마음</span>
+            </h2>
+            <p className="text-gray-600">
+              각 테스트는 1~2분이면 완료돼요
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                title: "감정 반응 패턴",
+                emoji: "💭",
+                desc: "불안할 때, 피하고 싶을 때, 과몰입할 때... 나의 감정 패턴은?",
+                color: "from-pink-50 to-pink-100"
+              },
+              {
+                title: "소비 심리",
+                emoji: "💰",
+                desc: "스트레스받을 때 쇼핑하나요? 인정받고 싶어서 사나요?",
+                color: "from-purple-50 to-purple-100"
+              },
+              {
+                title: "일 처리 방식",
+                emoji: "⚡",
+                desc: "계획형? 즉흥형? 마감 직전형? 일할 때의 나는",
+                color: "from-blue-50 to-blue-100"
+              },
+              {
+                title: "갈등 대처법",
+                emoji: "💬",
+                desc: "싸울 때 나는 회피? 공격? 설득? 수용?",
+                color: "from-green-50 to-green-100"
+              },
+              {
+                title: "번아웃 체크",
+                emoji: "🔋",
+                desc: "지금 연애할 에너지가 남아있나요?",
+                color: "from-orange-50 to-orange-100"
+              },
+            ].map((test, idx) => (
+              <div
+                key={idx}
+                className={`bg-gradient-to-br ${test.color} rounded-2xl p-6 hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1`}
+                onClick={() => router.push(`/test/${idx + 1}`)}
+              >
+                <div className="text-5xl mb-4">{test.emoji}</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {test.title}
+                </h3>
+                <p className="text-sm text-gray-700 leading-relaxed">{test.desc}</p>
+                <div className="mt-4 text-primary-600 font-medium text-sm">
+                  테스트 하러가기 →
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-3xl p-12 text-center text-white shadow-2xl">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            나는 어떤 사람일까요?
+          </h2>
+          <p className="text-xl mb-8 opacity-90">
+            지금 바로 시작해보세요. 5분이면 충분해요.
+          </p>
+          <Button
+            onClick={handleStart}
+            variant="secondary"
+            className="bg-white text-primary-600 hover:bg-gray-50 px-10 py-5 text-lg shadow-xl"
+          >
+            무료로 테스트 시작하기
+          </Button>
         </div>
       </main>
 
-      <footer className="container mx-auto px-4 py-8 max-w-4xl text-center text-sm text-gray-500">
-        <p>이 결과는 참고용이며, 전문 상담을 대체하지 않습니다.</p>
+      {/* 푸터 */}
+      <footer className="container mx-auto px-4 py-12 max-w-5xl">
+        <div className="border-t border-gray-200 pt-8">
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">💝</span>
+                <span className="text-xl font-bold text-primary-600">나지연</span>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                나를 이해하면, 관계가 쉬워집니다.<br />
+                진심 어린 마음으로 여러분의 행복을 응원해요.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-3">💌 더 나은 서비스를 위해</h4>
+              <p className="text-sm text-gray-600 mb-2">
+                후원 계좌: 카카오뱅크 3333-xx-xxxxx (나지연)
+              </p>
+              <p className="text-xs text-gray-500">
+                여러분의 소중한 후원은 더 정확하고 따뜻한 서비스를 만드는 데 사용됩니다.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center text-xs text-gray-500 border-t border-gray-200 pt-6">
+            <p className="mb-2">
+              이 결과는 참고용이며, 전문 심리 상담이나 의료 진단을 대체하지 않습니다.
+            </p>
+            <p>© 2026 나지연. All rights reserved.</p>
+          </div>
+        </div>
       </footer>
     </div>
   );
