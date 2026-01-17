@@ -571,7 +571,7 @@ export interface CodeExplanation {
   description: string;
 }
 
-export function getCodeExplanations(code: string, components: TypeComponents): CodeExplanation[] {
+export function getCodeExplanations(code: string): CodeExplanation[] {
   const explanations: CodeExplanation[] = [];
 
   // 1번째 자리: 애착 스타일

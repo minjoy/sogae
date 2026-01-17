@@ -378,9 +378,6 @@ function generateConflictStyleResult(subscales: SubscaleScore[]) {
 
   const primary = subscales[0];
   const secondaryLabel = undefined;
-  let comment = '';
-  let recommendations: string[] = [];
-  let compatibility: CompatibilityInfo | undefined;
 
   // 위험 신호 체크
   const hasRisk =
@@ -453,20 +450,16 @@ function generateConflictStyleResult(subscales: SubscaleScore[]) {
     compatibility: undefined,
   };
 
-  comment = result.comment;
-  recommendations = result.recs;
-  compatibility = result.compatibility;
-
-  if (hasRisk) {
-    comment += ' (주의: 관계 손상 가능성 높은 구간)';
-  }
+  const comment = hasRisk
+    ? result.comment + ' (주의: 관계 손상 가능성 높은 구간)'
+    : result.comment;
 
   return {
     primaryLabel: primary.name,
     secondaryLabel,
     comment,
-    recommendations,
-    compatibility,
+    recommendations: result.recs,
+    compatibility: result.compatibility,
   };
 }
 

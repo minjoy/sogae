@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ALL_TESTS } from '@/lib/tests/test-data';
-import { scoreTest, CompatibilityInfo } from '@/lib/tests/scoring';
+import { scoreTest } from '@/lib/tests/scoring';
 import Button from '@/components/Button';
 import Footer from '@/components/Footer';
 

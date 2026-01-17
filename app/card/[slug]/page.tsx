@@ -89,7 +89,7 @@ export default function CardPage() {
         const components = parseCodeToComponents(code);
         if (components) {
           setRarity(calculateRarity(components));
-          setCodeExplanations(getCodeExplanations(code, components));
+          setCodeExplanations(getCodeExplanations(code));
         }
       }
     } catch (error) {
