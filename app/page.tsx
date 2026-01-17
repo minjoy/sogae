@@ -27,7 +27,7 @@ export default function Home() {
             ✨ 이미 12,847명이 자신의 마음을 발견했어요
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="font-display text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             언제 연애하는게<br />
             <span className="text-primary-600">이득일까?</span>
           </h1>
@@ -101,7 +101,7 @@ export default function Home() {
         {/* 5가지 테스트 소개 */}
         <div className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               5가지 테스트로 알아보는<br />
               <span className="text-primary-600">나의 연애 준비 상태</span>
             </h2>
@@ -163,7 +163,7 @@ export default function Home() {
 
         {/* CTA */}
         <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-3xl p-12 text-center text-white shadow-2xl">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">
             나는 어떤 사람일까요?
           </h2>
           <p className="text-xl mb-8 opacity-90">

@@ -60,6 +60,11 @@ const config: Config = {
           'Roboto',
           'sans-serif',
         ],
+        display: [
+          'Cafe24Danjunghae',
+          'Pretendard',
+          'sans-serif',
+        ],
       },
     },
   },
