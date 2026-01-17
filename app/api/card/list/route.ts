@@ -21,7 +21,7 @@ async function handleGetCards(request: AuthenticatedRequest) {
 
     return NextResponse.json({
       success: true,
-      cards: cards.map((card) => ({
+      cards: cards.map((card: { id: string; shareSlug: string; cardPayload: unknown; createdAt: Date; isActive: boolean }) => ({
         id: card.id,
         shareSlug: card.shareSlug,
         personalityType: (card.cardPayload as any)?.personalityType || null,

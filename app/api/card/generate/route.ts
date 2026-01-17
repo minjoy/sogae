@@ -11,6 +11,7 @@ import {
   determineLifestyleMode,
   determineSpendingPattern,
   generatePersonalityType,
+  calculateRarity,
   type TypeComponents,
 } from '@/lib/types/personality-types';
 
@@ -53,29 +54,38 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
       }
     });
 
-    // 연애 준비 상태 계산
+    // 연애 준비 상태 계산 (개선된 알고리즘)
     const readiness = calculateReadiness(testScores);
 
-    // 성격 유형 결정
+    // 성격 유형 결정 (개선된 알고리즘 - subscales 전체 전달)
     const test1Subscales = testScores[1].subscales;
+    const test2Subscales = testScores[2].subscales;
+    const test3Subscales = testScores[3].subscales;
     const test4Subscales = testScores[4].subscales;
+    const test5Subscales = testScores[5].subscales;
 
     const anxSubscale = test1Subscales.find((s: Record<string, any>) => s.subscale === 'ANX');
     const avdSubscale = test1Subscales.find((s: Record<string, any>) => s.subscale === 'AVD');
-    const burnoutScore = testScores[5].subscales[0].score;
+    const burnoutSubscale = test5Subscales.find((s: Record<string, any>) => s.subscale === 'BURN');
+    const burnoutScore = burnoutSubscale?.score || test5Subscales[0]?.score || 3.0;
 
+    // 개선된 유형 결정 (상대적 순위 + 점수 차이 기반)
     const typeComponents: TypeComponents = {
       attachment: determineAttachmentStyle(
         anxSubscale?.score || 3.0,
         avdSubscale?.score || 3.0
       ),
       energy: determineEnergyLevel(burnoutScore),
-      conflict: determineConflictStyle(test4Subscales[0].subscale),
-      lifestyle: determineLifestyleMode(testScores[3].subscales[0].subscale),
-      spending: determineSpendingPattern(testScores[2].subscales[0].subscale),
+      // 새로운 함수: subscales 전체를 전달하여 상대적 순위 기반 결정
+      conflict: determineConflictStyle(test4Subscales),
+      lifestyle: determineLifestyleMode(test3Subscales),
+      spending: determineSpendingPattern(test2Subscales),
     };
 
     const personalityType = generatePersonalityType(typeComponents);
+
+    // 희귀도 계산
+    const rarity = calculateRarity(typeComponents);
 
     // 사용자 정보 가져오기
     const user = await prisma.user.findUnique({
@@ -83,7 +93,7 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
       select: { nickname: true },
     });
 
-    // 통합 카드 데이터 생성
+    // 통합 카드 데이터 생성 (확장된 데이터 포함)
     const cardPayload = {
       // 성격 유형 정보
       personalityType: {
@@ -102,11 +112,28 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
       datingMode: readiness.modeLabel,
       datingEmoji: readiness.emoji,
       datingScore: readiness.score,
+      datingMessage: readiness.message,
       nickname: user?.nickname,
       // 성격 유형 기반 맞춤 조언
       doList: personalityType.strengths.slice(0, 3),
       dontList: personalityType.challenges.slice(0, 3),
       phraseForPartner: personalityType.relationshipTips.slice(0, 3),
+      // 새로운 데이터: 희귀도
+      rarity: {
+        percent: rarity.percent,
+        label: rarity.label,
+        isRare: rarity.isRare,
+      },
+      // 새로운 데이터: 상세 분석 (마음 상태 연결)
+      breakdown: readiness.breakdown ? {
+        emotionalStability: readiness.breakdown.emotionalStability,
+        selfRegulation: readiness.breakdown.selfRegulation,
+        relationshipSkills: readiness.breakdown.relationshipSkills,
+        psychologicalResources: readiness.breakdown.psychologicalResources,
+        insights: readiness.breakdown.insights,
+      } : null,
+      // 어울리는 상대 유형
+      compatibleTypes: personalityType.compatibleTypes,
     };
 
     // 공유 슬러그 생성
