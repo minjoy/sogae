@@ -7,8 +7,8 @@ export default function Footer() {
   const pathname = usePathname();
   const [isCopied, setIsCopied] = useState(false);
 
-  // /test로 시작하는 경로에서는 Footer 숨김
-  if (pathname?.startsWith('/test')) {
+  // 테스트 진행 중인 페이지에서만 Footer 숨김 (result 페이지는 제외)
+  if (pathname?.startsWith('/test') && !pathname?.endsWith('/result')) {
     return null;
   }
 

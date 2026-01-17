@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
-import Footer from '@/components/Footer';
 import {
   calculateRarity,
   getCodeExplanations,
@@ -444,9 +443,6 @@ export default function CardPage() {
           </Link>
         </div>
       </div>
-
-      {/* 푸터 */}
-      <Footer />
     </div>
   );
 }
