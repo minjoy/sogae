@@ -412,6 +412,15 @@ export default function CardPage() {
                   </p>
                 </div>
               )}
+
+              {/* 전체 성격 보기 버튼 */}
+              <button
+                onClick={() => router.push('/personality')}
+                className="mt-4 w-full py-3 bg-white border-2 border-primary-200 text-primary-600 rounded-xl font-semibold hover:bg-primary-50 transition-all flex items-center justify-center gap-2"
+              >
+                <span>📖</span>
+                <span>전체 성격 코드 보기</span>
+              </button>
             </div>
           )}
 

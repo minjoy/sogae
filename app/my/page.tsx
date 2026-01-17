@@ -216,17 +216,23 @@ export default function MyPage() {
               </div>
 
               {shouldShowViewCard ? (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-                  <div className="text-4xl mb-3">✨</div>
-                  <h3 className="text-lg font-semibold text-green-900 mb-2">
-                    나만의 사용설명서가 준비되어 있어요!
-                  </h3>
-                  <p className="text-green-700 mb-4">
-                    내 카드를 확인하고 친구들과 공유해보세요
-                  </p>
-                  <Button onClick={() => router.push(`/card/${activeCard!.shareSlug}`)}>
-                    카드 보기
-                  </Button>
+                <div
+                  className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white cursor-pointer hover:shadow-xl transition-all"
+                  onClick={() => router.push(`/card/${activeCard!.shareSlug}`)}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-5xl">{activeCard!.personalityType?.emoji || '✨'}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="inline-block bg-white/20 backdrop-blur px-3 py-1 rounded-full text-sm font-bold">
+                          {activeCard!.personalityType?.code}
+                        </span>
+                        <span className="text-sm opacity-80">{activeCard!.datingMode}</span>
+                      </div>
+                      <h3 className="text-xl font-bold">{activeCard!.personalityType?.name}</h3>
+                    </div>
+                    <div className="text-3xl">→</div>
+                  </div>
                 </div>
               ) : shouldShowGenerateCard ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
@@ -353,51 +359,47 @@ export default function MyPage() {
         {/* 나만의 사용설명서 카드 히스토리 */}
         {user && cards.length > 0 && (
           <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">나만의 사용설명서 히스토리</h2>
-            <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">히스토리</h2>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 border-b">
+                <div className="col-span-3">날짜</div>
+                <div className="col-span-2 text-center">코드</div>
+                <div className="col-span-4">유형</div>
+                <div className="col-span-3 text-center">준비도</div>
+              </div>
               {cards.map((card) => (
                 <div
                   key={card.id}
-                  className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200"
-                  onClick={() => router.push(`/card/${card.shareSlug}`)}
+                  className="grid grid-cols-12 gap-2 px-4 py-3 items-center border-b last:border-b-0 hover:bg-gray-50"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        {card.personalityType && (
-                          <>
-                            <span className="text-3xl">{card.personalityType.emoji}</span>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="inline-block bg-primary-100 text-primary-700 px-2 py-1 rounded text-xs font-bold">
-                                  {card.personalityType.code}
-                                </span>
-                                <h3 className="font-semibold text-gray-900">
-                                  {card.personalityType.name}
-                                </h3>
-                              </div>
-                              <p className="text-sm text-gray-600 mt-1">
-                                {card.datingMode}
-                              </p>
-                            </div>
-                          </>
-                        )}
+                  <div className="col-span-3 text-xs text-gray-500">
+                    {new Date(card.createdAt).toLocaleDateString('ko-KR', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </div>
+                  <div className="col-span-2 text-center">
+                    <span className="inline-block bg-primary-100 text-primary-700 px-2 py-0.5 rounded text-xs font-bold">
+                      {card.personalityType?.code || '-'}
+                    </span>
+                  </div>
+                  <div className="col-span-4 text-sm text-gray-700 truncate">
+                    {card.personalityType?.name || '-'}
+                  </div>
+                  <div className="col-span-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-2 rounded-full ${
+                            (card.datingScore || 0) >= 80 ? 'bg-green-500' :
+                            (card.datingScore || 0) >= 55 ? 'bg-yellow-500' : 'bg-red-400'
+                          }`}
+                          style={{ width: `${card.datingScore || 0}%` }}
+                        />
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-gray-500 mb-1">
-                        {new Date(card.createdAt).toLocaleDateString('ko-KR', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(card.createdAt).toLocaleTimeString('ko-KR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
+                      <span className="text-xs font-medium text-gray-600 w-8">
+                        {card.datingScore || 0}
+                      </span>
                     </div>
                   </div>
                 </div>
