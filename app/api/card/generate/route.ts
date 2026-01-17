@@ -149,7 +149,7 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
     const card = await prisma.unifiedCard.create({
       data: {
         userId,
-        cardPayload,
+        cardPayload: cardPayload as any,
         visibilitySettings: {
           showNickname: true,
           showScores: true,

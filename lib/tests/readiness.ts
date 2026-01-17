@@ -221,7 +221,6 @@ function calculateSelfRegulation(
   // Test 2: 소비 성향
   const spendingTest = testScores[2];
   if (spendingTest && spendingTest.subscales.length > 0) {
-    const primarySpending = spendingTest.subscales[0];
     const ctrl = findSubscale(spendingTest.subscales, 'CTRL');
     const impl = findSubscale(spendingTest.subscales, 'IMPL');
     const comf = findSubscale(spendingTest.subscales, 'COMF');
@@ -250,7 +249,7 @@ function calculateSelfRegulation(
     const plan = findSubscale(workTest.subscales, 'PLAN');
     const expl = findSubscale(workTest.subscales, 'EXPL');
     const impr = findSubscale(workTest.subscales, 'IMPR');
-    const dead = findSubscale(workTest.subscales, 'DEAD');
+    // dead(마감형)는 자기조절과 직접 연관 없음 - 중립 처리
 
     // 계획형: 높은 자기조절
     if (plan && plan.score >= 3.5) {
