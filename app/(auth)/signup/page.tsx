@@ -125,14 +125,14 @@ export default function SignupPage() {
         {/* 로고 */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="text-4xl">💝</span>
+            <span className="text-4xl">💕</span>
             <div>
-              <div className="text-3xl font-bold text-primary-600">나마진</div>
-              <div className="text-xs text-gray-500">나의 마음 진단</div>
+              <div className="text-3xl font-bold text-primary-600">언연이</div>
+              <div className="text-xs text-gray-500">언제 연애하는게 이득일까</div>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">마음을 알아가는 첫 걸음</h1>
-          <p className="text-gray-600">마음이 준비되면 시작하는 건강한 연애</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">나의 연애 타이밍 찾기</h1>
+          <p className="text-gray-600">현재 마음 상태를 분석하고 최적의 타이밍을 알아보세요</p>
         </div>
 
         <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-primary-100">

@@ -28,15 +28,15 @@ export default function Home() {
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            지금의 나를<br />
-            <span className="text-primary-600">제대로 알고 있나요?</span>
+            언제 연애하는게<br />
+            <span className="text-primary-600">이득일까?</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-gray-600 mb-4 leading-relaxed">
-            혹시, 나도 모르는 나의 마음이 있을까요?
+            현재의 마음 상태를 분석해서 연애할 타이밍인지 알려드려요
           </p>
           <p className="text-lg text-gray-500 mb-10">
-            마음 준비가 됐을 때 시작하는 건강한 연애
+            어떤 상태의 상대방이 잘 어울리는지도 분석해드려요
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
@@ -47,7 +47,7 @@ export default function Home() {
               무료로 시작하기 →
             </Button>
             <p className="text-sm text-gray-500">
-              ⏱️ 5분이면 완성되는 나만의 마음 진단
+              ⏱️ 5분이면 완성되는 나만의 연애 타이밍 분석
             </p>
           </div>
 
@@ -103,7 +103,7 @@ export default function Home() {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               5가지 테스트로 알아보는<br />
-              <span className="text-primary-600">진짜 나의 마음</span>
+              <span className="text-primary-600">나의 연애 준비 상태</span>
             </h2>
             <p className="text-gray-600">
               각 테스트는 1~2분이면 완료돼요

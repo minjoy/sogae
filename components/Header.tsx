@@ -24,8 +24,8 @@ export default function Header() {
             onClick={() => router.push('/')}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <span className="text-2xl">💝</span>
-            <span className="text-xl font-bold text-primary-600">나마진</span>
+            <span className="text-2xl">💕</span>
+            <span className="text-xl font-bold text-primary-600">언연이</span>
           </button>
 
           <div className="flex items-center gap-3">

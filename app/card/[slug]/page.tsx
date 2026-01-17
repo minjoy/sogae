@@ -28,8 +28,8 @@ export default function CardPage() {
   // 메타태그 동적 업데이트
   useEffect(() => {
     if (card) {
-      const title = `${card.nickname}님의 마음 사용설명서 | 나마진`;
-      const description = `${card.personalityType?.name || ''} - 마음이 준비되면 시작하는 건강한 관계`;
+      const title = `${card.nickname}님의 연애 타이밍 분석 | 언연이`;
+      const description = `${card.personalityType?.name || ''} - 지금 연애하면 좋을까?`;
       const url = window.location.href;
 
       // 기본 메타태그
@@ -41,7 +41,7 @@ export default function CardPage() {
       updateMetaTag('property', 'og:description', description);
       updateMetaTag('property', 'og:url', url);
       updateMetaTag('property', 'og:type', 'profile');
-      updateMetaTag('property', 'og:site_name', '나마진 - 나의 마음 진단');
+      updateMetaTag('property', 'og:site_name', '언연이 - 언제 연애하는게 이득일까');
       updateMetaTag('property', 'og:image', window.location.origin + '/images/og-card.png');
 
       // Twitter Card
@@ -138,7 +138,7 @@ export default function CardPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             {card.nickname}님의 사용설명서
           </h1>
-          <p className="text-gray-600">나를 이해하면, 관계가 쉬워진다</p>
+          <p className="text-gray-600">언제 연애하는게 이득일까?</p>
         </div>
 
         {/* 카드 */}
@@ -360,7 +360,7 @@ export default function CardPage() {
             href="/"
             className="text-sm text-blue-600 hover:underline font-semibold"
           >
-            소개 - 나를 이해하면, 관계가 쉬워진다
+            언연이 - 언제 연애하는게 이득일까
           </Link>
         </div>
       </div>

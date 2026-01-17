@@ -29,12 +29,12 @@ export default function Footer() {
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">💝</span>
-              <span className="text-xl font-bold text-primary-600">나마진</span>
+              <span className="text-2xl">💕</span>
+              <span className="text-xl font-bold text-primary-600">언연이</span>
             </div>
             <p className="text-sm text-gray-600">
-              나를 진단하고, 마음이 준비되면 시작하세요.<br />
-              진심 어린 마음으로 여러분의 행복을 응원해요.
+              언제 연애하는게 이득일까?<br />
+              현재의 마음 상태를 분석해서 연애할 타이밍을 알려드려요.
             </p>
           </div>
 
@@ -64,7 +64,7 @@ export default function Footer() {
           <p className="mb-1">
             이 결과는 참고용이며, 전문 심리 상담이나 의료 진단을 대체하지 않습니다.
           </p>
-          <p>© 2026 나마진. All rights reserved.</p>
+          <p>© 2026 언연이. All rights reserved.</p>
         </div>
       </div>
     </footer>
