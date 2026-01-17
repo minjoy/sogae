@@ -680,74 +680,84 @@ function getCompatibilityReason(myAttachment: AttachmentStyle, partnerAttachment
 }
 
 /**
- * 성격 유형 희귀도 계산 (개선된 확률 모델)
+ * 성격 유형 희귀도 계산 (현실적인 모델)
+ *
+ * 기존 방식(확률 곱)은 너무 작은 값이 나와 비현실적.
+ * 개선: 희귀 요소 개수에 따라 등급 부여
  */
 export function calculateRarity(components: TypeComponents): { percent: number; label: string; isRare: boolean } {
-  // 실제 인구 분포에 가까운 비율 (심리학 연구 기반)
-  const attachmentRates: Record<AttachmentStyle, number> = {
-    SECURE: 0.50,      // 50% - 안정형이 가장 많음 (Mickelson et al., 1997)
-    ANXIOUS: 0.20,     // 20%
-    AVOIDANT: 0.15,    // 15%
-    MIXED: 0.10,       // 10%
-    PREOCCUPIED: 0.03, // 3% - 희귀
-    DISMISSIVE: 0.02,  // 2% - 희귀
+  // 각 차원별 희귀도 점수 (높을수록 흔함)
+  const attachmentCommonness: Record<AttachmentStyle, number> = {
+    SECURE: 5,       // 가장 흔함
+    ANXIOUS: 4,
+    AVOIDANT: 3,
+    MIXED: 2,
+    PREOCCUPIED: 1,  // 희귀
+    DISMISSIVE: 1,   // 희귀
   };
 
-  const energyRates: Record<EnergyLevel, number> = {
-    HIGH: 0.25,
-    MODERATE: 0.45,
-    LOW: 0.20,
-    DEPLETED: 0.10,
+  const energyCommonness: Record<EnergyLevel, number> = {
+    MODERATE: 5,     // 가장 흔함
+    HIGH: 4,
+    LOW: 3,
+    DEPLETED: 2,
   };
 
-  const conflictRates: Record<ConflictStyle, number> = {
-    COLLABORATIVE: 0.15,
-    ASSERTIVE: 0.20,
-    ACCOMMODATING: 0.25,
-    AVOIDING: 0.25,
-    BALANCED: 0.15,
+  const conflictCommonness: Record<ConflictStyle, number> = {
+    ACCOMMODATING: 5,
+    AVOIDING: 5,
+    ASSERTIVE: 4,
+    COLLABORATIVE: 3,
+    BALANCED: 3,
   };
 
-  const lifestyleRates: Record<LifestyleMode, number> = {
-    PLANNER: 0.30,
-    EXPLORER: 0.15,
-    IMPROVISER: 0.20,
-    DEADLINE: 0.20,
-    ADAPTIVE: 0.15,
+  const lifestyleCommonness: Record<LifestyleMode, number> = {
+    PLANNER: 5,
+    DEADLINE: 4,
+    IMPROVISER: 4,
+    EXPLORER: 3,
+    ADAPTIVE: 3,
   };
 
-  // 조합 확률 계산
-  const probability =
-    attachmentRates[components.attachment] *
-    energyRates[components.energy] *
-    conflictRates[components.conflict] *
-    lifestyleRates[components.lifestyle];
+  // 총 점수 계산 (4-20 범위)
+  const totalScore =
+    attachmentCommonness[components.attachment] +
+    energyCommonness[components.energy] +
+    conflictCommonness[components.conflict] +
+    lifestyleCommonness[components.lifestyle];
 
-  // 상위 몇 %인지 계산 (낮을수록 희귀)
-  const percentRank = Math.round(probability * 10000) / 100;
+  // 점수를 상위 % 로 변환 (더 현실적인 분포)
+  // 4점(최소) = 상위 5%, 20점(최대) = 상위 85%
+  let percent: number;
+  let label: string;
+  let isRare: boolean;
 
-  // 희귀도 라벨 결정
-  let label = '';
-  let isRare = false;
-
-  if (percentRank <= 0.3) {
-    label = '전설급 희귀';
+  if (totalScore <= 8) {
+    // 매우 희귀한 조합
+    percent = 5 + (totalScore - 4) * 2; // 5-13%
+    label = '희귀한 조합';
     isRare = true;
-  } else if (percentRank <= 0.7) {
-    label = '매우 희귀';
-    isRare = true;
-  } else if (percentRank <= 1.5) {
-    label = '희귀';
-    isRare = true;
-  } else if (percentRank <= 3.0) {
+  } else if (totalScore <= 12) {
+    // 특별한 조합
+    percent = 15 + (totalScore - 8) * 5; // 15-35%
     label = '특별한 조합';
     isRare = false;
+  } else if (totalScore <= 16) {
+    // 일반적인 조합
+    percent = 40 + (totalScore - 12) * 7; // 40-68%
+    label = '균형 잡힌 조합';
+    isRare = false;
   } else {
-    label = '일반적';
+    // 매우 흔한 조합
+    percent = 70 + (totalScore - 16) * 5; // 70-90%
+    label = '안정적인 조합';
     isRare = false;
   }
 
-  return { percent: percentRank, label, isRare };
+  // 소수점 반올림
+  percent = Math.round(percent);
+
+  return { percent, label, isRare };
 }
 
 /**

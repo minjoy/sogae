@@ -276,16 +276,20 @@ export default function CardPage() {
           <div className="p-6 border-b border-gray-100">
             <h3 className="text-sm font-semibold text-red-600 mb-3 flex items-center">
               <span className="text-xl mr-2">❌</span>
-              이런 건 힘들어요
+              이런 건 안좋아요
             </h3>
-            <ul className="space-y-2">
-              {card.dontList?.map((item: string, index: number) => (
-                <li key={index} className="text-gray-700 flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
+            {card.dontList && card.dontList.length > 0 ? (
+              <ul className="space-y-2">
+                {card.dontList.map((item: string, index: number) => (
+                  <li key={index} className="text-gray-700 flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 text-sm">특별히 안좋은 점이 없어요! 안정적인 상태입니다 ✨</p>
+            )}
           </div>
 
           {/* 연애 조언 */}

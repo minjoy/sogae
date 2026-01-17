@@ -13,6 +13,7 @@ export default function MyPage() {
   const [activeCard, setActiveCard] = useState<Record<string, any> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -371,31 +372,28 @@ export default function MyPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-4">히스토리</h2>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 border-b">
-                <div className="col-span-3">날짜</div>
-                <div className="col-span-2 text-center">코드</div>
-                <div className="col-span-4">유형</div>
-                <div className="col-span-3 text-center">준비도</div>
+                <div className="col-span-4">날짜</div>
+                <div className="col-span-3 text-center">코드</div>
+                <div className="col-span-5 text-center">준비도</div>
               </div>
-              {cards.map((card) => (
+              {(showAllHistory ? cards : cards.slice(0, 10)).map((card) => (
                 <div
                   key={card.id}
                   className="grid grid-cols-12 gap-2 px-4 py-3 items-center border-b last:border-b-0 hover:bg-gray-50"
                 >
-                  <div className="col-span-3 text-xs text-gray-500">
+                  <div className="col-span-4 text-xs text-gray-500">
                     {new Date(card.createdAt).toLocaleDateString('ko-KR', {
+                      year: 'numeric',
                       month: 'short',
                       day: 'numeric',
                     })}
                   </div>
-                  <div className="col-span-2 text-center">
+                  <div className="col-span-3 text-center">
                     <span className="inline-block bg-primary-100 text-primary-700 px-2 py-0.5 rounded text-xs font-bold">
                       {card.personalityType?.code || '-'}
                     </span>
                   </div>
-                  <div className="col-span-4 text-sm text-gray-700 truncate">
-                    {card.personalityType?.name || '-'}
-                  </div>
-                  <div className="col-span-3">
+                  <div className="col-span-5">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
                         <div
@@ -413,6 +411,24 @@ export default function MyPage() {
                   </div>
                 </div>
               ))}
+              {cards.length > 10 && (
+                <button
+                  onClick={() => setShowAllHistory(!showAllHistory)}
+                  className="w-full py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+                >
+                  {showAllHistory ? (
+                    <>
+                      <span>접기</span>
+                      <span>▲</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>더보기 ({cards.length - 10}개)</span>
+                      <span>▼</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         )}
