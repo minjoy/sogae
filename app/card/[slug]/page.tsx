@@ -191,7 +191,7 @@ export default function CardPage() {
               <h3 className="text-lg font-bold mb-2">{card.datingMode}</h3>
               {card.showScores && (
                 <div className="text-sm opacity-75">
-                  <p className="font-semibold mb-1">준비 점수: {card.datingScore}점</p>
+                  <p className="font-semibold mb-1">연애 준비 점수: {card.datingScore}점</p>
                   <p className="text-xs">
                     {card.datingScore >= 80 && '(80점 이상: 연애 시작에 매우 좋은 상태)'}
                     {card.datingScore >= 55 && card.datingScore < 80 && '(55-79점: 천천히 진행하며 관계 발전 가능)'}

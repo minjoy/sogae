@@ -374,7 +374,7 @@ export default function MyPage() {
               <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-gray-50 text-xs font-semibold text-gray-500 border-b">
                 <div className="col-span-4">날짜</div>
                 <div className="col-span-3 text-center">코드</div>
-                <div className="col-span-5 text-center">준비도</div>
+                <div className="col-span-5 text-center">연애 준비 점수</div>
               </div>
               {(showAllHistory ? cards : cards.slice(0, 10)).map((card) => (
                 <div

@@ -6,11 +6,23 @@ import Button from '@/components/Button';
 
 export default function Home() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [participantCount, setParticipantCount] = useState(12847);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
+    // 참여자 수 가져오기
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        const data = await response.json();
+        if (data.success) {
+          setParticipantCount(data.count);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+    };
+
+    fetchStats();
   }, []);
 
   const handleStart = () => {
@@ -24,7 +36,7 @@ export default function Home() {
       <main className="container mx-auto px-4 py-12 md:py-20 max-w-5xl">
         <div className="text-center mb-16">
           <div className="inline-block bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            ✨ 이미 12,847명이 자신의 마음을 발견했어요
+            ✨ 이미 {participantCount.toLocaleString()}명이 자신의 마음을 발견했어요
           </div>
 
           <h1 className="font-display text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
@@ -33,10 +45,12 @@ export default function Home() {
           </h1>
 
           <p className="text-xl md:text-2xl text-gray-600 mb-4 leading-relaxed">
-            현재의 마음 상태를 분석해서 연애할 타이밍인지 알려드려요
+            <span className="block sm:inline">현재의 마음 상태를 분석해서</span>
+            <span className="block sm:inline sm:ml-1">연애할 타이밍인지 알려드려요</span>
           </p>
           <p className="text-lg text-gray-500 mb-10">
-            어떤 상태의 상대방이 잘 어울리는지도 분석해드려요
+            <span className="block sm:inline">어떤 상태의 상대방이</span>
+            <span className="block sm:inline sm:ml-1">잘 어울리는지도 분석해드려요</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
