@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ALL_TESTS } from '@/lib/tests/test-data';
-import { scoreTest } from '@/lib/tests/scoring';
+import { scoreTest, CompatibilityInfo } from '@/lib/tests/scoring';
 import Button from '@/components/Button';
+import Footer from '@/components/Footer';
 
 export default function TestResultPage() {
   const router = useRouter();
@@ -15,10 +16,13 @@ export default function TestResultPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [allTestsCompleted, setAllTestsCompleted] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const testDef = ALL_TESTS[testId];
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
     fetchResult();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -76,6 +80,11 @@ export default function TestResultPage() {
 
         if (data.success) {
           const testResult = data.results.find((r: Record<string, any>) => r.testType === testId);
+          // 로그인 사용자도 compatibility 정보를 위해 점수 재계산
+          if (testResult && testResult.rawAnswers) {
+            const calculatedScore = scoreTest(testId, testResult.rawAnswers);
+            testResult.compatibility = calculatedScore.compatibility;
+          }
           setResult(testResult);
           // 로그인 사용자만 5개 테스트 완료 확인
           setAllTestsCompleted(data.results.length >= 5);
@@ -102,6 +111,7 @@ export default function TestResultPage() {
             },
             comment: calculatedScore.comment,
             recommendations: calculatedScore.recommendations,
+            compatibility: calculatedScore.compatibility,
           });
         }
       }
@@ -262,6 +272,38 @@ export default function TestResultPage() {
               </ul>
             </div>
           )}
+
+          {/* 연애 궁합 정보 */}
+          {result.compatibility && (
+            <div className="p-8 bg-gradient-to-br from-pink-50 to-purple-50">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-xl">💕</span>
+                나와 어울리는 연애 상대
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-white rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-block bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-bold">
+                      {result.compatibility.myType}
+                    </span>
+                    <span className="text-gray-400">→</span>
+                    <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
+                      {result.compatibility.idealPartner}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed mb-3">
+                    {result.compatibility.idealPartnerDesc}
+                  </p>
+                  <div className="bg-yellow-50 rounded-lg p-3">
+                    <p className="text-sm text-yellow-800">
+                      <span className="font-semibold">💡 Tip: </span>
+                      {result.compatibility.datingTip}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 5개 테스트 완료 시 사용설명서 안내 */}
@@ -320,44 +362,41 @@ export default function TestResultPage() {
         </div>
 
         {/* 비회원 가입 유도 */}
-        {!localStorage.getItem('token') && (
+        {!isLoggedIn && (
           <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 md:p-8 text-white shadow-xl mb-8">
-            <div className="text-5xl mb-4 text-center">✨</div>
+            <div className="text-5xl mb-4 text-center">🎯</div>
             <h3 className="text-xl md:text-2xl font-bold mb-3 text-center">
-              5개 테스트 완료 시<br />나만의 마음 사용설명서 카드를 받아요!
+              더 정확한 연애 상대를 알고 싶다면?
             </h3>
             <p className="text-sm md:text-base text-white/90 mb-4 text-center">
-              💭 감정 · 💰 소비 · ⚡ 일 · 💬 대화 · 🔋 에너지
+              5가지 테스트를 모두 완료하면<br />
+              <strong>나와 딱 맞는 상대 성격 유형</strong>을 정확하게 알려드려요!
             </p>
 
             <div className="bg-white/10 backdrop-blur rounded-xl p-4 mb-4">
-              <p className="text-sm md:text-base mb-3 font-semibold">📋 카드에 담기는 내용</p>
+              <p className="text-sm md:text-base mb-3 font-semibold">🔮 5개 테스트 완료 시 받을 수 있는 것</p>
               <ul className="space-y-2 text-xs md:text-sm">
                 <li className="flex items-start gap-2">
                   <span className="text-yellow-300">✓</span>
-                  <span>나만의 4글자 MBTI식 성격코드 (예: SHCP)</span>
+                  <span>나만의 4글자 성격코드 (MBTI처럼!)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-yellow-300">✓</span>
-                  <span>5가지 테스트 통합 분석 결과</span>
+                  <span>5가지 영역을 종합한 <strong>정확한 상대 궁합</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-yellow-300">✓</span>
-                  <span>나에게 어울리는 관계 유형 매칭</span>
+                  <span>연애 준비 상태 & 맞춤 연애 조언</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-yellow-300">✓</span>
-                  <span>연애 준비 상태 & 구체적인 연애 조언</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-300">✓</span>
-                  <span>친구/파트너와 공유할 수 있는 링크</span>
+                  <span>공유 가능한 나만의 사용설명서 카드</span>
                 </li>
               </ul>
             </div>
 
             <p className="text-sm opacity-90 mb-4 text-center">
-              💝 회원가입하고 관리하세요
+              💝 회원가입하면 결과를 저장하고 카드를 만들 수 있어요
             </p>
 
             <div className="flex gap-3 justify-center">
@@ -380,12 +419,16 @@ export default function TestResultPage() {
         )}
 
         {/* 안내 */}
-        <div className="bg-blue-50 rounded-xl p-6 text-center">
+        <div className="bg-blue-50 rounded-xl p-6 text-center mb-8">
           <p className="text-sm text-gray-700">
-            💡 5개 테스트를 모두 완료하면 <strong>통합 카드</strong>를 만들 수 있어요
+            💡 지금은 1가지 테스트 결과만 본 거예요.<br />
+            <strong>5개 모두 완료하면 더 정확한 상대 성격</strong>을 알 수 있어요!
           </p>
         </div>
       </div>
+
+      {/* 푸터 */}
+      <Footer />
     </div>
   );
 }

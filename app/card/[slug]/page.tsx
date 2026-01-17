@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Button from '@/components/Button';
+import Footer from '@/components/Footer';
+import {
+  calculateRarity,
+  getCodeExplanations,
+  parseCodeToComponents,
+  CodeExplanation
+} from '@/lib/types/personality-types';
 
 export default function CardPage() {
   const params = useParams();
@@ -15,6 +22,8 @@ export default function CardPage() {
   const [error, setError] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [rarity, setRarity] = useState<{ percent: number; label: string; isRare: boolean } | null>(null);
+  const [codeExplanations, setCodeExplanations] = useState<CodeExplanation[]>([]);
 
   useEffect(() => {
     // 로그인 상태 확인
@@ -73,6 +82,16 @@ export default function CardPage() {
       }
 
       setCard(data.card);
+
+      // 희귀도와 코드 설명 계산
+      if (data.card?.personalityType?.code) {
+        const code = data.card.personalityType.code;
+        const components = parseCodeToComponents(code);
+        if (components) {
+          setRarity(calculateRarity(components));
+          setCodeExplanations(getCodeExplanations(code, components));
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch card:', error);
       setError('카드를 불러오는 중 오류가 발생했습니다');
@@ -146,6 +165,12 @@ export default function CardPage() {
           {/* 성격 유형 */}
           {card.personalityType && (
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-8 text-center text-white border-b-2 border-primary-700">
+              {/* 희귀도 배지 */}
+              {rarity && rarity.isRare && (
+                <div className="inline-block bg-yellow-400 text-yellow-900 px-4 py-1 rounded-full text-xs font-bold mb-3 animate-pulse">
+                  ✨ {rarity.label} - 상위 {rarity.percent}%
+                </div>
+              )}
               <div className="text-6xl mb-3">{card.personalityType.emoji}</div>
               <div className="inline-block bg-white/20 backdrop-blur px-5 py-2 rounded-full text-sm font-semibold mb-2">
                 {card.personalityType.code}
@@ -336,6 +361,61 @@ export default function CardPage() {
             </div>
           )}
 
+          {/* 성격 코드 족보 (MBTI처럼 각 자리 설명) */}
+          {codeExplanations.length > 0 && (
+            <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="text-xl mr-2">📖</span>
+                나의 성격 코드 해석표
+              </h3>
+              <p className="text-xs text-gray-600 mb-4">
+                MBTI처럼 각 글자가 당신의 특성을 나타내요
+              </p>
+              <div className="space-y-3">
+                {codeExplanations.map((exp) => (
+                  <div key={exp.position} className="bg-white rounded-xl p-4 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-lg font-bold">
+                        {exp.code}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{exp.emoji}</span>
+                        <div>
+                          <span className="text-xs text-gray-500">{exp.category}</span>
+                          <h4 className="font-semibold text-gray-900 text-sm">{exp.name}</h4>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed pl-11">
+                      {exp.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {/* 희귀도 표시 */}
+              {rarity && (
+                <div className={`mt-4 p-4 rounded-xl ${rarity.isRare ? 'bg-yellow-100 border-2 border-yellow-300' : 'bg-gray-100'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{rarity.isRare ? '✨' : '📊'}</span>
+                      <span className="font-semibold text-gray-900">이 조합의 희귀도</span>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-bold ${rarity.isRare ? 'bg-yellow-400 text-yellow-900' : 'bg-gray-300 text-gray-700'}`}>
+                      {rarity.label}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    {rarity.isRare
+                      ? `당신은 전체 인구 중 상위 ${rarity.percent}%에 해당하는 특별한 조합을 가지고 있어요!`
+                      : `이 조합은 전체 인구 중 약 ${rarity.percent}% 정도가 가지고 있어요.`
+                    }
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
 
         {/* 액션 버튼 */}
@@ -352,7 +432,7 @@ export default function CardPage() {
         </div>
 
         {/* 안내 */}
-        <div className="bg-white rounded-xl p-6 text-center shadow-sm">
+        <div className="bg-white rounded-xl p-6 text-center shadow-sm mb-8">
           <p className="text-sm text-gray-600 mb-2">
             이 결과는 참고용이며, 전문 상담을 대체하지 않습니다.
           </p>
@@ -364,6 +444,9 @@ export default function CardPage() {
           </Link>
         </div>
       </div>
+
+      {/* 푸터 */}
+      <Footer />
     </div>
   );
 }

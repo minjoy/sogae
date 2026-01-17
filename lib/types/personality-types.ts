@@ -492,3 +492,202 @@ function generateCompatibleTypes(components: TypeComponents): CompatibleType[] {
 
   return compatible.slice(0, 3); // 최대 3개
 }
+
+/**
+ * 성격 유형 희귀도 계산 (각 조합의 발생 확률 기반)
+ */
+export function calculateRarity(components: TypeComponents): { percent: number; label: string; isRare: boolean } {
+  // 각 요소별 발생 비율 (가상 데이터 기반)
+  const attachmentRates = {
+    SECURE: 0.25,    // 25% - 안정형은 희귀
+    ANXIOUS: 0.35,   // 35%
+    AVOIDANT: 0.25,  // 25%
+    MIXED: 0.15,     // 15% - 혼합형은 희귀
+  };
+
+  const energyRates = {
+    HIGH: 0.30,      // 30%
+    MODERATE: 0.45,  // 45%
+    LOW: 0.25,       // 25%
+  };
+
+  const conflictRates = {
+    COLLABORATIVE: 0.20,  // 20% - 협력형은 희귀
+    ASSERTIVE: 0.25,      // 25%
+    ACCOMMODATING: 0.30,  // 30%
+    AVOIDING: 0.25,       // 25%
+  };
+
+  const lifestyleRates = {
+    PLANNER: 0.35,     // 35%
+    EXPLORER: 0.20,    // 20%
+    IMPROVISER: 0.25,  // 25%
+    DEADLINE: 0.20,    // 20%
+  };
+
+  // 조합 확률 계산
+  const probability =
+    attachmentRates[components.attachment] *
+    energyRates[components.energy] *
+    conflictRates[components.conflict] *
+    lifestyleRates[components.lifestyle];
+
+  // 퍼센트로 변환 (상위 몇 %인지)
+  const percentRank = Math.round(probability * 10000) / 100;
+
+  // 희귀도 라벨 결정
+  let label = '';
+  let isRare = false;
+
+  if (percentRank <= 0.5) {
+    label = '전설급 희귀';
+    isRare = true;
+  } else if (percentRank <= 1.0) {
+    label = '매우 희귀';
+    isRare = true;
+  } else if (percentRank <= 2.0) {
+    label = '희귀';
+    isRare = true;
+  } else if (percentRank <= 5.0) {
+    label = '특별한 조합';
+    isRare = false;
+  } else {
+    label = '일반적';
+    isRare = false;
+  }
+
+  return { percent: percentRank, label, isRare };
+}
+
+/**
+ * 성격 코드 각 자리 설명 (족보)
+ */
+export interface CodeExplanation {
+  position: number;
+  code: string;
+  category: string;
+  name: string;
+  emoji: string;
+  description: string;
+}
+
+export function getCodeExplanations(code: string, components: TypeComponents): CodeExplanation[] {
+  const explanations: CodeExplanation[] = [];
+
+  // 1번째 자리: 애착 스타일
+  const attachmentInfo = {
+    S: { name: '안정형', emoji: '🌟', description: '관계에서 안정감을 느끼고, 적절한 거리와 친밀함을 자연스럽게 조절합니다. 상대를 믿고, 갈등이 생겨도 대화로 풀어갈 수 있어요.' },
+    A: { name: '확인형', emoji: '💗', description: '상대의 마음을 자주 확인하고 싶어하며, 연락이 뜸하면 불안해집니다. 사랑이 깊다는 증거이기도 해요.' },
+    V: { name: '독립형', emoji: '🦋', description: '독립성과 개인 공간을 중요하게 여깁니다. 너무 빨리 가까워지면 부담스럽고, 혼자만의 시간이 필요해요.' },
+    M: { name: '밀당형', emoji: '🎭', description: '가까워지고 싶지만 동시에 부담스러운 복잡한 감정을 느낍니다. 밀고 당기기 패턴이 나타날 수 있어요.' },
+  };
+
+  // 2번째 자리: 에너지 레벨
+  const energyInfo = {
+    H: { name: '활력 충만', emoji: '🔥', description: '에너지가 충만한 상태로, 새로운 관계를 시작하거나 깊게 발전시키기 좋은 시기입니다.' },
+    B: { name: '균형 상태', emoji: '⚖️', description: '적절한 에너지 밸런스를 유지하고 있어, 관계에 안정적으로 집중할 수 있습니다.' },
+    L: { name: '회복 중', emoji: '🌿', description: '에너지가 많이 소진된 상태입니다. 새로운 관계보다는 회복과 재충전이 우선이에요.' },
+  };
+
+  // 3번째 자리: 갈등 스타일
+  const conflictInfo = {
+    C: { name: '대화형', emoji: '💬', description: '문제가 생기면 대화로 풀어가려는 협력형입니다. 상대의 입장도 이해하려 노력해요.' },
+    S: { name: '솔직형', emoji: '⚡', description: '문제가 생기면 솔직하게 표현합니다. 명확한 소통을 선호하지만, 때로는 톤이 강해 보일 수 있어요.' },
+    P: { name: '배려형', emoji: '🤝', description: '문제가 생기면 상대를 배려해 양보하는 편입니다. 관계를 부드럽게 유지하지만, 자신의 욕구를 억압할 수 있어요.' },
+    D: { name: '정리형', emoji: '🚪', description: '문제가 생기면 일단 거리를 두고 혼자 정리하려는 편입니다. 시간이 필요하지만, 대화를 미루면 오해가 쌓일 수 있어요.' },
+  };
+
+  // 4번째 자리: 생활 방식
+  const lifestyleInfo = {
+    P: { name: '계획형', emoji: '📅', description: '체계적으로 계획을 세우고 실행합니다. 약속 시간을 잘 지키고, 예상치 못한 변화에 스트레스를 받을 수 있어요.' },
+    E: { name: '탐색형', emoji: '🔍', description: '신중하게 생각하고 결정합니다. 충분히 고민한 후 행동하지만, 결정이 느려 보일 수 있어요.' },
+    I: { name: '즉흥형', emoji: '🎲', description: '떠오르면 바로 실행합니다. 유연하고 적응력이 좋지만, 상대에게 배려 없이 보일 수 있어요.' },
+    R: { name: '마감형', emoji: '⏰', description: '마감이 다가와야 집중력이 폭발합니다. 효율적이지만, 바쁠 때 연락이 뜸해질 수 있어요.' },
+  };
+
+  // 각 자리 설명 생성
+  if (code[0] && attachmentInfo[code[0] as keyof typeof attachmentInfo]) {
+    const info = attachmentInfo[code[0] as keyof typeof attachmentInfo];
+    explanations.push({
+      position: 1,
+      code: code[0],
+      category: '애착 스타일',
+      name: info.name,
+      emoji: info.emoji,
+      description: info.description,
+    });
+  }
+
+  if (code[1] && energyInfo[code[1] as keyof typeof energyInfo]) {
+    const info = energyInfo[code[1] as keyof typeof energyInfo];
+    explanations.push({
+      position: 2,
+      code: code[1],
+      category: '에너지 레벨',
+      name: info.name,
+      emoji: info.emoji,
+      description: info.description,
+    });
+  }
+
+  if (code[2] && conflictInfo[code[2] as keyof typeof conflictInfo]) {
+    const info = conflictInfo[code[2] as keyof typeof conflictInfo];
+    explanations.push({
+      position: 3,
+      code: code[2],
+      category: '갈등 스타일',
+      name: info.name,
+      emoji: info.emoji,
+      description: info.description,
+    });
+  }
+
+  if (code[3] && lifestyleInfo[code[3] as keyof typeof lifestyleInfo]) {
+    const info = lifestyleInfo[code[3] as keyof typeof lifestyleInfo];
+    explanations.push({
+      position: 4,
+      code: code[3],
+      category: '생활 방식',
+      name: info.name,
+      emoji: info.emoji,
+      description: info.description,
+    });
+  }
+
+  return explanations;
+}
+
+/**
+ * 성격 코드에서 TypeComponents 추출
+ */
+export function parseCodeToComponents(code: string): TypeComponents | null {
+  if (!code || code.length !== 4) return null;
+
+  const attachmentMap: { [key: string]: AttachmentStyle } = {
+    S: 'SECURE', A: 'ANXIOUS', V: 'AVOIDANT', M: 'MIXED',
+  };
+  const energyMap: { [key: string]: EnergyLevel } = {
+    H: 'HIGH', B: 'MODERATE', L: 'LOW',
+  };
+  const conflictMap: { [key: string]: ConflictStyle } = {
+    C: 'COLLABORATIVE', S: 'ASSERTIVE', P: 'ACCOMMODATING', D: 'AVOIDING',
+  };
+  const lifestyleMap: { [key: string]: LifestyleMode } = {
+    P: 'PLANNER', E: 'EXPLORER', I: 'IMPROVISER', R: 'DEADLINE',
+  };
+
+  const attachment = attachmentMap[code[0]];
+  const energy = energyMap[code[1]];
+  const conflict = conflictMap[code[2]];
+  const lifestyle = lifestyleMap[code[3]];
+
+  if (!attachment || !energy || !conflict || !lifestyle) return null;
+
+  return {
+    attachment,
+    energy,
+    conflict,
+    lifestyle,
+    spending: 'CONTROL', // 기본값 (카드에서는 별도로 사용하지 않음)
+  };
+}

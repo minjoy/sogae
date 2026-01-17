@@ -53,6 +53,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
+          'SUIT Variable',
           'Pretendard',
           '-apple-system',
           'BlinkMacSystemFont',
@@ -61,7 +62,8 @@ const config: Config = {
           'sans-serif',
         ],
         display: [
-          'Cafe24Danjunghae',
+          'Cafe24Ssurround',
+          'SUIT Variable',
           'Pretendard',
           'sans-serif',
         ],
