@@ -216,23 +216,32 @@ export default function MyPage() {
               </div>
 
               {shouldShowViewCard ? (
-                <div
-                  className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white cursor-pointer hover:shadow-xl transition-all"
-                  onClick={() => router.push(`/card/${activeCard!.shareSlug}`)}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-5xl">{activeCard!.personalityType?.emoji || '✨'}</div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="inline-block bg-white/20 backdrop-blur px-3 py-1 rounded-full text-sm font-bold">
-                          {activeCard!.personalityType?.code}
-                        </span>
-                        <span className="text-sm opacity-80">{activeCard!.datingMode}</span>
+                <div className="space-y-3">
+                  <div
+                    className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-6 text-white cursor-pointer hover:shadow-xl transition-all"
+                    onClick={() => router.push(`/card/${activeCard!.shareSlug}`)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="text-5xl">{activeCard!.personalityType?.emoji || '✨'}</div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="inline-block bg-white/20 backdrop-blur px-3 py-1 rounded-full text-sm font-bold">
+                            {activeCard!.personalityType?.code}
+                          </span>
+                          <span className="text-sm opacity-80">{activeCard!.datingMode}</span>
+                        </div>
+                        <h3 className="text-xl font-bold">{activeCard!.personalityType?.name}</h3>
                       </div>
-                      <h3 className="text-xl font-bold">{activeCard!.personalityType?.name}</h3>
+                      <div className="text-3xl">→</div>
                     </div>
-                    <div className="text-3xl">→</div>
                   </div>
+                  <button
+                    onClick={() => router.push('/test')}
+                    className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    <span>🔄</span>
+                    <span>테스트 다시하기</span>
+                  </button>
                 </div>
               ) : shouldShowGenerateCard ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">

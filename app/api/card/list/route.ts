@@ -26,6 +26,7 @@ async function handleGetCards(request: AuthenticatedRequest) {
         shareSlug: card.shareSlug,
         personalityType: (card.cardPayload as any)?.personalityType || null,
         datingMode: (card.cardPayload as any)?.datingMode || '',
+        datingScore: (card.cardPayload as any)?.datingScore || 0,
         createdAt: card.createdAt,
         isActive: card.isActive,
       })),
