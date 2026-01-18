@@ -516,70 +516,195 @@ function getConflictDescription(conflict: ConflictStyle): string {
 function generateStrengths(components: TypeComponents): string[] {
   const strengths: string[] = [];
 
-  // 애착 스타일 기반 강점
+  // 애착 스타일 기반 강점 (더 많은 항목 추가)
   const attachmentStrengths: Record<AttachmentStyle, string[]> = {
-    SECURE: ['갈등 상황에서도 차분하게 대화할 수 있음', '상대방을 신뢰하고 안정적인 관계 유지'],
-    ANXIOUS: ['관계에 대한 높은 관심과 헌신', '감정 표현이 솔직하고 명확함'],
-    AVOIDANT: ['독립적으로 문제 해결 가능', '개인 시간을 효과적으로 활용'],
-    MIXED: ['다양한 관계 스타일에 적응 가능', '깊이와 공간 모두를 이해함'],
-    PREOCCUPIED: ['관계에 깊이 헌신할 수 있음', '상대방의 감정에 민감하게 반응'],
-    DISMISSIVE: ['감정에 휘둘리지 않는 냉철함', '혼자서도 충분히 행복할 수 있음'],
+    SECURE: [
+      '갈등 상황에서도 차분하게 대화할 수 있음',
+      '상대방을 신뢰하고 안정적인 관계 유지',
+      '적절한 거리감과 친밀감을 자연스럽게 조절',
+      '상대의 독립성을 존중하면서도 친밀함 유지',
+    ],
+    ANXIOUS: [
+      '관계에 대한 높은 관심과 헌신',
+      '감정 표현이 솔직하고 명확함',
+      '상대방의 기분 변화에 민감하게 반응',
+      '관계 발전을 위해 적극적으로 노력함',
+    ],
+    AVOIDANT: [
+      '독립적으로 문제 해결 가능',
+      '개인 시간을 효과적으로 활용',
+      '감정에 휩쓸리지 않는 냉정한 판단력',
+      '자기 자신만의 세계와 취미 보유',
+    ],
+    MIXED: [
+      '다양한 관계 스타일에 적응 가능',
+      '깊이와 공간 모두를 이해함',
+      '복잡한 감정을 인식하고 설명할 수 있음',
+      '관계의 미묘한 뉘앙스를 잘 파악함',
+    ],
+    PREOCCUPIED: [
+      '관계에 깊이 헌신할 수 있음',
+      '상대방의 감정에 민감하게 반응',
+      '사랑을 표현하는 데 주저함이 없음',
+      '관계를 위해 희생할 준비가 되어 있음',
+    ],
+    DISMISSIVE: [
+      '감정에 휘둘리지 않는 냉철함',
+      '혼자서도 충분히 행복할 수 있음',
+      '독립적인 의사결정 능력',
+      '감정적 드라마에 휘말리지 않음',
+    ],
   };
   strengths.push(...attachmentStrengths[components.attachment]);
 
-  // 에너지 레벨 기반 강점
-  if (components.energy === 'HIGH') {
-    strengths.push('새로운 활동과 관계에 적극적');
-    strengths.push('긍정적인 에너지를 주변에 전파');
-  } else if (components.energy === 'MODERATE') {
-    strengths.push('안정적인 페이스로 관계 유지');
-  }
+  // 에너지 레벨 기반 강점 (더 많은 항목 추가)
+  const energyStrengths: Record<EnergyLevel, string[]> = {
+    HIGH: [
+      '새로운 활동과 관계에 적극적',
+      '긍정적인 에너지를 주변에 전파',
+      '데이트나 만남에 열정적으로 참여',
+    ],
+    MODERATE: [
+      '안정적인 페이스로 관계 유지',
+      '무리하지 않고 꾸준히 관계 발전',
+    ],
+    LOW: [
+      '자신의 한계를 인식하고 있음',
+      '무리한 관계보다 질 높은 관계 추구',
+    ],
+    DEPLETED: [
+      '회복의 중요성을 알고 있음',
+      '자기 돌봄의 필요성 인식',
+    ],
+  };
+  strengths.push(...energyStrengths[components.energy]);
 
-  // 갈등 스타일 기반 강점
-  if (components.conflict === 'COLLABORATIVE') {
-    strengths.push('문제 해결 시 협력적 접근');
-  } else if (components.conflict === 'ASSERTIVE') {
-    strengths.push('자신의 의견을 명확하게 전달');
-  } else if (components.conflict === 'BALANCED') {
-    strengths.push('상황에 따라 유연하게 대처');
-  }
+  // 갈등 스타일 기반 강점 (더 많은 항목 추가)
+  const conflictStrengths: Record<ConflictStyle, string[]> = {
+    COLLABORATIVE: [
+      '문제 해결 시 협력적 접근',
+      '상대의 입장을 이해하려 노력함',
+      '윈-윈 해결책을 찾으려 함',
+    ],
+    ASSERTIVE: [
+      '자신의 의견을 명확하게 전달',
+      '문제를 숨기지 않고 직면함',
+    ],
+    ACCOMMODATING: [
+      '상대방을 배려하는 마음',
+      '관계의 평화를 중요시함',
+    ],
+    AVOIDING: [
+      '감정적 대응 전 냉각 시간 확보',
+      '성급한 말실수를 피할 수 있음',
+    ],
+    BALANCED: [
+      '상황에 따라 유연하게 대처',
+      '다양한 갈등 해결 방식 활용 가능',
+    ],
+  };
+  strengths.push(...conflictStrengths[components.conflict]);
 
-  return strengths.slice(0, 5);
+  // 생활 방식 기반 강점 추가
+  const lifestyleStrengths: Record<LifestyleMode, string[]> = {
+    PLANNER: ['체계적인 데이트 계획 가능', '약속을 잘 지킴'],
+    EXPLORER: ['신중하고 깊이 있는 판단', '충분히 고민 후 결정'],
+    IMPROVISER: ['즉흥적인 상황에서 유연함', '새로운 경험에 열린 태도'],
+    DEADLINE: ['집중력이 필요할 때 폭발적 에너지', '효율적인 시간 활용'],
+    ADAPTIVE: ['어떤 스타일의 상대와도 맞춤 가능', '상황 적응력 우수'],
+  };
+  strengths.push(...lifestyleStrengths[components.lifestyle]);
+
+  return strengths.slice(0, 10);
 }
 
 function generateChallenges(components: TypeComponents): string[] {
   const challenges: string[] = [];
 
-  // 애착 스타일 기반 도전과제
+  // 애착 스타일 기반 도전과제 (더 많은 항목 추가)
   const attachmentChallenges: Record<AttachmentStyle, string[]> = {
-    SECURE: [], // 안정형은 도전과제 적음
-    ANXIOUS: ['과도한 확인 욕구로 상대가 부담감을 느낄 수 있음', '거절에 대한 두려움이 의사결정을 방해할 수 있음'],
-    AVOIDANT: ['감정 표현 회피로 오해가 생길 수 있음', '친밀감 형성에 시간이 오래 걸릴 수 있음'],
-    MIXED: ['가까워지고 싶지만 동시에 부담스러워하는 모순', '밀고 당기기 패턴이 관계를 불안정하게 만들 수 있음'],
-    PREOCCUPIED: ['관계에 과도하게 몰입할 수 있음', '상대의 작은 변화에도 크게 동요할 수 있음'],
-    DISMISSIVE: ['상대가 거리감을 느낄 수 있음', '감정적 연결이 어려울 수 있음'],
+    SECURE: ['때로는 "너무 무난해" 보여서 열정이 부족해 보일 수 있음'],
+    ANXIOUS: [
+      '과도한 확인 욕구로 상대가 부담감을 느낄 수 있음',
+      '거절에 대한 두려움이 의사결정을 방해할 수 있음',
+      '연락이 늦으면 최악의 상황을 상상하기 쉬움',
+      '상대의 행동을 지나치게 분석하는 경향',
+    ],
+    AVOIDANT: [
+      '감정 표현 회피로 오해가 생길 수 있음',
+      '친밀감 형성에 시간이 오래 걸릴 수 있음',
+      '상대가 거리감을 느끼고 서운해할 수 있음',
+      '깊은 대화를 피하려는 경향이 있음',
+    ],
+    MIXED: [
+      '가까워지고 싶지만 동시에 부담스러워하는 모순',
+      '밀고 당기기 패턴이 관계를 불안정하게 만들 수 있음',
+      '자신의 감정을 스스로도 이해하기 어려울 때가 있음',
+      '상대방이 혼란스러워할 수 있음',
+    ],
+    PREOCCUPIED: [
+      '관계에 과도하게 몰입할 수 있음',
+      '상대의 작은 변화에도 크게 동요할 수 있음',
+      '자신의 정체성이 관계에 지나치게 의존될 수 있음',
+      '상대 없이 혼자 있는 시간이 힘들 수 있음',
+    ],
+    DISMISSIVE: [
+      '상대가 거리감을 느낄 수 있음',
+      '감정적 연결이 어려울 수 있음',
+      '상대의 감정적 필요를 무시하는 것처럼 보일 수 있음',
+      '친밀함을 불편해하는 것이 상처로 느껴질 수 있음',
+    ],
   };
   challenges.push(...attachmentChallenges[components.attachment]);
 
-  // 에너지 레벨 기반 도전과제
-  if (components.energy === 'LOW' || components.energy === 'DEPLETED') {
-    challenges.push('현재 번아웃 위험이 있어 관계에 에너지를 쏟기 어려움');
-    challenges.push('회복 없이 관계를 진행하면 소진될 수 있음');
-  }
-
-  // 갈등 스타일 기반 도전과제
-  const conflictChallenges: Record<ConflictStyle, string> = {
-    COLLABORATIVE: '',
-    ASSERTIVE: '직설적 표현이 상대에게 공격적으로 느껴질 수 있음',
-    ACCOMMODATING: '과도한 양보로 자신의 욕구를 억압할 수 있음',
-    AVOIDING: '갈등 회피로 문제가 누적될 수 있음',
-    BALANCED: '',
+  // 에너지 레벨 기반 도전과제 (더 많은 항목 추가)
+  const energyChallenges: Record<EnergyLevel, string[]> = {
+    HIGH: ['지나친 열정이 상대에게 부담될 수 있음'],
+    MODERATE: [],
+    LOW: [
+      '현재 번아웃 위험이 있어 관계에 에너지를 쏟기 어려움',
+      '회복 없이 관계를 진행하면 소진될 수 있음',
+      '데이트 약속을 미루거나 취소하고 싶을 수 있음',
+    ],
+    DEPLETED: [
+      '지금은 연애보다 회복이 우선 필요한 시기',
+      '관계에 투자할 에너지가 부족한 상태',
+      '상대방에게 충분한 관심을 주기 어려울 수 있음',
+      '감정적 여유가 없어 예민해질 수 있음',
+    ],
   };
-  if (conflictChallenges[components.conflict]) {
-    challenges.push(conflictChallenges[components.conflict]);
-  }
+  challenges.push(...energyChallenges[components.energy]);
 
-  return challenges.slice(0, 4);
+  // 갈등 스타일 기반 도전과제 (더 많은 항목 추가)
+  const conflictChallenges: Record<ConflictStyle, string[]> = {
+    COLLABORATIVE: [],
+    ASSERTIVE: [
+      '직설적 표현이 상대에게 공격적으로 느껴질 수 있음',
+      '논쟁에서 이기려는 경향이 있을 수 있음',
+    ],
+    ACCOMMODATING: [
+      '과도한 양보로 자신의 욕구를 억압할 수 있음',
+      '불만이 쌓여 한꺼번에 터질 수 있음',
+    ],
+    AVOIDING: [
+      '갈등 회피로 문제가 누적될 수 있음',
+      '중요한 대화를 계속 미루게 될 수 있음',
+    ],
+    BALANCED: [],
+  };
+  challenges.push(...conflictChallenges[components.conflict]);
+
+  // 생활 방식 기반 도전과제 추가
+  const lifestyleChallenges: Record<LifestyleMode, string[]> = {
+    PLANNER: ['예상치 못한 변화에 스트레스를 받을 수 있음'],
+    EXPLORER: ['결정이 느려서 상대가 답답해할 수 있음'],
+    IMPROVISER: ['계획 없는 행동이 무책임해 보일 수 있음'],
+    DEADLINE: ['바쁠 때 연락이 뜸해져서 서운함을 줄 수 있음'],
+    ADAPTIVE: [],
+  };
+  challenges.push(...lifestyleChallenges[components.lifestyle]);
+
+  return challenges.slice(0, 10);
 }
 
 function generateRelationshipTips(components: TypeComponents): string[] {

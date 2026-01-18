@@ -114,10 +114,10 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
       datingScore: readiness.score,
       datingMessage: readiness.message,
       nickname: user?.nickname,
-      // 성격 유형 기반 맞춤 조언
-      doList: personalityType.strengths.slice(0, 3),
-      dontList: personalityType.challenges.slice(0, 3),
-      phraseForPartner: personalityType.relationshipTips.slice(0, 3),
+      // 성격 유형 기반 맞춤 조언 (최대 10개)
+      doList: personalityType.strengths.slice(0, 10),
+      dontList: personalityType.challenges.slice(0, 10),
+      phraseForPartner: personalityType.relationshipTips.slice(0, 5),
       // 새로운 데이터: 희귀도
       rarity: {
         percent: rarity.percent,
