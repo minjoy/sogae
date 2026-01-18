@@ -12,20 +12,23 @@ datasource db {
 
 // 사용자 테이블
 model User {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  passwordHash String  @map("password_hash")
-  nickname    String
-  gender      String?
-  birthyear   Int?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String   @map("password_hash")
+  nickname        String
+  gender          String?
+  birthyear       Int?
+  personalityCode String?  @map("personality_code") // 성격 유형 코드 (예: SHCP)
+  isDummy         Boolean  @default(false) @map("is_dummy") // 더미 사용자 여부
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
   testResults   TestResult[]
   unifiedCards  UnifiedCard[]
   datingState   DatingState?
 
+  @@index([personalityCode])
   @@map("users")
 }
 

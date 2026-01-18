@@ -23,6 +23,8 @@ export default function CardPage() {
   const [isCopied, setIsCopied] = useState(false);
   const [rarity, setRarity] = useState<{ percent: number; label: string; isRare: boolean } | null>(null);
   const [codeExplanations, setCodeExplanations] = useState<CodeExplanation[]>([]);
+  const [expandedTypes, setExpandedTypes] = useState<Record<number, boolean>>({});
+  const [matchingUsers, setMatchingUsers] = useState<any[]>([]);
 
   useEffect(() => {
     // 로그인 상태 확인
@@ -91,12 +93,34 @@ export default function CardPage() {
           setCodeExplanations(getCodeExplanations(code));
         }
       }
+
+      // 매칭 사용자 조회
+      if (data.card?.personalityType?.compatibleTypes) {
+        const codes = data.card.personalityType.compatibleTypes.map((t: any) => t.code);
+        fetchMatchingUsers(codes);
+      }
     } catch (error) {
       console.error('Failed to fetch card:', error);
       setError('카드를 불러오는 중 오류가 발생했습니다');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchMatchingUsers = async (codes: string[]) => {
+    try {
+      const response = await fetch(`/api/users/matching?codes=${codes.join(',')}`);
+      const data = await response.json();
+      if (data.success) {
+        setMatchingUsers(data.users);
+      }
+    } catch (error) {
+      console.error('Failed to fetch matching users:', error);
+    }
+  };
+
+  const toggleExpanded = (index: number) => {
+    setExpandedTypes(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
   const handleShare = async () => {
@@ -346,61 +370,108 @@ export default function CardPage() {
                 <span className="text-xl mr-2">💕</span>
                 나와 잘 어울리는 연애 상대
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {card.personalityType.compatibleTypes.map((compatible: any, index: number) => (
                   <div key={index} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                    {/* 헤더 */}
-                    <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-4 text-white">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-white/20 backdrop-blur px-4 py-1.5 rounded-full text-sm font-bold">
-                          {compatible.code}
+                    {/* 아코디언 헤더 - 클릭 가능 */}
+                    <button
+                      onClick={() => toggleExpanded(index)}
+                      className="w-full bg-gradient-to-r from-primary-500 to-primary-600 p-4 text-white text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-white/20 backdrop-blur px-4 py-1.5 rounded-full text-sm font-bold">
+                            {compatible.code}
+                          </div>
+                          <h4 className="font-bold">{compatible.name}</h4>
                         </div>
-                        <h4 className="font-bold text-lg">{compatible.name}</h4>
+                        <span className={`text-xl transition-transform duration-300 ${expandedTypes[index] ? 'rotate-180' : ''}`}>
+                          ▼
+                        </span>
                       </div>
+                    </button>
+
+                    {/* 아코디언 내용 */}
+                    <div className={`transition-all duration-300 overflow-hidden ${expandedTypes[index] ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                      {/* 설명 */}
+                      <div className="p-4 border-b border-gray-100">
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                          {compatible.reason}
+                        </p>
+                      </div>
+
+                      {/* 이 유형의 특징 */}
+                      {compatible.characteristics && compatible.characteristics.length > 0 && (
+                        <div className="p-4 border-b border-gray-100 bg-blue-50/50">
+                          <h5 className="text-xs font-semibold text-blue-700 mb-3 flex items-center gap-1">
+                            <span>✨</span> 이 유형의 특징
+                          </h5>
+                          <ul className="space-y-2">
+                            {compatible.characteristics.map((char: string, charIdx: number) => (
+                              <li key={charIdx} className="text-sm text-gray-700 flex items-start gap-2">
+                                <span className="text-blue-400 mt-0.5">•</span>
+                                <span>{char}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* 알아보는 법 예시 */}
+                      {compatible.howToRecognize && compatible.howToRecognize.length > 0 && (
+                        <div className="p-4 bg-green-50/50">
+                          <h5 className="text-xs font-semibold text-green-700 mb-3 flex items-center gap-1">
+                            <span>🔍</span> 이런 사람을 찾아보세요
+                          </h5>
+                          <ul className="space-y-2">
+                            {compatible.howToRecognize.map((how: string, howIdx: number) => (
+                              <li key={howIdx} className="text-sm text-gray-700 flex items-start gap-2">
+                                <span className="text-green-400 mt-0.5">•</span>
+                                <span>{how}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-
-                    {/* 설명 */}
-                    <div className="p-4 border-b border-gray-100">
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {compatible.reason}
-                      </p>
-                    </div>
-
-                    {/* 이 유형의 특징 */}
-                    {compatible.characteristics && compatible.characteristics.length > 0 && (
-                      <div className="p-4 border-b border-gray-100 bg-blue-50/50">
-                        <h5 className="text-xs font-semibold text-blue-700 mb-3 flex items-center gap-1">
-                          <span>✨</span> 이 유형의 특징
-                        </h5>
-                        <ul className="space-y-2">
-                          {compatible.characteristics.map((char: string, charIdx: number) => (
-                            <li key={charIdx} className="text-sm text-gray-700 flex items-start gap-2">
-                              <span className="text-blue-400 mt-0.5">•</span>
-                              <span>{char}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* 알아보는 법 예시 */}
-                    {compatible.howToRecognize && compatible.howToRecognize.length > 0 && (
-                      <div className="p-4 bg-green-50/50">
-                        <h5 className="text-xs font-semibold text-green-700 mb-3 flex items-center gap-1">
-                          <span>🔍</span> 이런 사람을 찾아보세요
-                        </h5>
-                        <ul className="space-y-2">
-                          {compatible.howToRecognize.map((how: string, howIdx: number) => (
-                            <li key={howIdx} className="text-sm text-gray-700 flex items-start gap-2">
-                              <span className="text-green-400 mt-0.5">•</span>
-                              <span>{how}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* 매칭 사용자 슬라이더 */}
+          {matchingUsers.length > 0 && (
+            <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="text-xl mr-2">👥</span>
+                나와 잘 맞는 사람들
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                위 유형에 해당하는 사람들이에요
+              </p>
+              <div className="overflow-x-auto scrollbar-hide">
+                <div className="flex gap-3 pb-2" style={{ width: 'max-content' }}>
+                  {matchingUsers.map((user, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-xl p-4 shadow-sm min-w-[140px] flex flex-col items-center"
+                    >
+                      <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xl mb-2">
+                        {user.gender === 'male' ? '👨' : user.gender === 'female' ? '👩' : '🧑'}
+                      </div>
+                      <p className="font-semibold text-gray-900 text-sm mb-1 truncate max-w-[120px]">
+                        {user.nickname}
+                      </p>
+                      <div className="bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                        {user.personalityCode}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {user.gender === 'male' ? '남성' : user.gender === 'female' ? '여성' : ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}

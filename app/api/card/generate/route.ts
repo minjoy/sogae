@@ -175,6 +175,12 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
       },
     });
 
+    // 사용자의 성격 코드 업데이트 (매칭용)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { personalityCode: personalityType.code },
+    });
+
     return NextResponse.json({
       success: true,
       card: {
