@@ -341,23 +341,64 @@ export default function CardPage() {
 
           {/* 어울리는 연애 상대 */}
           {card.personalityType?.compatibleTypes && card.personalityType.compatibleTypes.length > 0 && (
-            <div className="p-6 bg-blue-50">
+            <div className="p-6 bg-gradient-to-br from-pink-50 to-blue-50">
               <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center">
                 <span className="text-xl mr-2">💕</span>
                 나와 잘 어울리는 연애 상대
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {card.personalityType.compatibleTypes.map((compatible: any, index: number) => (
-                  <div key={index} className="bg-white rounded-xl p-4 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="inline-block bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-xs font-bold">
-                        {compatible.code}
+                  <div key={index} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    {/* 헤더 */}
+                    <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-4 text-white">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-white/20 backdrop-blur px-4 py-1.5 rounded-full text-sm font-bold">
+                          {compatible.code}
+                        </div>
+                        <h4 className="font-bold text-lg">{compatible.name}</h4>
                       </div>
-                      <h4 className="font-semibold text-gray-900">{compatible.name}</h4>
                     </div>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {compatible.reason}
-                    </p>
+
+                    {/* 설명 */}
+                    <div className="p-4 border-b border-gray-100">
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {compatible.reason}
+                      </p>
+                    </div>
+
+                    {/* 이 유형의 특징 */}
+                    {compatible.characteristics && compatible.characteristics.length > 0 && (
+                      <div className="p-4 border-b border-gray-100 bg-blue-50/50">
+                        <h5 className="text-xs font-semibold text-blue-700 mb-3 flex items-center gap-1">
+                          <span>✨</span> 이 유형의 특징
+                        </h5>
+                        <ul className="space-y-2">
+                          {compatible.characteristics.map((char: string, charIdx: number) => (
+                            <li key={charIdx} className="text-sm text-gray-700 flex items-start gap-2">
+                              <span className="text-blue-400 mt-0.5">•</span>
+                              <span>{char}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* 알아보는 법 예시 */}
+                    {compatible.howToRecognize && compatible.howToRecognize.length > 0 && (
+                      <div className="p-4 bg-green-50/50">
+                        <h5 className="text-xs font-semibold text-green-700 mb-3 flex items-center gap-1">
+                          <span>🔍</span> 이런 사람을 찾아보세요
+                        </h5>
+                        <ul className="space-y-2">
+                          {compatible.howToRecognize.map((how: string, howIdx: number) => (
+                            <li key={howIdx} className="text-sm text-gray-700 flex items-start gap-2">
+                              <span className="text-green-400 mt-0.5">•</span>
+                              <span>{how}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

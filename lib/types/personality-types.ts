@@ -12,6 +12,8 @@ export interface CompatibleType {
   code: string;
   name: string;
   reason: string;
+  characteristics: string[];  // 이 유형의 특징
+  howToRecognize: string[];   // 알아보는 법 예시
 }
 
 export interface PersonalityType {
@@ -738,8 +740,109 @@ function generateRelationshipTips(components: TypeComponents): string[] {
 function generateCompatibleTypes(components: TypeComponents): CompatibleType[] {
   const compatible: CompatibleType[] = [];
 
+  // 상세 유형 정보 데이터베이스
+  const typeDetails: Record<string, Omit<CompatibleType, 'code'>> = {
+    // 안정형 기반 유형들
+    'SHCP': {
+      name: '활력 넘치는 안정 대화형',
+      reason: '에너지가 넘치고 관계에서 안정감을 주는 타입입니다. 적극적으로 애정을 표현하며, 갈등 시 대화로 풀어가려 합니다.',
+      characteristics: [
+        '연락을 먼저 하고, 데이트도 적극적으로 제안함',
+        '감정 표현이 자연스럽고 "좋아해"를 자주 말함',
+        '문제가 생기면 회피하지 않고 대화로 해결하려 함',
+        '상대방의 개인 시간도 존중하면서 함께하는 시간도 소중히 여김',
+      ],
+      howToRecognize: [
+        '첫 만남에서도 자연스럽게 대화를 이끌어감',
+        '연락이 늦어도 불안해하지 않고 기다릴 줄 앎',
+        '"우리 이거 한번 얘기해볼까?"라며 먼저 대화를 제안함',
+        '친구들에게도 당신 이야기를 자연스럽게 함',
+      ],
+    },
+    'SBCP': {
+      name: '균형 잡힌 안정 대화형',
+      reason: '안정적인 에너지로 꾸준히 관계를 유지하는 타입입니다. 무리하지 않으면서도 성실하게 관계에 임합니다.',
+      characteristics: [
+        '약속을 잘 지키고 일관된 태도를 보임',
+        '급하게 관계를 진행시키려 하지 않음',
+        '상대의 페이스를 존중하고 맞춰줌',
+        '감정 기복이 적고 예측 가능한 반응을 보임',
+      ],
+      howToRecognize: [
+        '데이트 후 "오늘 즐거웠어" 같은 피드백을 줌',
+        '바쁠 때도 최소한의 연락은 유지함',
+        '갑자기 태도가 변하거나 연락이 끊기지 않음',
+        '중요한 결정 전에 당신의 의견을 물어봄',
+      ],
+    },
+    'SBCE': {
+      name: '균형 잡힌 독립 안정형',
+      reason: '독립적이면서도 관계에서 안정감을 줍니다. 서로의 공간을 존중하면서 깊이 있는 연결을 만들어갑니다.',
+      characteristics: [
+        '자기만의 취미와 생활이 확실함',
+        '매일 연락하지 않아도 관계에 흔들림이 없음',
+        '함께 있을 때 온전히 집중함',
+        '상대에게 의존하지 않으면서도 든든한 지지자가 됨',
+      ],
+      howToRecognize: [
+        '"오늘은 각자 시간 보내자"고 자연스럽게 말함',
+        '혼자만의 시간이 필요하다고 솔직하게 표현함',
+        '만날 때마다 자기 이야기도 많이 함',
+        '당신의 독립적인 활동을 응원하고 격려함',
+      ],
+    },
+    'SBPA': {
+      name: '균형 잡힌 안정 배려형',
+      reason: '상대방을 세심하게 배려하면서 안정적인 관계를 만듭니다. 당신의 페이스에 맞춰주며 부담을 주지 않습니다.',
+      characteristics: [
+        '상대방의 컨디션과 기분을 잘 살핌',
+        '부담스럽지 않게 관심을 표현함',
+        '갈등 상황에서 먼저 양보하는 편',
+        '조용히 옆에서 지지해주는 스타일',
+      ],
+      howToRecognize: [
+        '"힘들면 말해, 기다릴게"라고 먼저 말해줌',
+        '약속을 미뤄도 서운해하지 않음',
+        '당신이 지쳐 보이면 조용히 곁에 있어줌',
+        '작은 것도 기억하고 챙겨줌',
+      ],
+    },
+    'AHCP': {
+      name: '열정적인 확인 대화형',
+      reason: '관계에 적극적이고 감정 표현이 풍부합니다. 서로의 마음을 자주 확인하며 친밀감을 쌓아갑니다.',
+      characteristics: [
+        '연락 빈도가 높고 반응이 빠름',
+        '감정을 숨기지 않고 솔직하게 표현함',
+        '관계 발전에 적극적으로 노력함',
+        '상대방에 대한 관심이 높음',
+      ],
+      howToRecognize: [
+        '하루에 여러 번 연락하고 싶어함',
+        '"나 좋아해?" 같은 확인 질문을 종종 함',
+        '함께한 시간을 사진이나 기록으로 남김',
+        '기념일과 약속을 중요하게 여김',
+      ],
+    },
+    'VBCE': {
+      name: '독립적인 탐색형',
+      reason: '자기만의 세계가 뚜렷하고 깊이 있는 대화를 좋아합니다. 서로의 공간을 존중하며 천천히 가까워집니다.',
+      characteristics: [
+        '처음에는 거리를 두고 천천히 마음을 열음',
+        '깊이 있는 대화와 지적인 교류를 좋아함',
+        '감정보다 논리로 소통하는 편',
+        '혼자만의 시간과 공간이 꼭 필요함',
+      ],
+      howToRecognize: [
+        '연락 빈도보다 대화의 질을 중요시함',
+        '개인 공간에 대한 경계가 명확함',
+        '관심사에 대해 깊이 있게 이야기함',
+        '친해지는 데 시간이 걸리지만 한번 열리면 충실함',
+      ],
+    },
+  };
+
   // 기본: 안정형은 누구와나 잘 맞음
-  const securePartner = generateTypeCode({
+  const baseCode = generateTypeCode({
     attachment: 'SECURE',
     energy: components.energy === 'DEPLETED' ? 'MODERATE' : components.energy,
     conflict: 'COLLABORATIVE',
@@ -747,9 +850,11 @@ function generateCompatibleTypes(components: TypeComponents): CompatibleType[] {
     spending: 'CONTROL',
   });
 
+  // 기본 매칭 타입 결정
+  const baseType = typeDetails[baseCode] || typeDetails['SBCP'];
   compatible.push({
-    code: securePartner,
-    name: '균형 잡힌 안정 대화형',
+    code: baseCode,
+    ...baseType,
     reason: getCompatibilityReason(components.attachment, 'SECURE'),
   });
 
@@ -758,22 +863,29 @@ function generateCompatibleTypes(components: TypeComponents): CompatibleType[] {
     // 불안형은 안정형 + 표현력 좋은 사람
     compatible.push({
       code: 'SHCP',
-      name: '활력 넘치는 안정 대화형',
+      ...typeDetails['SHCP'],
       reason: '꾸준히 "좋아해"라고 표현해주고, 당신의 확인 욕구를 이해해줄 수 있는 상대입니다.',
     });
   } else if (components.attachment === 'AVOIDANT' || components.attachment === 'DISMISSIVE') {
     // 회피형은 안정형 + 독립적인 사람
     compatible.push({
       code: 'SBCE',
-      name: '균형 잡힌 안정 대화형',
+      ...typeDetails['SBCE'],
       reason: '당신의 혼자만의 시간을 존중하고, 적절한 거리감을 유지할 수 있는 상대입니다.',
     });
   } else if (components.attachment === 'MIXED') {
     // 혼합형은 매우 안정적인 사람
     compatible.push({
       code: 'SHCP',
-      name: '활력 넘치는 안정 대화형',
+      ...typeDetails['SHCP'],
       reason: '당신의 밀당에 흔들리지 않고 일관된 태도로 안정감을 줄 수 있는 상대입니다.',
+    });
+  } else if (components.attachment === 'SECURE') {
+    // 안정형은 다양한 타입과 잘 맞음
+    compatible.push({
+      code: 'AHCP',
+      ...typeDetails['AHCP'],
+      reason: '당신의 안정감이 상대의 불안을 잠재워주고, 서로 균형 잡힌 관계를 만들 수 있습니다.',
     });
   }
 
@@ -781,12 +893,23 @@ function generateCompatibleTypes(components: TypeComponents): CompatibleType[] {
   if (components.energy === 'LOW' || components.energy === 'DEPLETED') {
     compatible.push({
       code: 'SBPA',
-      name: '균형 잡힌 안정 배려형',
+      ...typeDetails['SBPA'],
       reason: '지금 당신에게 필요한 회복 시간을 존중하고, 페이스를 맞춰줄 수 있는 상대입니다.',
+    });
+  } else if (components.energy === 'HIGH' && compatible.length < 3) {
+    compatible.push({
+      code: 'SHCP',
+      ...typeDetails['SHCP'],
+      reason: '비슷한 에너지 레벨로 함께 활발하게 활동하며 즐거운 시간을 보낼 수 있습니다.',
     });
   }
 
-  return compatible.slice(0, 3);
+  // 중복 제거 및 최대 3개 반환
+  const uniqueCompatible = compatible.filter((item, index, self) =>
+    index === self.findIndex((t) => t.code === item.code)
+  );
+
+  return uniqueCompatible.slice(0, 3);
 }
 
 function getCompatibilityReason(myAttachment: AttachmentStyle, partnerAttachment: AttachmentStyle): string {
