@@ -89,11 +89,11 @@ export function decodeTestResult(code: string): ShareableResult | null {
   }
 }
 
-// 테스트 정보 (간략화)
+// 테스트 정보 (test-data.ts와 일치)
 export const TEST_INFO: Record<number, { title: string; emoji: string }> = {
-  1: { title: '애착유형 테스트', emoji: '💕' },
-  2: { title: '갈등대처 테스트', emoji: '🤝' },
-  3: { title: '연애가치관 테스트', emoji: '💎' },
-  4: { title: '소비습관 테스트', emoji: '💰' },
-  5: { title: '번아웃 테스트', emoji: '🔋' },
+  1: { title: '감정 타입 테스트', emoji: '💭' },
+  2: { title: '소비 성향 심리', emoji: '💰' },
+  3: { title: '일 처리 방식', emoji: '⚡' },
+  4: { title: '갈등 대화 스타일', emoji: '💬' },
+  5: { title: '번아웃 위험도', emoji: '🔋' },
 };

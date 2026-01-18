@@ -134,27 +134,14 @@ export default function TestResultPage() {
     );
     const shareUrl = `${window.location.origin}/share/test/${shareCode}`;
 
-    if (navigator.share) {
-      // 모바일에서 네이티브 공유 기능 사용
-      try {
-        await navigator.share({
-          title: `${testDef.title} 결과`,
-          text: `나의 ${testDef.title} 결과를 확인해보세요!`,
-          url: shareUrl,
-        });
-      } catch (error) {
-        console.error('Share failed:', error);
-      }
-    } else {
-      // 데스크톱에서 클립보드 복사
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-      } catch (error) {
-        console.error('Copy failed:', error);
-        alert('링크를 복사하지 못했습니다.');
-      }
+    // 클립보드에 URL만 복사
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+      alert('링크를 복사하지 못했습니다.');
     }
   };
 
