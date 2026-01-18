@@ -8,6 +8,34 @@ interface ShareableResult {
   sc?: { n: string; v: number }[]; // subscales (name, value)
 }
 
+// URL-safe base64 인코딩 (브라우저 호환)
+function toBase64Url(str: string): string {
+  // 브라우저: btoa 사용
+  if (typeof window !== 'undefined') {
+    const base64 = btoa(unescape(encodeURIComponent(str)));
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  // Node.js: Buffer 사용
+  const base64 = Buffer.from(str, 'utf-8').toString('base64');
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// URL-safe base64 디코딩 (브라우저 호환)
+function fromBase64Url(str: string): string {
+  // padding 복원
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+
+  // 브라우저: atob 사용
+  if (typeof window !== 'undefined') {
+    return decodeURIComponent(escape(atob(base64)));
+  }
+  // Node.js: Buffer 사용
+  return Buffer.from(base64, 'base64').toString('utf-8');
+}
+
 // 결과를 공유 코드로 인코딩
 export function encodeTestResult(
   testType: number,
@@ -37,16 +65,14 @@ export function encodeTestResult(
     }));
   }
 
-  // JSON을 base64로 인코딩 (URL-safe)
   const json = JSON.stringify(data);
-  const base64 = Buffer.from(json, 'utf-8').toString('base64url');
-  return base64;
+  return toBase64Url(json);
 }
 
 // 공유 코드를 결과로 디코딩
 export function decodeTestResult(code: string): ShareableResult | null {
   try {
-    const json = Buffer.from(code, 'base64url').toString('utf-8');
+    const json = fromBase64Url(code);
     const data = JSON.parse(json) as ShareableResult;
 
     // 유효성 검사
