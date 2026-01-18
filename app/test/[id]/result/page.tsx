@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ALL_TESTS } from '@/lib/tests/test-data';
 import { scoreTest } from '@/lib/tests/scoring';
+import { encodeTestResult } from '@/lib/share-code';
 import Button from '@/components/Button';
 
 export default function TestResultPage() {
@@ -122,7 +123,16 @@ export default function TestResultPage() {
   };
 
   const handleShare = async () => {
-    const url = window.location.href;
+    // 결과를 인코딩하여 공유 URL 생성
+    const scores = result?.scores as Record<string, any>;
+    const shareCode = encodeTestResult(
+      testId,
+      scores?.primaryLabel || '',
+      scores?.secondaryLabel,
+      result?.comment,
+      scores?.subscales
+    );
+    const shareUrl = `${window.location.origin}/share/test/${shareCode}`;
 
     if (navigator.share) {
       // 모바일에서 네이티브 공유 기능 사용
@@ -130,7 +140,7 @@ export default function TestResultPage() {
         await navigator.share({
           title: `${testDef.title} 결과`,
           text: `나의 ${testDef.title} 결과를 확인해보세요!`,
-          url: url,
+          url: shareUrl,
         });
       } catch (error) {
         console.error('Share failed:', error);
@@ -138,7 +148,7 @@ export default function TestResultPage() {
     } else {
       // 데스크톱에서 클립보드 복사
       try {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(shareUrl);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
       } catch (error) {
