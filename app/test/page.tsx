@@ -46,6 +46,8 @@ export default function TestListPage() {
   const router = useRouter();
   const [completedTests, setCompletedTests] = useState<number[]>([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadCompletedTests();
@@ -74,6 +76,35 @@ export default function TestListPage() {
       }
     } catch (error) {
       console.error('Failed to load completed tests:', error);
+    }
+  };
+
+  const handleDeleteAllTests = async () => {
+    try {
+      setIsDeleting(true);
+      const token = localStorage.getItem('token');
+
+      const response = await fetch('/api/test/results', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCompletedTests([]);
+        setShowDeleteConfirm(false);
+        alert('모든 테스트가 삭제되었습니다.');
+      } else {
+        alert(data.error || '삭제 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to delete tests:', error);
+      alert('삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -123,6 +154,15 @@ export default function TestListPage() {
                       <strong>{5 - completedCount}개</strong> 남았어요! 완료하면 <strong>나만의 사용설명서 카드</strong>를 받아볼 수 있어요
                     </p>
                   </div>
+                )}
+
+                {completedCount > 0 && (
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="mt-4 text-sm text-red-500 hover:text-red-700 underline"
+                  >
+                    전체 테스트 삭제하기
+                  </button>
                 )}
               </>
             ) : (
@@ -278,6 +318,39 @@ export default function TestListPage() {
           </p>
         </div>
       </div>
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">⚠️</div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                전체 테스트를 삭제할까요?
+              </h3>
+              <p className="text-gray-600 text-sm">
+                모든 테스트 결과가 삭제되며, 이 작업은 되돌릴 수 없습니다.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleDeleteAllTests}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? '삭제 중...' : '삭제하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
