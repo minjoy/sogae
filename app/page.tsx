@@ -72,40 +72,40 @@ export default function Home() {
 
         {/* 주요 가치 제안 */}
         <div className="grid md:grid-cols-3 gap-8 mb-20">
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-8 shadow-lg border border-primary-100">
-            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-2xl mb-4">
+          <div className="text-center p-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-pink-100 to-primary-100 rounded-full flex items-center justify-center text-2xl mb-4 mx-auto">
               🔍
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
               나를 정확하게
             </h3>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-gray-500 text-sm leading-relaxed">
               심리학 기반의 5가지 테스트로 <br />
               진짜 나의 모습을 발견해요
             </p>
           </div>
 
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-8 shadow-lg border border-primary-100">
-            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-2xl mb-4">
+          <div className="text-center p-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-primary-100 rounded-full flex items-center justify-center text-2xl mb-4 mx-auto">
               💌
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
               솔직하게
             </h3>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-gray-500 text-sm leading-relaxed">
               &ldquo;마음이 준비되면 시작하세요&rdquo;<br />
               진실된 조언을 드려요
             </p>
           </div>
 
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-8 shadow-lg border border-primary-100">
-            <div className="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center text-2xl mb-4">
+          <div className="text-center p-6">
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-primary-100 rounded-full flex items-center justify-center text-2xl mb-4 mx-auto">
               🎁
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
               따뜻하게
             </h3>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-gray-500 text-sm leading-relaxed">
               비난이 아닌 이해,<br />
               케어하고 보호하는 마음으로
             </p>
@@ -124,51 +124,49 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
                 title: "감정 반응 패턴",
                 emoji: "💭",
                 desc: "불안할 때, 피하고 싶을 때, 과몰입할 때... 나의 감정 패턴은?",
-                color: "from-pink-50 to-pink-100"
               },
               {
                 title: "소비 심리",
                 emoji: "💰",
                 desc: "스트레스받을 때 쇼핑하나요? 인정받고 싶어서 사나요?",
-                color: "from-purple-50 to-purple-100"
               },
               {
                 title: "일 처리 방식",
                 emoji: "⚡",
                 desc: "계획형? 즉흥형? 마감 직전형? 일할 때의 나는",
-                color: "from-blue-50 to-blue-100"
               },
               {
                 title: "갈등 대처법",
                 emoji: "💬",
                 desc: "싸울 때 나는 회피? 공격? 설득? 수용?",
-                color: "from-green-50 to-green-100"
               },
               {
                 title: "번아웃 체크",
                 emoji: "🔋",
                 desc: "마음의 에너지, 지금 충분한가요?",
-                color: "from-orange-50 to-orange-100"
               },
             ].map((test, idx) => (
               <div
                 key={idx}
-                className={`bg-gradient-to-br ${test.color} rounded-2xl p-6 hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1`}
+                className="bg-gray-50 rounded-2xl p-6 cursor-pointer transition-all duration-200
+                  shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff]
+                  hover:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]
+                  active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
                 onClick={() => router.push(`/test/${idx + 1}`)}
               >
                 <div className="text-5xl mb-4">{test.emoji}</div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
                   {test.title}
                 </h3>
-                <p className="text-sm text-gray-700 leading-relaxed">{test.desc}</p>
-                <div className="mt-4 text-primary-600 font-medium text-sm">
-                  테스트 하러가기 →
+                <p className="text-sm text-gray-600 leading-relaxed">{test.desc}</p>
+                <div className="mt-4 text-primary-600 font-semibold text-sm flex items-center gap-1">
+                  테스트 시작 <span className="text-lg">→</span>
                 </div>
               </div>
             ))}
