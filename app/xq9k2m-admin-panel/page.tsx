@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Stats {
   totalUsers: number;
@@ -13,6 +14,7 @@ interface Stats {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +38,7 @@ export default function AdminPage() {
       if (data.success) {
         setIsAuthenticated(true);
         setStats(data.stats);
+        sessionStorage.setItem('adminPassword', password);
       } else {
         setError(data.error || '인증 실패');
       }
@@ -116,7 +119,12 @@ export default function AdminPage() {
           <>
             {/* 주요 지표 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <StatCard title="총 회원 수" value={stats.totalUsers} icon="👥" />
+              <StatCard
+                title="총 회원 수"
+                value={stats.totalUsers}
+                icon="👥"
+                onClick={() => router.push('/xq9k2m-admin-panel/users')}
+              />
               <StatCard title="총 테스트 수" value={stats.totalTests} icon="📝" />
               <StatCard title="생성된 카드" value={stats.totalCards} icon="🎴" />
               <StatCard title="최근 7일 가입" value={stats.recentUsers} icon="🆕" />
@@ -174,12 +182,26 @@ export default function AdminPage() {
   );
 }
 
-function StatCard({ title, value, icon }: { title: string; value: number; icon: string }) {
+function StatCard({
+  title,
+  value,
+  icon,
+  onClick,
+}: {
+  title: string;
+  value: number;
+  icon: string;
+  onClick?: () => void;
+}) {
   return (
-    <div className="bg-gray-800 rounded-xl p-4">
+    <div
+      className={`bg-gray-800 rounded-xl p-4 ${onClick ? 'cursor-pointer hover:bg-gray-700 transition-colors' : ''}`}
+      onClick={onClick}
+    >
       <div className="text-2xl mb-2">{icon}</div>
       <p className="text-gray-400 text-sm">{title}</p>
       <p className="text-2xl font-bold text-white">{value.toLocaleString()}</p>
+      {onClick && <p className="text-xs text-blue-400 mt-1">클릭하여 상세보기 →</p>}
     </div>
   );
 }
