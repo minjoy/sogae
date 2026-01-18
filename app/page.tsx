@@ -155,6 +155,7 @@ export default function Home() {
               <div
                 key={idx}
                 className="bg-gray-50 rounded-2xl p-6 cursor-pointer transition-all duration-200
+                  border border-gray-200
                   shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff]
                   hover:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]
                   active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
