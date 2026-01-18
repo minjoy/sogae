@@ -203,7 +203,7 @@ export default function TestResultPage() {
   // 메타태그 동적 업데이트
   useEffect(() => {
     if (result && testDef) {
-      const title = `${testDef.title} 결과 | 마이타입`;
+      const title = `${testDef.title} 결과 | 언연이`;
       const description = `나의 ${testDef.title}: ${result.scores?.primaryLabel || ''} - ${testDef.description}`;
       const url = window.location.href;
 
@@ -216,7 +216,7 @@ export default function TestResultPage() {
       updateMetaTag('property', 'og:description', description);
       updateMetaTag('property', 'og:url', url);
       updateMetaTag('property', 'og:type', 'article');
-      updateMetaTag('property', 'og:site_name', '마이타입 - 나만의 연애 사용설명서');
+      updateMetaTag('property', 'og:site_name', '언연이 - 나만의 연애 사용설명서');
       updateMetaTag('property', 'og:image', window.location.origin + '/images/og-test-result.png');
 
       // Twitter Card

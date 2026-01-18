@@ -428,7 +428,7 @@ export default function ShareResultClient({ result }: ShareResultClientProps) {
 
         {/* 푸터 */}
         <div className="text-center mt-8 text-sm text-gray-400">
-          <p>마이타입 - 나만의 연애 사용설명서</p>
+          <p>언연이 - 언제 연애하는게 이득일까</p>
         </div>
       </div>
     </div>

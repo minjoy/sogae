@@ -16,14 +16,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!result) {
     return {
-      title: '잘못된 링크 | 마이타입',
+      title: '잘못된 링크 | 언연이',
       description: '공유 링크가 올바르지 않습니다.',
     };
   }
 
   const testInfo = TEST_INFO[result.t];
   const typeDetail = getTypeDetail(result.t, result.p);
-  const title = `${result.p} - ${testInfo?.title || '테스트'} 결과 | 마이타입`;
+  const title = `${result.p} - ${testInfo?.title || '테스트'} 결과 | 언연이`;
   const description = typeDetail?.desc || `나의 ${testInfo?.title || '테스트'} 결과: ${result.p}`;
 
   return {
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       type: 'article',
-      siteName: '마이타입',
+      siteName: '언연이',
       url: `${siteUrl}/share/test/${code}`,
       images: [
         {
