@@ -95,13 +95,14 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
 
     // 통합 카드 데이터 생성 (확장된 데이터 포함)
     const cardPayload = {
-      // 성격 유형 정보
+      // 성격 유형 정보 (compatibleTypes 포함)
       personalityType: {
         code: personalityType.code,
         name: personalityType.name,
         emoji: personalityType.emoji,
         summary: personalityType.summary,
         description: personalityType.description,
+        compatibleTypes: personalityType.compatibleTypes,
       },
       summaryTitle: personalityType.name,
       emotionLabel: results[0]!.label,
@@ -132,8 +133,6 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
         psychologicalResources: readiness.breakdown.psychologicalResources,
         insights: readiness.breakdown.insights,
       } : null,
-      // 어울리는 상대 유형
-      compatibleTypes: personalityType.compatibleTypes,
     };
 
     // 공유 슬러그 생성
