@@ -38,7 +38,9 @@ export default function AdminPage() {
       if (data.success) {
         setIsAuthenticated(true);
         setStats(data.stats);
-        sessionStorage.setItem('adminPassword', password);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('adminPassword', password);
+        }
       } else {
         setError(data.error || '인증 실패');
       }

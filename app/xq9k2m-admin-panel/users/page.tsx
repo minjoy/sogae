@@ -25,10 +25,12 @@ export default function AdminUsersPage() {
 
   // 세션 스토리지에서 비밀번호 확인
   useEffect(() => {
-    const savedPassword = sessionStorage.getItem('adminPassword');
-    if (savedPassword) {
-      setPassword(savedPassword);
-      fetchUsers(savedPassword);
+    if (typeof window !== 'undefined') {
+      const savedPassword = sessionStorage.getItem('adminPassword');
+      if (savedPassword) {
+        setPassword(savedPassword);
+        fetchUsers(savedPassword);
+      }
     }
   }, []);
 
@@ -53,7 +55,9 @@ export default function AdminUsersPage() {
       if (data.success) {
         setIsAuthenticated(true);
         setUsers(data.users);
-        sessionStorage.setItem('adminPassword', pwd);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('adminPassword', pwd);
+        }
       } else {
         setError(data.error || '인증 실패');
       }
