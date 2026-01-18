@@ -36,14 +36,12 @@ function generateKoreanName(gender: 'male' | 'female'): string {
 function generateNickname(name: string): string {
   const suffixes = ['', '🌟', '✨', '💫', '🌈', '🍀', '🌸', '🌻'];
   const suffix = getRandomElement(suffixes);
-  // 일부는 이름 그대로, 일부는 별명 형태
+  const adjectives = ['행복한', '즐거운', '따뜻한', '귀여운', '멋진', '사랑스런', '빛나는', '포근한'];
   const nicknameStyles = [
     name,
-    name.slice(0, 1) + '**',
-    name.slice(0, 2) + '*',
     name + suffix,
-    '익명의 ' + (Math.random() > 0.5 ? '곰돌이' : '토끼'),
-    '행복한 ' + name.slice(1),
+    getRandomElement(adjectives) + ' ' + name.slice(1),
+    name.slice(1) + suffix,
   ];
   return getRandomElement(nicknameStyles);
 }

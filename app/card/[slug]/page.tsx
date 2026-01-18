@@ -25,6 +25,7 @@ export default function CardPage() {
   const [codeExplanations, setCodeExplanations] = useState<CodeExplanation[]>([]);
   const [expandedTypes, setExpandedTypes] = useState<Record<number, boolean>>({});
   const [matchingUsers, setMatchingUsers] = useState<any[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     // 로그인 상태 확인
@@ -450,17 +451,31 @@ export default function CardPage() {
               <p className="text-xs text-gray-500 mb-4">
                 위 유형에 해당하는 사람들이에요
               </p>
-              <div className="overflow-x-auto scrollbar-hide">
-                <div className="flex gap-3 pb-2" style={{ width: 'max-content' }}>
-                  {matchingUsers.map((user, idx) => (
+              <div
+                className="overflow-hidden"
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+              >
+                <div
+                  className="flex gap-3 pb-2"
+                  style={{
+                    animation: matchingUsers.length > 3
+                      ? `marquee ${matchingUsers.length * 4}s linear infinite`
+                      : 'none',
+                    animationPlayState: isPaused ? 'paused' : 'running',
+                    width: 'max-content',
+                  }}
+                >
+                  {/* 무한 루프를 위해 리스트 반복 (4명 이상일 때만) */}
+                  {(matchingUsers.length > 3 ? [...matchingUsers, ...matchingUsers] : matchingUsers).map((user, idx) => (
                     <div
                       key={idx}
-                      className="bg-white rounded-xl p-4 shadow-sm min-w-[140px] flex flex-col items-center"
+                      className="bg-white rounded-xl p-4 shadow-sm min-w-[140px] flex flex-col items-center flex-shrink-0"
                     >
                       <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-xl mb-2">
                         {user.gender === 'male' ? '👨' : user.gender === 'female' ? '👩' : '🧑'}
                       </div>
-                      <p className="font-semibold text-gray-900 text-sm mb-1 truncate max-w-[120px]">
+                      <p className="font-semibold text-gray-900 text-sm mb-1">
                         {user.nickname}
                       </p>
                       <div className="bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full text-xs font-bold">
@@ -473,6 +488,16 @@ export default function CardPage() {
                   ))}
                 </div>
               </div>
+              <style jsx>{`
+                @keyframes marquee {
+                  0% {
+                    transform: translateX(0);
+                  }
+                  100% {
+                    transform: translateX(-50%);
+                  }
+                }
+              `}</style>
             </div>
           )}
 
