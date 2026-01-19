@@ -11,7 +11,6 @@ export async function GET(
     const card = await prisma.unifiedCard.findUnique({
       where: {
         shareSlug: slug,
-        isActive: true,
       },
       include: {
         user: {
