@@ -39,7 +39,7 @@ export default function DujjonkuMapPage() {
   const markersRef = useRef<any[]>([]);
   const clustererRef = useRef<any>(null);
 
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<StoreDetail | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -65,6 +65,18 @@ export default function DujjonkuMapPage() {
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
   }, []);
+
+  // SDK 로딩 완료 후 지도 초기화
+  useEffect(() => {
+    if (!sdkLoaded) return;
+
+    // 약간의 지연을 두어 DOM이 확실히 렌더링되도록
+    const timer = setTimeout(() => {
+      initMap();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [sdkLoaded]);
 
   // 카카오맵 초기화
   const initMap = useCallback(() => {
@@ -107,8 +119,6 @@ export default function DujjonkuMapPage() {
 
     // 초기 매장 로드
     fetchStores();
-
-    setIsMapLoaded(true);
   }, []);
 
   // 매장 목록 조회
@@ -346,7 +356,7 @@ export default function DujjonkuMapPage() {
       <Script
         src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=4608bb9158fa17e55fe0999938e4e812&libraries=services,clusterer&autoload=false`}
         onLoad={() => {
-          window.kakao.maps.load(initMap);
+          window.kakao.maps.load(() => setSdkLoaded(true));
         }}
       />
 
