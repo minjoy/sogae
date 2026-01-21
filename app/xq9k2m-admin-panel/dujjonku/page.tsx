@@ -235,7 +235,7 @@ export default function AdminDujjonkuPage() {
 
       if (response.ok) {
         setIsCreateOpen(false);
-        setCreateForm({ name: '', category: 'dujjonku', address: '', lat: '', lng: '', phone: '', description: '', imageUrl: '' });
+        setCreateForm({ name: '', category: 'dujjonku', dessertName: '', address: '', lat: '', lng: '', phone: '', description: '', imageUrl: '' });
         fetchStores();
       }
     } catch (error) {
