@@ -29,6 +29,12 @@ export default function Header() {
           </button>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/dujjonku-map')}
+              className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
+            >
+              두쫀쿠맵
+            </button>
             {isLoggedIn ? (
               <button
                 onClick={() => router.push('/my')}

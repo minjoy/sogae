@@ -191,6 +191,15 @@ export default function Home() {
           </Button>
         </div>
       </main>
+
+      {/* 두쫀쿠맵 플로팅 버튼 */}
+      <button
+        onClick={() => router.push('/dujjonku-map')}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-pink-400 to-primary-500 rounded-full shadow-lg flex items-center justify-center z-40 hover:scale-110 transition-transform"
+        title="두쫀쿠맵"
+      >
+        <span className="text-2xl">🍪</span>
+      </button>
     </div>
   );
 }

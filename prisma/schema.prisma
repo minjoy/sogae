@@ -20,13 +20,16 @@ model User {
   birthyear       Int?
   personalityCode String?  @map("personality_code") // 성격 유형 코드 (예: SHCP)
   isDummy         Boolean  @default(false) @map("is_dummy") // 더미 사용자 여부
+  sweetnessPoints Int      @default(0) @map("sweetness_points") // 달달함 점수
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations
-  testResults   TestResult[]
-  unifiedCards  UnifiedCard[]
-  datingState   DatingState?
+  testResults     TestResult[]
+  unifiedCards    UnifiedCard[]
+  datingState     DatingState?
+  dujjonkuStores  DujjonkuStore[]  // 등록한 두쫀쿠 매장
+  storeReports    StoreReport[]    // 신고한 매장
 
   @@index([personalityCode])
   @@map("users")
@@ -79,4 +82,47 @@ model DatingState {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("dating_state")
+}
+
+// 두쫀쿠 매장 테이블
+model DujjonkuStore {
+  id          String   @id @default(uuid())
+  name        String   // 매장명
+  address     String   // 주소
+  lat         Float    // 위도
+  lng         Float    // 경도
+  phone       String?  // 전화번호
+  description String?  @db.Text // 매장 설명
+  imageUrl    String?  @map("image_url") // 매장 이미지 URL
+  clickCount  Int      @default(0) @map("click_count") // 클릭 수
+  reportCount Int      @default(0) @map("report_count") // 신고 수
+  isHidden    Boolean  @default(false) @map("is_hidden") // 숨김 여부 (3회 신고 시 자동 숨김)
+  isAdmin     Boolean  @default(false) @map("is_admin") // 관리자가 등록했는지 여부
+  userId      String?  @map("user_id") // 등록한 사용자 (관리자 등록 시 null)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user    User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  reports StoreReport[]
+
+  @@index([lat, lng])
+  @@index([isHidden])
+  @@map("dujjonku_stores")
+}
+
+// 매장 신고 테이블
+model StoreReport {
+  id        String   @id @default(uuid())
+  storeId   String   @map("store_id")
+  userId    String   @map("user_id")
+  reason    String   // 신고 사유
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  store DujjonkuStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, userId]) // 한 사용자가 같은 매장을 중복 신고 방지
+  @@map("store_reports")
 }
