@@ -415,7 +415,7 @@ export default function DujjonkuMapPage() {
 
       {/* 매장 상세 모달 */}
       {isDetailOpen && selectedStore && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-[200] flex items-end justify-center">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setIsDetailOpen(false)}
@@ -471,7 +471,7 @@ export default function DujjonkuMapPage() {
 
       {/* 매장 등록 모달 */}
       {isRegisterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setIsRegisterOpen(false)}
@@ -574,7 +574,7 @@ export default function DujjonkuMapPage() {
 
       {/* 신고 모달 */}
       {isReportOpen && selectedStore && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setIsReportOpen(false)}
