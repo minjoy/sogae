@@ -457,21 +457,23 @@ export default function DujjonkuMapPage() {
           <div id="map" className="w-full h-full" />
 
           {/* 카테고리 필터 버튼 */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => handleCategoryChange(cat.key)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  selectedCategory === cat.key
-                    ? 'bg-primary-500 text-white shadow-lg'
-                    : 'bg-white/90 text-gray-700 hover:bg-white shadow'
-                }`}
-              >
-                <span className="mr-1">{cat.emoji}</span>
-                {cat.label}
-              </button>
-            ))}
+          <div className="absolute top-4 left-0 right-0 z-10 px-4">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => handleCategoryChange(cat.key)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                    selectedCategory === cat.key
+                      ? 'bg-primary-500 text-white shadow-lg'
+                      : 'bg-white/90 text-gray-700 hover:bg-white shadow'
+                  }`}
+                >
+                  <span className="mr-1">{cat.emoji}</span>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* 현재 위치 버튼 */}
@@ -822,6 +824,13 @@ export default function DujjonkuMapPage() {
         }
         .animate-slide-up {
           animation: slide-up 0.3s ease-out;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </>
