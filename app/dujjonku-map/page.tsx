@@ -64,6 +64,11 @@ export default function DujjonkuMapPage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
+
+    // 이미 SDK가 로드되어 있는지 확인 (클라이언트 사이드 네비게이션 시)
+    if (window.kakao && window.kakao.maps) {
+      setSdkLoaded(true);
+    }
   }, []);
 
   // SDK 로딩 완료 후 지도 초기화
