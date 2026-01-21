@@ -449,7 +449,12 @@ export default function DujjonkuMapPage() {
             </svg>
           </button>
           <h1 className="text-lg font-bold text-gray-900">두쫀쿠맵</h1>
-          <div className="w-10" /> {/* 균형용 */}
+          <button
+            onClick={() => router.push('/test')}
+            className="px-3 py-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
+          >
+            마음테스트
+          </button>
         </header>
 
         {/* 지도 영역 */}
