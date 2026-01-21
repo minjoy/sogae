@@ -67,7 +67,7 @@ async function handleCreateStore(request: AuthenticatedRequest) {
   try {
     const userId = request.user!.userId;
     const body = await request.json();
-    const { name, category, categories, address, lat, lng, phone, description, imageUrl } = body;
+    const { name, category, categories, address, lat, lng, phone, description, imageUrl, dessertName } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -76,15 +76,47 @@ async function handleCreateStore(request: AuthenticatedRequest) {
       );
     }
 
+    const parsedLat = parseFloat(lat);
+    const parsedLng = parseFloat(lng);
+
+    // 위치 기반 중복 체크 (약 10m 반경 내 동일 매장 확인)
+    const DUPLICATE_THRESHOLD = 0.0001; // 약 10m
+    const existingStore = await prisma.dujjonkuStore.findFirst({
+      where: {
+        lat: { gte: parsedLat - DUPLICATE_THRESHOLD, lte: parsedLat + DUPLICATE_THRESHOLD },
+        lng: { gte: parsedLng - DUPLICATE_THRESHOLD, lte: parsedLng + DUPLICATE_THRESHOLD },
+        isHidden: false,
+      },
+    });
+
+    if (existingStore) {
+      return NextResponse.json(
+        { error: `이미 등록된 매장입니다: ${existingStore.name}` },
+        { status: 400 }
+      );
+    }
+
     // 카테고리 검증 (복수 카테고리 지원)
     let validCategory: string;
+    let categoryList: string[] = [];
     if (Array.isArray(categories) && categories.length > 0) {
       // 배열로 받은 경우 - 유효한 카테고리만 필터링 후 쉼표로 구분
       const validCategories = categories.filter((c: string) => CATEGORIES.includes(c as Category));
+      categoryList = validCategories;
       validCategory = validCategories.length > 0 ? validCategories.join(',') : 'dujjonku';
     } else {
       // 단일 카테고리로 받은 경우 (기존 호환성)
       validCategory = CATEGORIES.includes(category) ? category : 'dujjonku';
+      categoryList = [validCategory];
+    }
+
+    // 두바이파생 또는 시그니처간식 선택 시 디저트명 필수
+    const needsDessertName = categoryList.includes('dubai') || categoryList.includes('signature');
+    if (needsDessertName && !dessertName) {
+      return NextResponse.json(
+        { error: '두바이파생 또는 시그니처간식 선택 시 디저트명을 입력해주세요' },
+        { status: 400 }
+      );
     }
 
     // 매장 생성
@@ -92,9 +124,10 @@ async function handleCreateStore(request: AuthenticatedRequest) {
       data: {
         name,
         category: validCategory,
+        dessertName: needsDessertName ? dessertName : null,
         address,
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
+        lat: parsedLat,
+        lng: parsedLng,
         phone: phone || null,
         description: description || null,
         imageUrl: imageUrl || null,

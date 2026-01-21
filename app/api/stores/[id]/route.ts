@@ -33,6 +33,7 @@ export async function GET(
         id: store.id,
         name: store.name,
         category: store.category,
+        dessertName: store.dessertName,
         address: store.address,
         lat: store.lat,
         lng: store.lng,

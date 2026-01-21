@@ -7,6 +7,7 @@ interface Store {
   id: string;
   name: string;
   category: string;
+  dessertName: string | null;
   address: string;
   lat: number;
   lng: number;
@@ -20,6 +21,37 @@ interface Store {
   createdAt: string;
   user: { nickname: string; email: string } | null;
   _count: { reports: number };
+}
+
+interface EditRequest {
+  id: string;
+  storeId: string;
+  userId: string;
+  name: string | null;
+  category: string | null;
+  dessertName: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  phone: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  status: string;
+  adminNote: string | null;
+  createdAt: string;
+  processedAt: string | null;
+  store: {
+    id: string;
+    name: string;
+    category: string;
+    dessertName: string | null;
+    address: string;
+    lat: number;
+    lng: number;
+    phone: string | null;
+    description: string | null;
+    imageUrl: string | null;
+  };
 }
 
 // 카테고리 정보
@@ -39,6 +71,7 @@ interface Pagination {
 const ADMIN_KEY = 'sogae-admin-2024';
 
 export default function AdminDujjonkuPage() {
+  const [activeTab, setActiveTab] = useState<'stores' | 'editRequests'>('stores');
   const [stores, setStores] = useState<Store[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [filter, setFilter] = useState('all');
@@ -49,6 +82,7 @@ export default function AdminDujjonkuPage() {
   const [createForm, setCreateForm] = useState({
     name: '',
     category: 'dujjonku',
+    dessertName: '',
     address: '',
     lat: '',
     lng: '',
@@ -56,6 +90,13 @@ export default function AdminDujjonkuPage() {
     description: '',
     imageUrl: '',
   });
+
+  // 수정 요청 관련 상태
+  const [editRequests, setEditRequests] = useState<EditRequest[]>([]);
+  const [editRequestFilter, setEditRequestFilter] = useState('pending');
+  const [selectedEditRequest, setSelectedEditRequest] = useState<EditRequest | null>(null);
+  const [isEditRequestDetailOpen, setIsEditRequestDetailOpen] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
 
   const fetchStores = async (page = 1) => {
     setIsLoading(true);
@@ -78,8 +119,66 @@ export default function AdminDujjonkuPage() {
   };
 
   useEffect(() => {
-    fetchStores();
-  }, [filter]);
+    if (activeTab === 'stores') {
+      fetchStores();
+    } else {
+      fetchEditRequests();
+    }
+  }, [filter, activeTab, editRequestFilter]);
+
+  // 수정 요청 목록 조회
+  const fetchEditRequests = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `/api/admin/store-edit-requests?status=${editRequestFilter}`,
+        { headers: { 'x-admin-key': ADMIN_KEY } }
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        setEditRequests(data.editRequests);
+      }
+    } catch (error) {
+      console.error('Failed to fetch edit requests:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 수정 요청 승인/거절
+  const handleEditRequestAction = async (
+    requestId: string,
+    action: 'approve' | 'reject',
+    applyFields?: string[]
+  ) => {
+    try {
+      const response = await fetch(`/api/admin/store-edit-requests/${requestId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': ADMIN_KEY,
+        },
+        body: JSON.stringify({
+          action,
+          applyFields: action === 'approve' ? applyFields : undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message);
+        setIsEditRequestDetailOpen(false);
+        fetchEditRequests();
+      } else {
+        alert(data.error || '처리에 실패했습니다');
+      }
+    } catch (error) {
+      console.error('Failed to process edit request:', error);
+      alert('처리 중 오류가 발생했습니다');
+    }
+  };
 
   const handleToggleHidden = async (storeId: string, currentHidden: boolean) => {
     try {
@@ -171,51 +270,108 @@ export default function AdminDujjonkuPage() {
             </Link>
             <h1 className="text-2xl font-bold text-gray-900 mt-1">두쫀쿠맵 관리</h1>
           </div>
+          {activeTab === 'stores' && (
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="px-4 py-2 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600"
+            >
+              + 매장 등록
+            </button>
+          )}
+        </div>
+
+        {/* 탭 */}
+        <div className="flex gap-2 mb-6">
           <button
-            onClick={() => setIsCreateOpen(true)}
-            className="px-4 py-2 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600"
+            onClick={() => setActiveTab('stores')}
+            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === 'stores'
+                ? 'bg-primary-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
           >
-            + 매장 등록
+            매장 목록
+          </button>
+          <button
+            onClick={() => setActiveTab('editRequests')}
+            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === 'editRequests'
+                ? 'bg-primary-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            수정 요청
+            {editRequests.filter((r) => r.status === 'pending').length > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                {editRequests.filter((r) => r.status === 'pending').length}
+              </span>
+            )}
           </button>
         </div>
 
-        {/* 필터 */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {[
-            { value: 'all', label: '전체' },
-            { value: 'hidden', label: '숨김' },
-            { value: 'reported', label: '신고됨' },
-          ].map((item) => (
-            <button
-              key={item.value}
-              onClick={() => setFilter(item.value)}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                filter === item.value
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-          <span className="w-px bg-gray-300 mx-2" />
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.key}
-              onClick={() => setFilter(cat.key)}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                filter === cat.key
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              {cat.emoji} {cat.label}
-            </button>
-          ))}
-        </div>
+        {/* 필터 - 매장 목록 탭 */}
+        {activeTab === 'stores' && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[
+              { value: 'all', label: '전체' },
+              { value: 'hidden', label: '숨김' },
+              { value: 'reported', label: '신고됨' },
+            ].map((item) => (
+              <button
+                key={item.value}
+                onClick={() => setFilter(item.value)}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  filter === item.value
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+            <span className="w-px bg-gray-300 mx-2" />
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => setFilter(cat.key)}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  filter === cat.key
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {cat.emoji} {cat.label}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {/* 통계 */}
-        {pagination && (
+        {/* 필터 - 수정 요청 탭 */}
+        {activeTab === 'editRequests' && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {[
+              { value: 'pending', label: '대기 중' },
+              { value: 'approved', label: '승인됨' },
+              { value: 'rejected', label: '거절됨' },
+              { value: 'all', label: '전체' },
+            ].map((item) => (
+              <button
+                key={item.value}
+                onClick={() => setEditRequestFilter(item.value)}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  editRequestFilter === item.value
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 통계 - 매장 목록 */}
+        {activeTab === 'stores' && pagination && (
           <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
             <p className="text-gray-600">
               총 <span className="font-bold text-primary-600">{pagination.total}</span>개 매장
@@ -223,7 +379,17 @@ export default function AdminDujjonkuPage() {
           </div>
         )}
 
-        {/* 테이블 */}
+        {/* 통계 - 수정 요청 */}
+        {activeTab === 'editRequests' && (
+          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+            <p className="text-gray-600">
+              총 <span className="font-bold text-primary-600">{editRequests.length}</span>개 수정 요청
+            </p>
+          </div>
+        )}
+
+        {/* 매장 목록 테이블 */}
+        {activeTab === 'stores' && (
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -325,7 +491,7 @@ export default function AdminDujjonkuPage() {
         </div>
 
         {/* 페이지네이션 */}
-        {pagination && pagination.totalPages > 1 && (
+        {activeTab === 'stores' && pagination && pagination.totalPages > 1 && (
           <div className="flex justify-center gap-2 mt-4">
             {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
               <button
@@ -340,6 +506,92 @@ export default function AdminDujjonkuPage() {
                 {page}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* 수정 요청 목록 */}
+        {activeTab === 'editRequests' && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">매장명</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">수정 내용</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">상태</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">요청일</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">액션</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                      로딩 중...
+                    </td>
+                  </tr>
+                ) : editRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                      수정 요청이 없습니다
+                    </td>
+                  </tr>
+                ) : (
+                  editRequests.map((req) => (
+                    <tr key={req.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-gray-900">{req.store.name}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {[
+                          req.name && '매장명',
+                          req.category && '카테고리',
+                          req.dessertName && '디저트명',
+                          req.address && '주소',
+                          req.phone && '전화번호',
+                          req.description && '설명',
+                          req.imageUrl && '이미지',
+                        ].filter(Boolean).join(', ') || '없음'}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          req.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          req.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {req.status === 'pending' ? '대기' :
+                           req.status === 'approved' ? '승인' : '거절'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm text-gray-600">
+                        {new Date(req.createdAt).toLocaleDateString('ko-KR')}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => {
+                            setSelectedEditRequest(req);
+                            setSelectedFields([
+                              req.name && 'name',
+                              req.category && 'category',
+                              req.dessertName && 'dessertName',
+                              req.address && 'address',
+                              req.lat && 'lat',
+                              req.lng && 'lng',
+                              req.phone && 'phone',
+                              req.description && 'description',
+                              req.imageUrl && 'imageUrl',
+                            ].filter((f): f is string => !!f));
+                            setIsEditRequestDetailOpen(true);
+                          }}
+                          className="px-3 py-1 bg-primary-100 text-primary-700 rounded text-xs font-medium hover:bg-primary-200"
+                        >
+                          상세보기
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -562,6 +814,242 @@ export default function AdminDujjonkuPage() {
             >
               등록하기
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 수정 요청 상세 모달 */}
+      {isEditRequestDetailOpen && selectedEditRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsEditRequestDetailOpen(false)} />
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setIsEditRequestDetailOpen(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-900 mb-2">수정 요청 상세</h2>
+            <p className="text-gray-500 text-sm mb-6">매장: {selectedEditRequest.store.name}</p>
+
+            {/* 상태 표시 */}
+            <div className="mb-4">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                selectedEditRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                selectedEditRequest.status === 'approved' ? 'bg-green-100 text-green-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {selectedEditRequest.status === 'pending' ? '대기 중' :
+                 selectedEditRequest.status === 'approved' ? '승인됨' : '거절됨'}
+              </span>
+            </div>
+
+            {/* 변경 내용 비교 */}
+            <div className="space-y-4 mb-6">
+              <h3 className="font-semibold text-gray-900">변경 요청 내용</h3>
+              <p className="text-xs text-gray-500">적용할 항목을 선택하세요</p>
+
+              {selectedEditRequest.name && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('name')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'name']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'name'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">매장명</p>
+                      <p className="text-sm text-gray-500">현재: {selectedEditRequest.store.name}</p>
+                      <p className="text-sm text-primary-600">변경: {selectedEditRequest.name}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.category && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('category')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'category']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'category'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">카테고리</p>
+                      <p className="text-sm text-gray-500">현재: {selectedEditRequest.store.category}</p>
+                      <p className="text-sm text-primary-600">변경: {selectedEditRequest.category}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.dessertName !== null && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('dessertName')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'dessertName']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'dessertName'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">디저트명</p>
+                      <p className="text-sm text-gray-500">현재: {selectedEditRequest.store.dessertName || '없음'}</p>
+                      <p className="text-sm text-primary-600">변경: {selectedEditRequest.dessertName || '없음'}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.address && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('address')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'address', 'lat', 'lng']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => !['address', 'lat', 'lng'].includes(f)));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">주소</p>
+                      <p className="text-sm text-gray-500">현재: {selectedEditRequest.store.address}</p>
+                      <p className="text-sm text-primary-600">변경: {selectedEditRequest.address}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.phone !== null && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('phone')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'phone']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'phone'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">전화번호</p>
+                      <p className="text-sm text-gray-500">현재: {selectedEditRequest.store.phone || '없음'}</p>
+                      <p className="text-sm text-primary-600">변경: {selectedEditRequest.phone || '없음'}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.description !== null && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('description')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'description']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'description'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">설명</p>
+                      <p className="text-sm text-gray-500">현재: {selectedEditRequest.store.description || '없음'}</p>
+                      <p className="text-sm text-primary-600">변경: {selectedEditRequest.description || '없음'}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.imageUrl !== null && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('imageUrl')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'imageUrl']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'imageUrl'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">이미지 URL</p>
+                      <p className="text-sm text-gray-500 break-all">현재: {selectedEditRequest.store.imageUrl || '없음'}</p>
+                      <p className="text-sm text-primary-600 break-all">변경: {selectedEditRequest.imageUrl || '없음'}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* 액션 버튼 */}
+            {selectedEditRequest.status === 'pending' && (
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleEditRequestAction(selectedEditRequest.id, 'approve', selectedFields)}
+                  disabled={selectedFields.length === 0}
+                  className="flex-1 py-3 bg-green-500 text-white rounded-xl font-semibold hover:bg-green-600 disabled:opacity-50"
+                >
+                  선택 항목 승인
+                </button>
+                <button
+                  onClick={() => handleEditRequestAction(selectedEditRequest.id, 'reject')}
+                  className="px-6 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600"
+                >
+                  거절
+                </button>
+              </div>
+            )}
+
+            {selectedEditRequest.status !== 'pending' && (
+              <div className="p-4 bg-gray-100 rounded-xl text-center text-gray-600">
+                이미 처리된 요청입니다
+              </div>
+            )}
           </div>
         </div>
       )}

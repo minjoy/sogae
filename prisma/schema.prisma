@@ -88,7 +88,8 @@ model DatingState {
 model DujjonkuStore {
   id          String   @id @default(uuid())
   name        String   // 매장명
-  category    String   @default("dujjonku") // 카테고리: dujjonku, dubai, signature
+  category    String   @default("dujjonku") // 카테고리: dujjonku, dubai, signature (복수 시 쉼표 구분)
+  dessertName String?  @map("dessert_name") // 디저트명 (두바이파생, 시그니처간식 선택 시 필수)
   address     String   // 주소
   lat         Float    // 위도
   lng         Float    // 경도
@@ -104,8 +105,9 @@ model DujjonkuStore {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user    User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  reports StoreReport[]
+  user         User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  reports      StoreReport[]
+  editRequests StoreEditRequest[]
 
   @@index([lat, lng])
   @@index([isHidden])
@@ -127,4 +129,34 @@ model StoreReport {
 
   @@unique([storeId, userId]) // 한 사용자가 같은 매장을 중복 신고 방지
   @@map("store_reports")
+}
+
+// 매장 수정 요청 테이블
+model StoreEditRequest {
+  id          String   @id @default(uuid())
+  storeId     String   @map("store_id")
+  userId      String   @map("user_id")
+
+  // 수정 요청 데이터 (변경하려는 필드만 포함)
+  name        String?  // 수정 요청 매장명
+  category    String?  // 수정 요청 카테고리
+  dessertName String?  @map("dessert_name") // 수정 요청 디저트명
+  address     String?  // 수정 요청 주소
+  lat         Float?   // 수정 요청 위도
+  lng         Float?   // 수정 요청 경도
+  phone       String?  // 수정 요청 전화번호
+  description String?  @db.Text // 수정 요청 설명
+  imageUrl    String?  @map("image_url") // 수정 요청 이미지 URL
+
+  status      String   @default("pending") // pending, approved, rejected
+  adminNote   String?  @map("admin_note") @db.Text // 관리자 메모
+  createdAt   DateTime @default(now()) @map("created_at")
+  processedAt DateTime? @map("processed_at") // 처리 일시
+
+  // Relations
+  store DujjonkuStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([status])
+  @@map("store_edit_requests")
 }

@@ -32,6 +32,7 @@ interface StoreDetail {
   id: string;
   name: string;
   category: string;
+  dessertName: string | null;
   address: string;
   lat: number;
   lng: number;
@@ -65,6 +66,7 @@ export default function DujjonkuMapPage() {
   const [registerForm, setRegisterForm] = useState({
     name: '',
     categories: ['dujjonku'] as string[],
+    dessertName: '',
     address: '',
     lat: 0,
     lng: 0,
@@ -75,6 +77,23 @@ export default function DujjonkuMapPage() {
 
   // 신고 폼
   const [reportReason, setReportReason] = useState('');
+
+  // 수정 요청 모달
+  const [isEditRequestOpen, setIsEditRequestOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    category: '',
+    dessertName: '',
+    address: '',
+    lat: 0,
+    lng: 0,
+    phone: '',
+    description: '',
+    imageUrl: '',
+  });
+
+  // 두바이파생/시그니처간식 선택 여부 확인
+  const needsDessertName = registerForm.categories.includes('dubai') || registerForm.categories.includes('signature');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -261,6 +280,7 @@ export default function DujjonkuMapPage() {
     setRegisterForm({
       name: '',
       categories: ['dujjonku'],
+      dessertName: '',
       address: '',
       lat: 0,
       lng: 0,
@@ -269,6 +289,64 @@ export default function DujjonkuMapPage() {
       imageUrl: '',
     });
     setIsRegisterOpen(true);
+  };
+
+  // 수정 요청 모달 열기
+  const openEditRequestModal = () => {
+    if (!isLoggedIn) {
+      alert('로그인이 필요합니다');
+      router.push('/login');
+      return;
+    }
+
+    if (!selectedStore) return;
+
+    // 현재 매장 정보로 폼 초기화
+    setEditForm({
+      name: selectedStore.name,
+      category: selectedStore.category,
+      dessertName: selectedStore.dessertName || '',
+      address: selectedStore.address,
+      lat: selectedStore.lat,
+      lng: selectedStore.lng,
+      phone: selectedStore.phone || '',
+      description: selectedStore.description || '',
+      imageUrl: selectedStore.imageUrl || '',
+    });
+    setIsDetailOpen(false);
+    setIsEditRequestOpen(true);
+  };
+
+  // 수정 요청 제출
+  const handleEditRequest = async () => {
+    if (!selectedStore) return;
+
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/stores/${selectedStore.id}/edit-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editForm),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message);
+        setIsEditRequestOpen(false);
+      } else {
+        alert(data.error || '수정 요청에 실패했습니다');
+      }
+    } catch (error) {
+      console.error('Edit request error:', error);
+      alert('수정 요청 중 오류가 발생했습니다');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 카테고리 변경 핸들러
@@ -563,7 +641,27 @@ export default function DujjonkuMapPage() {
               })}
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900 mb-2 pr-8">{selectedStore.name}</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-bold text-gray-900 pr-8">{selectedStore.name}</h2>
+              {/* 수정하기 버튼 */}
+              <button
+                onClick={openEditRequestModal}
+                className="p-2 text-gray-500 hover:text-primary-600 transition-colors"
+                title="수정 요청"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 디저트명 표시 */}
+            {selectedStore.dessertName && (
+              <p className="text-primary-600 text-sm font-medium mb-2">
+                {selectedStore.dessertName}
+              </p>
+            )}
+
             <p className="text-gray-600 text-sm mb-4">{selectedStore.address}</p>
 
             {selectedStore.phone && (
@@ -666,6 +764,25 @@ export default function DujjonkuMapPage() {
                   })}
                 </div>
               </div>
+
+              {/* 디저트명 (두바이파생/시그니처간식 선택 시 필수) */}
+              {needsDessertName && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    디저트명 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={registerForm.dessertName}
+                    onChange={(e) => setRegisterForm((prev) => ({ ...prev, dessertName: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="예: 두바이초콜릿, 크로플 등"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    해당 매장에서 판매하는 대표 디저트명을 입력해주세요
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -842,6 +959,121 @@ export default function DujjonkuMapPage() {
               className="w-full mt-6 py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 disabled:opacity-50"
             >
               {isLoading ? '신고 중...' : '신고하기'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 수정 요청 모달 */}
+      {isEditRequestOpen && selectedStore && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsEditRequestOpen(false)}
+          />
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setIsEditRequestOpen(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-900 mb-2">매장 정보 수정 요청</h2>
+            <p className="text-gray-500 text-sm mb-6">수정 요청은 관리자 승인 후 반영됩니다</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">매장명</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">카테고리</label>
+                <select
+                  value={editForm.category}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                >
+                  <option value="dujjonku">두쫀쿠</option>
+                  <option value="dubai">두바이파생</option>
+                  <option value="signature">시그니처간식</option>
+                  <option value="dujjonku,dubai">두쫀쿠 + 두바이파생</option>
+                  <option value="dujjonku,signature">두쫀쿠 + 시그니처간식</option>
+                  <option value="dubai,signature">두바이파생 + 시그니처간식</option>
+                  <option value="dujjonku,dubai,signature">전체</option>
+                </select>
+              </div>
+
+              {(editForm.category.includes('dubai') || editForm.category.includes('signature')) && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">디저트명</label>
+                  <input
+                    type="text"
+                    value={editForm.dessertName}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, dessertName: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="예: 두바이초콜릿"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">주소</label>
+                <input
+                  type="text"
+                  value={editForm.address}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, address: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">전화번호</label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="예: 02-1234-5678"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">매장 설명</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">이미지 URL</label>
+                <input
+                  type="url"
+                  value={editForm.imageUrl}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleEditRequest}
+              disabled={isLoading}
+              className="w-full mt-6 py-3 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600 disabled:opacity-50"
+            >
+              {isLoading ? '요청 중...' : '수정 요청하기'}
             </button>
           </div>
         </div>
