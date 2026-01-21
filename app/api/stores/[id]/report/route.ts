@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // 신고 생성 및 신고 수 증가
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: typeof prisma) => {
       await tx.storeReport.create({
         data: {
           storeId,

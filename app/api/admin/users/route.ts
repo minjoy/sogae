@@ -34,7 +34,15 @@ export async function POST(request: Request) {
       },
     });
 
-    const formattedUsers = users.map((user) => ({
+    const formattedUsers = users.map((user: {
+      id: string;
+      email: string;
+      nickname: string;
+      gender: string | null;
+      birthyear: number | null;
+      createdAt: Date;
+      _count: { testResults: number; unifiedCards: number };
+    }) => ({
       id: user.id,
       email: user.email,
       nickname: user.nickname,

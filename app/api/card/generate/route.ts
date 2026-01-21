@@ -30,7 +30,7 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
     );
 
     // 5개 테스트 모두 완료했는지 확인
-    if (results.some((r) => r === null)) {
+    if (results.some((r: typeof results[number]) => r === null)) {
       return NextResponse.json(
         { error: '모든 테스트를 완료해주세요' },
         { status: 400 }
@@ -39,7 +39,7 @@ async function handleGenerateCard(request: AuthenticatedRequest) {
 
     // TestScore 객체로 변환
     const testScores: { [testType: number]: TestScore } = {};
-    results.forEach((result, index) => {
+    results.forEach((result: typeof results[number], index: number) => {
       if (result) {
         const testType = index + 1;
         const scores = result.scores as Record<string, any>;

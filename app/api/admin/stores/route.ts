@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
 
     const where: any = {};
     if (filter === 'hidden') where.isHidden = true;
-    if (filter === 'reported') where.reportCount = { gt: 0 };
+    else if (filter === 'reported') where.reportCount = { gt: 0 };
+    else if (['dujjonku', 'dubai', 'signature'].includes(filter)) where.category = filter;
 
     const [stores, total] = await Promise.all([
       prisma.dujjonkuStore.findMany({
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, address, lat, lng, phone, description, imageUrl } = body;
+    const { name, category, address, lat, lng, phone, description, imageUrl } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -73,9 +74,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 카테고리 검증
+    const validCategories = ['dujjonku', 'dubai', 'signature'];
+    const validCategory = validCategories.includes(category) ? category : 'dujjonku';
+
     const store = await prisma.dujjonkuStore.create({
       data: {
         name,
+        category: validCategory,
         address,
         lat: parseFloat(lat),
         lng: parseFloat(lng),

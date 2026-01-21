@@ -64,13 +64,13 @@ export async function POST(request: Request) {
       5: '번아웃',
     };
 
-    const testStats = testsByType.map((t) => ({
+    const testStats = testsByType.map((t: { testType: number; _count: { id: number } }) => ({
       type: t.testType,
       name: testTypeNames[t.testType] || `테스트 ${t.testType}`,
       count: t._count.id,
     }));
 
-    const readinessStats = readinessDistribution.map((r) => ({
+    const readinessStats = readinessDistribution.map((r: { modeLabel: string; _count: { userId: number } }) => ({
       label: r.modeLabel,
       count: r._count.userId,
     }));

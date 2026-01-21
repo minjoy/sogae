@@ -32,6 +32,7 @@ export async function GET(
       store: {
         id: store.id,
         name: store.name,
+        category: store.category,
         address: store.address,
         lat: store.lat,
         lng: store.lng,

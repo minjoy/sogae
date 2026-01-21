@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 
-// GET: 매장 목록 조회 (맵 바운드 기반)
+// 카테고리 상수
+const CATEGORIES = ['dujjonku', 'dubai', 'signature'] as const;
+type Category = typeof CATEGORIES[number];
+
+// GET: 매장 목록 조회 (맵 바운드 기반 + 카테고리 필터)
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -11,21 +15,30 @@ export async function GET(request: NextRequest) {
     const neLat = parseFloat(searchParams.get('neLat') || '0');
     const neLng = parseFloat(searchParams.get('neLng') || '0');
     const level = parseInt(searchParams.get('level') || '3');
+    const category = searchParams.get('category') || 'all'; // all, dujjonku, dubai, signature
 
     // 줌 레벨에 따른 최대 개수 제한
     let limit = 100;
     if (level >= 10) limit = 20;
     else if (level >= 7) limit = 50;
 
+    const where: any = {
+      isHidden: false,
+      lat: { gte: swLat, lte: neLat },
+      lng: { gte: swLng, lte: neLng },
+    };
+
+    // 카테고리 필터
+    if (category !== 'all' && CATEGORIES.includes(category as Category)) {
+      where.category = category;
+    }
+
     const stores = await prisma.dujjonkuStore.findMany({
-      where: {
-        isHidden: false,
-        lat: { gte: swLat, lte: neLat },
-        lng: { gte: swLng, lte: neLng },
-      },
+      where,
       select: {
         id: true,
         name: true,
+        category: true,
         address: true,
         lat: true,
         lng: true,
@@ -54,7 +67,7 @@ async function handleCreateStore(request: AuthenticatedRequest) {
   try {
     const userId = request.user!.userId;
     const body = await request.json();
-    const { name, address, lat, lng, phone, description } = body;
+    const { name, category, address, lat, lng, phone, description, imageUrl } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -63,15 +76,20 @@ async function handleCreateStore(request: AuthenticatedRequest) {
       );
     }
 
+    // 카테고리 검증
+    const validCategory = CATEGORIES.includes(category) ? category : 'dujjonku';
+
     // 매장 생성
     const store = await prisma.dujjonkuStore.create({
       data: {
         name,
+        category: validCategory,
         address,
         lat: parseFloat(lat),
         lng: parseFloat(lng),
         phone: phone || null,
         description: description || null,
+        imageUrl: imageUrl || null,
         userId,
         isAdmin: false,
       },

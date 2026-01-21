@@ -6,11 +6,13 @@ import Link from 'next/link';
 interface Store {
   id: string;
   name: string;
+  category: string;
   address: string;
   lat: number;
   lng: number;
   phone: string | null;
   description: string | null;
+  imageUrl: string | null;
   clickCount: number;
   reportCount: number;
   isHidden: boolean;
@@ -19,6 +21,13 @@ interface Store {
   user: { nickname: string; email: string } | null;
   _count: { reports: number };
 }
+
+// 카테고리 정보
+const CATEGORIES = [
+  { key: 'dujjonku', label: '두쫀쿠', emoji: '🍪' },
+  { key: 'dubai', label: '두바이사촌', emoji: '🍫' },
+  { key: 'signature', label: '시그니처간식', emoji: '🎂' },
+] as const;
 
 interface Pagination {
   page: number;
@@ -39,11 +48,13 @@ export default function AdminDujjonkuPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '',
+    category: 'dujjonku',
     address: '',
     lat: '',
     lng: '',
     phone: '',
     description: '',
+    imageUrl: '',
   });
 
   const fetchStores = async (page = 1) => {
@@ -125,7 +136,7 @@ export default function AdminDujjonkuPage() {
 
       if (response.ok) {
         setIsCreateOpen(false);
-        setCreateForm({ name: '', address: '', lat: '', lng: '', phone: '', description: '' });
+        setCreateForm({ name: '', category: 'dujjonku', address: '', lat: '', lng: '', phone: '', description: '', imageUrl: '' });
         fetchStores();
       }
     } catch (error) {
@@ -169,7 +180,7 @@ export default function AdminDujjonkuPage() {
         </div>
 
         {/* 필터 */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           {[
             { value: 'all', label: '전체' },
             { value: 'hidden', label: '숨김' },
@@ -185,6 +196,20 @@ export default function AdminDujjonkuPage() {
               }`}
             >
               {item.label}
+            </button>
+          ))}
+          <span className="w-px bg-gray-300 mx-2" />
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              onClick={() => setFilter(cat.key)}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                filter === cat.key
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {cat.emoji} {cat.label}
             </button>
           ))}
         </div>
@@ -204,6 +229,7 @@ export default function AdminDujjonkuPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">매장명</th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">카테고리</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">주소</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">클릭수</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">신고수</th>
@@ -215,13 +241,13 @@ export default function AdminDujjonkuPage() {
             <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                     로딩 중...
                   </td>
                 </tr>
               ) : stores.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                     등록된 매장이 없습니다
                   </td>
                 </tr>
@@ -235,6 +261,16 @@ export default function AdminDujjonkuPage() {
                       >
                         {store.name}
                       </button>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        store.category === 'dujjonku' ? 'bg-yellow-100 text-yellow-800' :
+                        store.category === 'dubai' ? 'bg-amber-100 text-amber-800' :
+                        'bg-purple-100 text-purple-800'
+                      }`}>
+                        {CATEGORIES.find((c) => c.key === store.category)?.emoji}{' '}
+                        {CATEGORIES.find((c) => c.key === store.category)?.label || '두쫀쿠'}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
                       {store.address}
@@ -322,7 +358,29 @@ export default function AdminDujjonkuPage() {
 
             <h2 className="text-xl font-bold text-gray-900 mb-4">{selectedStore.name}</h2>
 
+            {/* 이미지 */}
+            {selectedStore.imageUrl && (
+              <div className="mb-4">
+                <img
+                  src={selectedStore.imageUrl}
+                  alt={selectedStore.name}
+                  className="w-full h-48 object-cover rounded-xl"
+                />
+              </div>
+            )}
+
             <div className="space-y-3 mb-6">
+              <p>
+                <span className="font-semibold">카테고리:</span>{' '}
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  selectedStore.category === 'dujjonku' ? 'bg-yellow-100 text-yellow-800' :
+                  selectedStore.category === 'dubai' ? 'bg-amber-100 text-amber-800' :
+                  'bg-purple-100 text-purple-800'
+                }`}>
+                  {CATEGORIES.find((c) => c.key === selectedStore.category)?.emoji}{' '}
+                  {CATEGORIES.find((c) => c.key === selectedStore.category)?.label || '두쫀쿠'}
+                </span>
+              </p>
               <p><span className="font-semibold">주소:</span> {selectedStore.address}</p>
               <p><span className="font-semibold">위치:</span> {selectedStore.lat}, {selectedStore.lng}</p>
               {selectedStore.phone && <p><span className="font-semibold">전화:</span> {selectedStore.phone}</p>}
@@ -394,6 +452,28 @@ export default function AdminDujjonkuPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-6">매장 등록 (관리자)</h2>
 
             <div className="space-y-4">
+              {/* 카테고리 선택 */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">카테고리 *</label>
+                <div className="flex gap-2">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => setCreateForm((prev) => ({ ...prev, category: cat.key }))}
+                      className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
+                        createForm.category === cat.key
+                          ? 'border-primary-500 bg-primary-50 text-primary-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="block text-lg mb-1">{cat.emoji}</span>
+                      <span className="block text-xs">{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">매장명 *</label>
                 <input
@@ -451,6 +531,28 @@ export default function AdminDujjonkuPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 resize-none"
                   rows={3}
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">상품 이미지 URL</label>
+                <input
+                  type="url"
+                  value={createForm.imageUrl}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500"
+                  placeholder="https://example.com/image.jpg"
+                />
+                {createForm.imageUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={createForm.imageUrl}
+                      alt="미리보기"
+                      className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

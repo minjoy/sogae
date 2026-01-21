@@ -13,15 +13,25 @@ declare global {
 interface Store {
   id: string;
   name: string;
+  category: string;
   address: string;
   lat: number;
   lng: number;
   clickCount: number;
 }
 
+// 카테고리 정보
+const CATEGORIES = [
+  { key: 'all', label: '전체', emoji: '🍪', color: '#ff6b6b' },
+  { key: 'dujjonku', label: '두쫀쿠', emoji: '🍪', color: '#ff6b6b' },
+  { key: 'dubai', label: '두바이사촌', emoji: '🍫', color: '#8b4513' },
+  { key: 'signature', label: '시그니처간식', emoji: '🎂', color: '#9b59b6' },
+] as const;
+
 interface StoreDetail {
   id: string;
   name: string;
+  category: string;
   address: string;
   lat: number;
   lng: number;
@@ -49,15 +59,18 @@ export default function DujjonkuMapPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // 매장 등록 폼
   const [registerForm, setRegisterForm] = useState({
     name: '',
+    category: 'dujjonku' as string,
     address: '',
     lat: 0,
     lng: 0,
     phone: '',
     description: '',
+    imageUrl: '',
   });
 
   // 신고 폼
@@ -129,17 +142,18 @@ export default function DujjonkuMapPage() {
   }, []);
 
   // 매장 목록 조회
-  const fetchStores = useCallback(async () => {
+  const fetchStores = useCallback(async (category?: string) => {
     if (!mapRef.current) return;
 
     const bounds = mapRef.current.getBounds();
     const level = mapRef.current.getLevel();
     const sw = bounds.getSouthWest();
     const ne = bounds.getNorthEast();
+    const categoryParam = category ?? selectedCategory;
 
     try {
       const response = await fetch(
-        `/api/stores?swLat=${sw.getLat()}&swLng=${sw.getLng()}&neLat=${ne.getLat()}&neLng=${ne.getLng()}&level=${level}`
+        `/api/stores?swLat=${sw.getLat()}&swLng=${sw.getLng()}&neLat=${ne.getLat()}&neLng=${ne.getLng()}&level=${level}&category=${categoryParam}`
       );
       const data = await response.json();
 
@@ -150,6 +164,21 @@ export default function DujjonkuMapPage() {
     } catch (error) {
       console.error('Failed to fetch stores:', error);
     }
+  }, [selectedCategory]);
+
+  // 카테고리별 마커 이미지 생성
+  const getMarkerImage = useCallback((category: string) => {
+    const categoryInfo = CATEGORIES.find((c) => c.key === category) || CATEGORIES[1];
+
+    // 카테고리별 마커 색상 설정
+    const markerColors: Record<string, string> = {
+      dujjonku: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', // 노란별 (기본)
+      dubai: 'https://t1.daumcdn.net/mapjsapi/images/marker.png', // 빨간마커
+      signature: 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png', // 스팟마커
+    };
+
+    const imageUrl = markerColors[category] || markerColors.dujjonku;
+    return new window.kakao.maps.MarkerImage(imageUrl, new window.kakao.maps.Size(24, 35));
   }, []);
 
   // 마커 업데이트
@@ -162,10 +191,7 @@ export default function DujjonkuMapPage() {
 
     // 새 마커 생성
     const markers = storeList.map((store) => {
-      const markerImage = new window.kakao.maps.MarkerImage(
-        'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
-        new window.kakao.maps.Size(24, 35)
-      );
+      const markerImage = getMarkerImage(store.category);
 
       const marker = new window.kakao.maps.Marker({
         position: new window.kakao.maps.LatLng(store.lat, store.lng),
@@ -181,7 +207,7 @@ export default function DujjonkuMapPage() {
 
     markersRef.current = markers;
     clustererRef.current.addMarkers(markers);
-  }, []);
+  }, [getMarkerImage]);
 
   // 매장 클릭 (상세 조회)
   const handleStoreClick = async (storeId: string) => {
@@ -234,13 +260,21 @@ export default function DujjonkuMapPage() {
     // 폼 초기화
     setRegisterForm({
       name: '',
+      category: 'dujjonku',
       address: '',
       lat: 0,
       lng: 0,
       phone: '',
       description: '',
+      imageUrl: '',
     });
     setIsRegisterOpen(true);
+  };
+
+  // 카테고리 변경 핸들러
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    fetchStores(category);
   };
 
   // 미리보기 맵 초기화/업데이트
@@ -422,6 +456,24 @@ export default function DujjonkuMapPage() {
         <div className="flex-1 relative">
           <div id="map" className="w-full h-full" />
 
+          {/* 카테고리 필터 버튼 */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.key}
+                onClick={() => handleCategoryChange(cat.key)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === cat.key
+                    ? 'bg-primary-500 text-white shadow-lg'
+                    : 'bg-white/90 text-gray-700 hover:bg-white shadow'
+                }`}
+              >
+                <span className="mr-1">{cat.emoji}</span>
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
           {/* 현재 위치 버튼 */}
           <button
             onClick={moveToCurrentLocation}
@@ -445,7 +497,7 @@ export default function DujjonkuMapPage() {
           </button>
 
           {/* 매장 수 표시 */}
-          <div className="absolute top-4 left-4 px-3 py-1.5 bg-white/90 backdrop-blur rounded-full shadow text-sm text-gray-700 z-10">
+          <div className="absolute top-16 left-4 px-3 py-1.5 bg-white/90 backdrop-blur rounded-full shadow text-sm text-gray-700 z-10">
             현재 지역 매장 <span className="font-bold text-primary-600">{stores.length}</span>개
           </div>
         </div>
@@ -472,6 +524,29 @@ export default function DujjonkuMapPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+
+            {/* 상품 이미지 */}
+            {selectedStore.imageUrl && (
+              <div className="mb-4 -mx-6 -mt-6">
+                <img
+                  src={selectedStore.imageUrl}
+                  alt={selectedStore.name}
+                  className="w-full h-48 object-cover rounded-t-3xl"
+                />
+              </div>
+            )}
+
+            {/* 카테고리 뱃지 */}
+            <div className="mb-2">
+              <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                selectedStore.category === 'dujjonku' ? 'bg-yellow-100 text-yellow-800' :
+                selectedStore.category === 'dubai' ? 'bg-amber-100 text-amber-800' :
+                'bg-purple-100 text-purple-800'
+              }`}>
+                {CATEGORIES.find((c) => c.key === selectedStore.category)?.emoji}{' '}
+                {CATEGORIES.find((c) => c.key === selectedStore.category)?.label || '두쫀쿠'}
+              </span>
+            </div>
 
             <h2 className="text-xl font-bold text-gray-900 mb-2 pr-8">{selectedStore.name}</h2>
             <p className="text-gray-600 text-sm mb-4">{selectedStore.address}</p>
@@ -529,9 +604,33 @@ export default function DujjonkuMapPage() {
               </svg>
             </button>
 
-            <h2 className="text-xl font-bold text-gray-900 mb-6">두쫀쿠 매장 등록</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">매장 등록</h2>
 
             <div className="space-y-4">
+              {/* 카테고리 선택 */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  카테고리 <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  {CATEGORIES.filter((c) => c.key !== 'all').map((cat) => (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => setRegisterForm((prev) => ({ ...prev, category: cat.key }))}
+                      className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
+                        registerForm.category === cat.key
+                          ? 'border-primary-500 bg-primary-50 text-primary-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="block text-lg mb-1">{cat.emoji}</span>
+                      <span className="block text-xs">{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   매장명 <span className="text-red-500">*</span>
@@ -541,7 +640,7 @@ export default function DujjonkuMapPage() {
                   value={registerForm.name}
                   onChange={(e) => setRegisterForm((prev) => ({ ...prev, name: e.target.value }))}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="예: 달달한 두쫀쿠"
+                  placeholder="예: 달달한 베이커리"
                 />
               </div>
 
@@ -603,6 +702,35 @@ export default function DujjonkuMapPage() {
                   placeholder="매장에 대한 간단한 설명"
                 />
               </div>
+
+              {/* 상품 이미지 URL */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  상품 이미지 URL
+                </label>
+                <input
+                  type="url"
+                  value={registerForm.imageUrl}
+                  onChange={(e) => setRegisterForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="https://example.com/image.jpg"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  상품 사진 URL을 입력하면 매장 상세에 표시됩니다
+                </p>
+                {registerForm.imageUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={registerForm.imageUrl}
+                      alt="미리보기"
+                      className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="mt-6 p-4 bg-primary-50 rounded-xl">
@@ -647,7 +775,7 @@ export default function DujjonkuMapPage() {
                 신고 사유
               </label>
               <div className="space-y-2 mb-4">
-                {['허위 정보', '폐업한 매장', '두쫀쿠 판매 안함', '기타'].map((reason) => (
+                {['허위 정보', '폐업한 매장', '해당 상품 판매 안함', '부적절한 이미지', '기타'].map((reason) => (
                   <button
                     key={reason}
                     onClick={() => setReportReason(reason)}

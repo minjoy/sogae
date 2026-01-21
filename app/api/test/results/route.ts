@@ -24,7 +24,7 @@ async function handleGetResults(request: AuthenticatedRequest) {
     );
 
     // null이 아닌 결과만 필터링
-    const validResults = results.filter((r) => r !== null);
+    const validResults = results.filter((r: typeof results[number]) => r !== null);
 
     return NextResponse.json({
       success: true,
