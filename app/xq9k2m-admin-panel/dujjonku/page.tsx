@@ -489,6 +489,7 @@ export default function AdminDujjonkuPage() {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* 페이지네이션 */}
         {activeTab === 'stores' && pagination && pagination.totalPages > 1 && (
