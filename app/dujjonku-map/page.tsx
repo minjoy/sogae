@@ -64,7 +64,7 @@ export default function DujjonkuMapPage() {
   // 매장 등록 폼
   const [registerForm, setRegisterForm] = useState({
     name: '',
-    category: 'dujjonku' as string,
+    categories: ['dujjonku'] as string[],
     address: '',
     lat: 0,
     lng: 0,
@@ -260,7 +260,7 @@ export default function DujjonkuMapPage() {
     // 폼 초기화
     setRegisterForm({
       name: '',
-      category: 'dujjonku',
+      categories: ['dujjonku'],
       address: '',
       lat: 0,
       lng: 0,
@@ -543,16 +543,24 @@ export default function DujjonkuMapPage() {
               </div>
             )}
 
-            {/* 카테고리 뱃지 */}
-            <div className="mb-2">
-              <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                selectedStore.category === 'dujjonku' ? 'bg-yellow-100 text-yellow-800' :
-                selectedStore.category === 'dubai' ? 'bg-amber-100 text-amber-800' :
-                'bg-purple-100 text-purple-800'
-              }`}>
-                {CATEGORIES.find((c) => c.key === selectedStore.category)?.emoji}{' '}
-                {CATEGORIES.find((c) => c.key === selectedStore.category)?.label || '두쫀쿠'}
-              </span>
+            {/* 카테고리 뱃지 (복수 카테고리 지원) */}
+            <div className="mb-2 flex flex-wrap gap-1">
+              {(selectedStore.category?.split(',') || ['dujjonku']).map((cat) => {
+                const categoryInfo = CATEGORIES.find((c) => c.key === cat.trim());
+                return (
+                  <span
+                    key={cat}
+                    className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                      cat.trim() === 'dujjonku' ? 'bg-yellow-100 text-yellow-800' :
+                      cat.trim() === 'dubai' ? 'bg-amber-100 text-amber-800' :
+                      'bg-purple-100 text-purple-800'
+                    }`}
+                  >
+                    {categoryInfo?.emoji}{' '}
+                    {categoryInfo?.label || '두쫀쿠'}
+                  </span>
+                );
+              })}
             </div>
 
             <h2 className="text-xl font-bold text-gray-900 mb-2 pr-8">{selectedStore.name}</h2>
@@ -614,27 +622,48 @@ export default function DujjonkuMapPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-6">매장 등록</h2>
 
             <div className="space-y-4">
-              {/* 카테고리 선택 */}
+              {/* 카테고리 선택 (복수 선택 가능) */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   카테고리 <span className="text-red-500">*</span>
+                  <span className="text-xs font-normal text-gray-500 ml-2">(복수 선택 가능)</span>
                 </label>
                 <div className="flex gap-2">
-                  {CATEGORIES.filter((c) => c.key !== 'all').map((cat) => (
-                    <button
-                      key={cat.key}
-                      type="button"
-                      onClick={() => setRegisterForm((prev) => ({ ...prev, category: cat.key }))}
-                      className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
-                        registerForm.category === cat.key
-                          ? 'border-primary-500 bg-primary-50 text-primary-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className="block text-lg mb-1">{cat.emoji}</span>
-                      <span className="block text-xs">{cat.label}</span>
-                    </button>
-                  ))}
+                  {CATEGORIES.filter((c) => c.key !== 'all').map((cat) => {
+                    const isSelected = registerForm.categories.includes(cat.key);
+                    return (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => {
+                          setRegisterForm((prev) => {
+                            const categories = prev.categories.includes(cat.key)
+                              ? prev.categories.filter((c) => c !== cat.key)
+                              : [...prev.categories, cat.key];
+                            // 최소 1개는 선택되어야 함
+                            if (categories.length === 0) return prev;
+                            return { ...prev, categories };
+                          });
+                        }}
+                        className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium border transition-all relative ${
+                          isSelected
+                            ? 'border-primary-500 bg-primary-50 text-primary-700'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {/* 체크 아이콘 */}
+                        {isSelected && (
+                          <span className="absolute top-1 right-1">
+                            <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        )}
+                        <span className="block text-lg mb-1">{cat.emoji}</span>
+                        <span className="block text-xs">{cat.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

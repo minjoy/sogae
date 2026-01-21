@@ -28,9 +28,9 @@ export async function GET(request: NextRequest) {
       lng: { gte: swLng, lte: neLng },
     };
 
-    // 카테고리 필터
+    // 카테고리 필터 (복수 카테고리 지원)
     if (category !== 'all' && CATEGORIES.includes(category as Category)) {
-      where.category = category;
+      where.category = { contains: category };
     }
 
     const stores = await prisma.dujjonkuStore.findMany({
@@ -67,7 +67,7 @@ async function handleCreateStore(request: AuthenticatedRequest) {
   try {
     const userId = request.user!.userId;
     const body = await request.json();
-    const { name, category, address, lat, lng, phone, description, imageUrl } = body;
+    const { name, category, categories, address, lat, lng, phone, description, imageUrl } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -76,8 +76,16 @@ async function handleCreateStore(request: AuthenticatedRequest) {
       );
     }
 
-    // 카테고리 검증
-    const validCategory = CATEGORIES.includes(category) ? category : 'dujjonku';
+    // 카테고리 검증 (복수 카테고리 지원)
+    let validCategory: string;
+    if (Array.isArray(categories) && categories.length > 0) {
+      // 배열로 받은 경우 - 유효한 카테고리만 필터링 후 쉼표로 구분
+      const validCategories = categories.filter((c: string) => CATEGORIES.includes(c as Category));
+      validCategory = validCategories.length > 0 ? validCategories.join(',') : 'dujjonku';
+    } else {
+      // 단일 카테고리로 받은 경우 (기존 호환성)
+      validCategory = CATEGORIES.includes(category) ? category : 'dujjonku';
+    }
 
     // 매장 생성
     const store = await prisma.dujjonkuStore.create({
