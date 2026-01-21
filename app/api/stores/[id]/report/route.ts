@@ -1,14 +1,32 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
+import { verifyToken } from '@/lib/middleware';
 
 // POST: 매장 신고
-async function handleReport(
-  request: AuthenticatedRequest,
+export async function POST(
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = request.user!.userId;
+    // 인증 확인
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json(
+        { error: '유효하지 않은 토큰입니다' },
+        { status: 401 }
+      );
+    }
+
+    const userId = decoded.userId;
     const { id: storeId } = await context.params;
     const body = await request.json();
     const { reason } = body;
@@ -70,5 +88,3 @@ async function handleReport(
     );
   }
 }
-
-export const POST = withAuth(handleReport);
