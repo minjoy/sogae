@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/middleware';
+import { verifyToken } from '@/lib/auth';
 
 // POST: 매장 신고
 export async function POST(
