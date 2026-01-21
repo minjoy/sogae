@@ -25,7 +25,7 @@ interface Store {
 // 카테고리 정보
 const CATEGORIES = [
   { key: 'dujjonku', label: '두쫀쿠', emoji: '🍪' },
-  { key: 'dubai', label: '두바이사촌', emoji: '🍫' },
+  { key: 'dubai', label: '두바이파생', emoji: '🍫' },
   { key: 'signature', label: '시그니처간식', emoji: '🎂' },
 ] as const;
 
