@@ -38,6 +38,8 @@ export default function DujjonkuMapPage() {
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const clustererRef = useRef<any>(null);
+  const previewMapRef = useRef<any>(null);
+  const previewMarkerRef = useRef<any>(null);
 
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
@@ -225,24 +227,59 @@ export default function DujjonkuMapPage() {
       return;
     }
 
-    // 현재 지도 중심 좌표로 초기화
-    const center = mapRef.current?.getCenter();
+    // 미리보기 맵 초기화
+    previewMapRef.current = null;
+    previewMarkerRef.current = null;
+
+    // 폼 초기화
     setRegisterForm({
       name: '',
       address: '',
-      lat: center?.getLat() || 37.5665,
-      lng: center?.getLng() || 126.978,
+      lat: 0,
+      lng: 0,
       phone: '',
       description: '',
     });
     setIsRegisterOpen(true);
   };
 
+  // 미리보기 맵 초기화/업데이트
+  const updatePreviewMap = useCallback((lat: number, lng: number) => {
+    if (!window.kakao || !window.kakao.maps) return;
+
+    const container = document.getElementById('preview-map');
+    if (!container) return;
+
+    const position = new window.kakao.maps.LatLng(lat, lng);
+
+    if (!previewMapRef.current) {
+      // 미리보기 맵 생성
+      const options = {
+        center: position,
+        level: 3,
+      };
+      previewMapRef.current = new window.kakao.maps.Map(container, options);
+    } else {
+      // 기존 맵 중심 이동
+      previewMapRef.current.setCenter(position);
+    }
+
+    // 기존 마커 제거
+    if (previewMarkerRef.current) {
+      previewMarkerRef.current.setMap(null);
+    }
+
+    // 새 마커 생성
+    previewMarkerRef.current = new window.kakao.maps.Marker({
+      position: position,
+      map: previewMapRef.current,
+    });
+  }, []);
+
   // 주소 검색
   const searchAddress = () => {
     if (!window.kakao || !window.kakao.maps.services) return;
 
-    const geocoder = new window.kakao.maps.services.Geocoder();
     const ps = new window.kakao.maps.services.Places();
 
     const keyword = registerForm.address;
@@ -254,17 +291,18 @@ export default function DujjonkuMapPage() {
     ps.keywordSearch(keyword, (data: any[], status: string) => {
       if (status === window.kakao.maps.services.Status.OK && data.length > 0) {
         const place = data[0];
+        const lat = parseFloat(place.y);
+        const lng = parseFloat(place.x);
+
         setRegisterForm((prev) => ({
           ...prev,
           address: place.address_name,
-          lat: parseFloat(place.y),
-          lng: parseFloat(place.x),
+          lat,
+          lng,
         }));
 
-        // 지도 이동
-        const moveLatLng = new window.kakao.maps.LatLng(place.y, place.x);
-        mapRef.current?.setCenter(moveLatLng);
-        mapRef.current?.setLevel(3);
+        // 미리보기 맵 업데이트
+        setTimeout(() => updatePreviewMap(lat, lng), 100);
       } else {
         alert('검색 결과가 없습니다');
       }
@@ -527,9 +565,16 @@ export default function DujjonkuMapPage() {
                   </button>
                 </div>
                 {registerForm.lat !== 0 && (
-                  <p className="text-xs text-green-600 mt-1">
-                    위치가 설정되었습니다
-                  </p>
+                  <>
+                    <p className="text-xs text-green-600 mt-1 mb-2">
+                      위치가 설정되었습니다: {registerForm.address}
+                    </p>
+                    {/* 미리보기 맵 */}
+                    <div
+                      id="preview-map"
+                      className="w-full h-40 rounded-xl border border-gray-200 overflow-hidden"
+                    />
+                  </>
                 )}
               </div>
 
