@@ -439,19 +439,19 @@ export default function DujjonkuMapPage() {
 
       <div className="fixed inset-0 flex flex-col bg-white z-[100]">
         {/* 헤더 */}
-        <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+        <header className="relative flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
           <button
             onClick={() => router.back()}
-            className="p-2 -ml-2 text-gray-600 hover:text-gray-900"
+            className="p-2 -ml-2 text-gray-600 hover:text-gray-900 z-10"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-lg font-bold text-gray-900">두쫀쿠맵</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-900">두쫀쿠맵</h1>
           <button
             onClick={() => router.push('/test')}
-            className="px-3 py-1.5 text-sm font-medium text-primary-600 hover:text-primary-700"
+            className="px-3 py-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 z-10"
           >
             마음테스트
           </button>
