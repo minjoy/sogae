@@ -771,15 +771,67 @@ export default function DujjonkuMapPage() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
                     디저트명 <span className="text-red-500">*</span>
                   </label>
+                  {/* 태그 표시 영역 */}
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {registerForm.dessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
+                      >
+                        {tag.trim()}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const tags = registerForm.dessertName.split(',').filter(t => t.trim());
+                            tags.splice(index, 1);
+                            setRegisterForm(prev => ({ ...prev, dessertName: tags.join(',') }));
+                          }}
+                          className="ml-1 text-primary-500 hover:text-primary-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
                   <input
                     type="text"
-                    value={registerForm.dessertName}
-                    onChange={(e) => setRegisterForm((prev) => ({ ...prev, dessertName: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="예: 두바이초콜릿, 크로플 등"
+                    placeholder="디저트명 입력 후 Enter 또는 콤마(,)로 구분"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        const input = e.currentTarget;
+                        const value = input.value.trim().replace(/,/g, '');
+                        if (value) {
+                          const currentTags = registerForm.dessertName.split(',').filter(t => t.trim());
+                          if (!currentTags.includes(value)) {
+                            setRegisterForm(prev => ({
+                              ...prev,
+                              dessertName: [...currentTags, value].join(',')
+                            }));
+                          }
+                          input.value = '';
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.currentTarget.value.trim().replace(/,/g, '');
+                      if (value) {
+                        const currentTags = registerForm.dessertName.split(',').filter(t => t.trim());
+                        if (!currentTags.includes(value)) {
+                          setRegisterForm(prev => ({
+                            ...prev,
+                            dessertName: [...currentTags, value].join(',')
+                          }));
+                        }
+                        e.currentTarget.value = '';
+                      }
+                    }}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    해당 매장에서 판매하는 대표 디저트명을 입력해주세요
+                    여러 개의 디저트명을 입력할 수 있습니다 (예: 두바이초콜릿, 피스타치오쿠키)
                   </p>
                 </div>
               )}
@@ -792,7 +844,7 @@ export default function DujjonkuMapPage() {
                   type="text"
                   value={registerForm.name}
                   onChange={(e) => setRegisterForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="예: 달달한 베이커리"
                 />
               </div>
@@ -806,7 +858,7 @@ export default function DujjonkuMapPage() {
                     type="text"
                     value={registerForm.address}
                     onChange={(e) => setRegisterForm((prev) => ({ ...prev, address: e.target.value }))}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                     placeholder="주소 또는 장소명 입력"
                   />
                   <button
@@ -838,7 +890,7 @@ export default function DujjonkuMapPage() {
                   type="tel"
                   value={registerForm.phone}
                   onChange={(e) => setRegisterForm((prev) => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="예: 02-1234-5678"
                 />
               </div>
@@ -850,7 +902,7 @@ export default function DujjonkuMapPage() {
                 <textarea
                   value={registerForm.description}
                   onChange={(e) => setRegisterForm((prev) => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none text-gray-900"
                   rows={3}
                   placeholder="매장에 대한 간단한 설명"
                 />
@@ -865,7 +917,7 @@ export default function DujjonkuMapPage() {
                   type="url"
                   value={registerForm.imageUrl}
                   onChange={(e) => setRegisterForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
                   placeholder="https://example.com/image.jpg"
                 />
                 <p className="text-xs text-gray-500 mt-1">
