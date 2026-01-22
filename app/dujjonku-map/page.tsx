@@ -35,7 +35,7 @@ const extractNumber = (value: string): string => {
 
 // 카테고리 정보
 const CATEGORIES = [
-  { key: 'all', label: '전체', emoji: '🍪', color: '#ff6b6b' },
+  { key: 'all', label: '전체', emoji: '', color: '#ff6b6b' },
   { key: 'dujjonku', label: '두쫀쿠', emoji: '🍪', color: '#ff6b6b' },
   { key: 'dubai', label: '두바이파생', emoji: '🍫', color: '#8b4513' },
   { key: 'signature', label: '시그니처간식', emoji: '🎂', color: '#9b59b6' },
