@@ -27,7 +27,7 @@ const SEARCH_KEYWORDS = ['두바이', '두바이 쫀득 쿠키', '두쫀쿠'];
 const ADMIN_KEY = 'sogae-admin-2024';
 
 // 조회 개수 옵션
-const DISPLAY_OPTIONS = [5, 10, 20, 30, 50];
+const DISPLAY_OPTIONS = [5, 10, 20, 30, 50, 100, 200, 500, 1000, 2000, 5000];
 
 // 지역 목록
 const REGIONS = [
