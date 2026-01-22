@@ -40,6 +40,7 @@ export async function GET(
         phone: store.phone,
         description: store.description,
         imageUrl: store.imageUrl,
+        storeUrl: store.storeUrl,
         clickCount: store.clickCount,
         registeredBy: store.isAdmin ? '관리자' : store.user?.nickname || '알 수 없음',
         createdAt: store.createdAt,

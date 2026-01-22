@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, category, address, lat, lng, phone, description, imageUrl } = body;
+    const { name, category, address, lat, lng, phone, description, imageUrl, storeUrl, dessertName } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -82,12 +82,14 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         category: validCategory,
+        dessertName: dessertName || null,
         address,
         lat: parseFloat(lat),
         lng: parseFloat(lng),
         phone: phone || null,
         description: description || null,
         imageUrl: imageUrl || null,
+        storeUrl: storeUrl || null,
         isAdmin: true,
         userId: null,
       },

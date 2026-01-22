@@ -95,6 +95,7 @@ export default function AdminDujjonkuPage() {
     phone: '',
     description: '',
     imageUrl: '',
+    storeUrl: '',
   });
 
   // 두바이파생/시그니처간식 선택 여부 확인
@@ -331,6 +332,7 @@ export default function AdminDujjonkuPage() {
           phone: createForm.phone,
           description: createForm.description,
           imageUrl: createForm.imageUrl,
+          storeUrl: createForm.storeUrl || null,
         }),
       });
 
@@ -347,6 +349,7 @@ export default function AdminDujjonkuPage() {
           phone: '',
           description: '',
           imageUrl: '',
+          storeUrl: '',
         });
         fetchStores();
       }
@@ -1099,6 +1102,20 @@ export default function AdminDujjonkuPage() {
                     />
                   </div>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">매장 링크</label>
+                <input
+                  type="url"
+                  value={createForm.storeUrl}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, storeUrl: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500"
+                  placeholder="https://instagram.com/store 또는 네이버 플레이스 링크"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  인스타그램, 네이버 플레이스 등 매장 링크를 입력하세요
+                </p>
               </div>
             </div>
 

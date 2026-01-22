@@ -39,6 +39,7 @@ interface StoreDetail {
   phone: string | null;
   description: string | null;
   imageUrl: string | null;
+  storeUrl: string | null;
   clickCount: number;
   registeredBy: string;
   createdAt: string;
@@ -55,6 +56,7 @@ export default function DujjonkuMapPage() {
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<StoreDetail | null>(null);
+  const [ogImage, setOgImage] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -74,6 +76,7 @@ export default function DujjonkuMapPage() {
     phone: '',
     description: '',
     imageUrl: '',
+    storeUrl: '',
   });
 
   // 신고 폼
@@ -92,6 +95,7 @@ export default function DujjonkuMapPage() {
     phone: '',
     description: '',
     imageUrl: '',
+    storeUrl: '',
   });
 
   // 두바이파생/시그니처간식 선택 여부 확인
@@ -239,7 +243,21 @@ export default function DujjonkuMapPage() {
 
       if (data.success) {
         setSelectedStore(data.store);
+        setOgImage(null); // OG 이미지 초기화
         setIsDetailOpen(true);
+
+        // storeUrl이 있으면 OG 이미지 가져오기
+        if (data.store.storeUrl) {
+          try {
+            const ogResponse = await fetch(`/api/og-image?url=${encodeURIComponent(data.store.storeUrl)}`);
+            const ogData = await ogResponse.json();
+            if (ogData.success && ogData.data.ogImage) {
+              setOgImage(ogData.data.ogImage);
+            }
+          } catch (ogError) {
+            console.error('Failed to fetch OG image:', ogError);
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to fetch store detail:', error);
@@ -291,6 +309,7 @@ export default function DujjonkuMapPage() {
       phone: '',
       description: '',
       imageUrl: '',
+      storeUrl: '',
     });
     setIsRegisterOpen(true);
   };
@@ -327,6 +346,7 @@ export default function DujjonkuMapPage() {
       phone: selectedStore.phone || '',
       description: selectedStore.description || '',
       imageUrl: selectedStore.imageUrl || '',
+      storeUrl: selectedStore.storeUrl || '',
     });
     setIsDetailOpen(false);
     setIsEditRequestOpen(true);
@@ -661,13 +681,16 @@ export default function DujjonkuMapPage() {
               </svg>
             </button>
 
-            {/* 상품 이미지 */}
-            {selectedStore.imageUrl && (
+            {/* 상품 이미지 또는 OG 이미지 */}
+            {(selectedStore.imageUrl || ogImage) && (
               <div className="mb-4 -mx-6 -mt-6">
                 <img
-                  src={selectedStore.imageUrl}
+                  src={selectedStore.imageUrl || ogImage || ''}
                   alt={selectedStore.name}
                   className="w-full h-48 object-cover rounded-t-3xl"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               </div>
             )}
@@ -719,6 +742,20 @@ export default function DujjonkuMapPage() {
               <p className="text-gray-700 text-sm mb-2">
                 <span className="font-semibold">전화:</span> {selectedStore.phone}
               </p>
+            )}
+
+            {selectedStore.storeUrl && (
+              <a
+                href={selectedStore.storeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary-600 text-sm mb-2 hover:underline"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                매장 링크 바로가기
+              </a>
             )}
 
             {selectedStore.description && (
@@ -1050,6 +1087,23 @@ export default function DujjonkuMapPage() {
                   </div>
                 )}
               </div>
+
+              {/* 매장 링크 */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  매장 링크
+                </label>
+                <input
+                  type="url"
+                  value={registerForm.storeUrl}
+                  onChange={(e) => setRegisterForm((prev) => ({ ...prev, storeUrl: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
+                  placeholder="https://instagram.com/store 또는 네이버 플레이스 링크"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  인스타그램, 네이버 플레이스 등 매장 링크를 입력하세요
+                </p>
+              </div>
             </div>
 
             <div className="mt-6 p-4 bg-primary-50 rounded-xl">
@@ -1243,6 +1297,17 @@ export default function DujjonkuMapPage() {
                   onChange={(e) => setEditForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="https://example.com/image.jpg"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">매장 링크</label>
+                <input
+                  type="url"
+                  value={editForm.storeUrl}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, storeUrl: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  placeholder="https://instagram.com/store 또는 네이버 플레이스 링크"
                 />
               </div>
             </div>
