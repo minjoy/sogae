@@ -40,13 +40,144 @@ const isPassOrderUrl = (url: string | null | undefined): boolean => {
   return PASS_ORDER_DOMAINS.some(domain => url.includes(domain));
 };
 
-// 카테고리 정보
+// 카테고리 정보 (색상 업데이트)
 const CATEGORIES = [
-  { key: 'all', label: '전체', emoji: '', color: '#ff6b6b' },
-  { key: 'dujjonku', label: '두쫀쿠', emoji: '🍪', color: '#ff6b6b' },
-  { key: 'dubai', label: '두바이파생', emoji: '🍫', color: '#8b4513' },
-  { key: 'signature', label: '시그니처간식', emoji: '🎂', color: '#9b59b6' },
+  { key: 'all', label: '전체', emoji: '', color: '#FF6B6B' },
+  { key: 'dujjonku', label: '두쫀쿠', emoji: '🍪', color: '#FF6B6B' },
+  { key: 'dubai', label: '두바이파생', emoji: '🍫', color: '#8B4513' },
+  { key: 'signature', label: '시그니처간식', emoji: '🎂', color: '#9B59B6' },
 ] as const;
+
+// 마커 이미지 캐시 (성능 최적화)
+const markerImageCache = new Map<string, string>();
+
+// 기본 핀 마커 생성 (Canvas 기반)
+const createPinMarkerImage = (color: string): string => {
+  const cacheKey = `pin_${color}`;
+  if (markerImageCache.has(cacheKey)) {
+    return markerImageCache.get(cacheKey)!;
+  }
+
+  const canvas = document.createElement('canvas');
+  const size = 32;
+  const tailHeight = 8;
+  canvas.width = size;
+  canvas.height = size + tailHeight;
+  const ctx = canvas.getContext('2d')!;
+
+  // 그림자 효과
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 2;
+
+  // 원형 헤드
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // 그림자 리셋 후 꼬리 그리기
+  ctx.shadowColor = 'transparent';
+
+  // 뾰족한 꼬리
+  ctx.beginPath();
+  ctx.moveTo(size / 2 - 6, size / 2 + 8);
+  ctx.lineTo(size / 2, size + tailHeight - 2);
+  ctx.lineTo(size / 2 + 6, size / 2 + 8);
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // 흰색 내부 원 (하이라이트)
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, size / 4, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.fill();
+
+  const dataUrl = canvas.toDataURL('image/png');
+  markerImageCache.set(cacheKey, dataUrl);
+  return dataUrl;
+};
+
+// 가격 표시 마커 생성 (Canvas 기반)
+const createPriceMarkerImage = (price: number, color: string): string => {
+  // 천원 단위로 변환 (11000 → 11, 5700 → 5.7)
+  const priceInK = price / 1000;
+  const priceText = priceInK % 1 === 0 ? String(priceInK) : priceInK.toFixed(1);
+
+  const cacheKey = `price_${priceText}_${color}`;
+  if (markerImageCache.has(cacheKey)) {
+    return markerImageCache.get(cacheKey)!;
+  }
+
+  const canvas = document.createElement('canvas');
+  const padding = 8;
+  const fontSize = 13;
+  const height = 28;
+
+  // 텍스트 너비 계산을 위한 임시 컨텍스트
+  const tempCtx = canvas.getContext('2d')!;
+  tempCtx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  const textWidth = tempCtx.measureText(priceText).width;
+  const width = Math.max(36, textWidth + padding * 2);
+
+  canvas.width = width;
+  canvas.height = height + 8; // 꼬리 공간
+  const ctx = canvas.getContext('2d')!;
+
+  // 그림자
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 2;
+
+  // 둥근 사각형 배경
+  const radius = 6;
+  ctx.beginPath();
+  ctx.moveTo(radius, 0);
+  ctx.lineTo(width - radius, 0);
+  ctx.quadraticCurveTo(width, 0, width, radius);
+  ctx.lineTo(width, height - radius);
+  ctx.quadraticCurveTo(width, height, width - radius, height);
+  ctx.lineTo(radius, height);
+  ctx.quadraticCurveTo(0, height, 0, height - radius);
+  ctx.lineTo(0, radius);
+  ctx.quadraticCurveTo(0, 0, radius, 0);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // 그림자 리셋
+  ctx.shadowColor = 'transparent';
+
+  // 아래쪽 꼬리 (삼각형)
+  ctx.beginPath();
+  ctx.moveTo(width / 2 - 5, height);
+  ctx.lineTo(width / 2, height + 6);
+  ctx.lineTo(width / 2 + 5, height);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+
+  // 텍스트
+  ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(priceText, width / 2, height / 2);
+
+  const dataUrl = canvas.toDataURL('image/png');
+  markerImageCache.set(cacheKey, dataUrl);
+  return dataUrl;
+};
+
+// 카테고리에서 색상 가져오기
+const getCategoryColor = (category: string): string => {
+  // 복수 카테고리인 경우 첫 번째 카테고리 색상 사용
+  const primaryCategory = category.split(',')[0].trim();
+  const categoryInfo = CATEGORIES.find((c) => c.key === primaryCategory);
+  return categoryInfo?.color || CATEGORIES[1].color;
+};
 
 interface StoreDetail {
   id: string;
@@ -224,20 +355,39 @@ export default function DujjonkuMapPage() {
     }
   }, [selectedCategory, priceFilter]);
 
-  // 카테고리별 마커 이미지 생성
+  // 기본 핀 마커 이미지 생성
   const getMarkerImage = useCallback((category: string) => {
-    const categoryInfo = CATEGORIES.find((c) => c.key === category) || CATEGORIES[1];
+    const color = getCategoryColor(category);
+    const imageUrl = createPinMarkerImage(color);
 
-    // 카테고리별 마커 색상 설정
-    const markerColors: Record<string, string> = {
-      dujjonku: 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png', // 노란별 (기본)
-      dubai: 'https://t1.daumcdn.net/mapjsapi/images/marker.png', // 빨간마커
-      signature: 'https://t1.daumcdn.net/localimg/localimages/07/2018/pc/img/marker_spot.png', // 스팟마커
-    };
-
-    const imageUrl = markerColors[category] || markerColors.dujjonku;
-    return new window.kakao.maps.MarkerImage(imageUrl, new window.kakao.maps.Size(24, 35));
+    return new window.kakao.maps.MarkerImage(
+      imageUrl,
+      new window.kakao.maps.Size(32, 40),
+      { offset: new window.kakao.maps.Point(16, 40) }
+    );
   }, []);
+
+  // 가격 표시 마커 이미지 생성
+  const getPriceMarkerImage = useCallback((price: number, category: string) => {
+    const color = getCategoryColor(category);
+    const imageUrl = createPriceMarkerImage(price, color);
+
+    // 가격 텍스트 길이에 따라 너비 계산
+    const priceInK = price / 1000;
+    const priceText = priceInK % 1 === 0 ? String(priceInK) : priceInK.toFixed(1);
+    const width = Math.max(36, priceText.length * 10 + 16);
+
+    return new window.kakao.maps.MarkerImage(
+      imageUrl,
+      new window.kakao.maps.Size(width, 36),
+      { offset: new window.kakao.maps.Point(width / 2, 36) }
+    );
+  }, []);
+
+  // 가격 필터가 적용되었는지 확인
+  const isPriceFilterActive = useCallback(() => {
+    return priceFilter.min !== '' || priceFilter.max !== '';
+  }, [priceFilter]);
 
   // 마커 업데이트
   const updateMarkers = useCallback((storeList: Store[]) => {
@@ -247,9 +397,20 @@ export default function DujjonkuMapPage() {
     clustererRef.current.clear();
     markersRef.current = [];
 
+    // 가격 필터 적용 여부 확인
+    const showPriceMarker = isPriceFilterActive();
+
     // 새 마커 생성
     const markers = storeList.map((store) => {
-      const markerImage = getMarkerImage(store.category);
+      // 가격 필터가 적용되고 두쫀쿠 카테고리이며 가격 정보가 있는 경우 가격 마커 사용
+      const usePriceMarker = showPriceMarker &&
+        store.category.includes('dujjonku') &&
+        store.price !== null &&
+        store.price > 0;
+
+      const markerImage = usePriceMarker
+        ? getPriceMarkerImage(store.price!, store.category)
+        : getMarkerImage(store.category);
 
       const marker = new window.kakao.maps.Marker({
         position: new window.kakao.maps.LatLng(store.lat, store.lng),
@@ -265,7 +426,7 @@ export default function DujjonkuMapPage() {
 
     markersRef.current = markers;
     clustererRef.current.addMarkers(markers);
-  }, [getMarkerImage]);
+  }, [getMarkerImage, getPriceMarkerImage, isPriceFilterActive]);
 
   // 매장 클릭 (상세 조회)
   const handleStoreClick = async (storeId: string) => {
