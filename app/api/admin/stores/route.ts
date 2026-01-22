@@ -74,6 +74,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const parsedLat = parseFloat(lat);
+    const parsedLng = parseFloat(lng);
+
+    // 위치 기반 중복 체크 (약 10m 반경 내 동일 매장 확인)
+    const DUPLICATE_THRESHOLD = 0.0001; // 약 10m
+    const existingStore = await prisma.dujjonkuStore.findFirst({
+      where: {
+        lat: { gte: parsedLat - DUPLICATE_THRESHOLD, lte: parsedLat + DUPLICATE_THRESHOLD },
+        lng: { gte: parsedLng - DUPLICATE_THRESHOLD, lte: parsedLng + DUPLICATE_THRESHOLD },
+      },
+    });
+
+    if (existingStore) {
+      return NextResponse.json(
+        { error: `이미 등록된 매장입니다: ${existingStore.name}` },
+        { status: 400 }
+      );
+    }
+
     // 카테고리 검증
     const validCategories = ['dujjonku', 'dubai', 'signature'];
     const validCategory = validCategories.includes(category) ? category : 'dujjonku';
@@ -87,8 +106,8 @@ export async function POST(request: NextRequest) {
         category: validCategory,
         dessertName: dessertName || null,
         address,
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
+        lat: parsedLat,
+        lng: parsedLng,
         phone: phone || null,
         description: description || null,
         imageUrl: imageUrl || null,

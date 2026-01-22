@@ -662,26 +662,6 @@ export default function DujjonkuMapPage() {
                   {cat.label}
                 </button>
               ))}
-
-              {/* 가격 필터 버튼 (두쫀쿠 관련 카테고리 선택시만 표시) */}
-              {(selectedCategory === 'all' || selectedCategory === 'dujjonku') && (
-                <button
-                  onClick={() => setIsPriceFilterOpen(true)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
-                    priceFilter.min || priceFilter.max
-                      ? 'bg-yellow-500 text-white shadow-lg'
-                      : 'bg-white/90 text-gray-700 hover:bg-white shadow'
-                  }`}
-                >
-                  <span className="mr-1">💰</span>
-                  가격
-                  {(priceFilter.min || priceFilter.max) && (
-                    <span className="ml-1 text-xs">
-                      ({priceFilter.min || '0'}~{priceFilter.max || '∞'})
-                    </span>
-                  )}
-                </button>
-              )}
             </div>
           </div>
 
@@ -707,9 +687,30 @@ export default function DujjonkuMapPage() {
             <span className="text-sm font-semibold">매장 등록</span>
           </button>
 
-          {/* 매장 수 표시 */}
-          <div className="absolute top-16 left-4 px-3 py-1.5 bg-white/90 backdrop-blur rounded-full shadow text-sm text-gray-700 z-10">
-            현재 지역 매장 <span className="font-bold text-primary-600">{stores.length}</span>개
+          {/* 매장 수 표시 및 가격 필터 */}
+          <div className="absolute top-16 left-4 flex items-center gap-2 z-10">
+            <div className="px-3 py-1.5 bg-white/90 backdrop-blur rounded-full shadow text-sm text-gray-700">
+              현재 지역 <span className="font-bold text-primary-600">{stores.length}</span>개
+            </div>
+            {/* 가격 필터 버튼 (두쫀쿠 관련 카테고리 선택시만 표시) */}
+            {(selectedCategory === 'all' || selectedCategory === 'dujjonku') && (
+              <button
+                onClick={() => setIsPriceFilterOpen(true)}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shadow ${
+                  priceFilter.min || priceFilter.max
+                    ? 'bg-yellow-500 text-white'
+                    : 'bg-white/90 text-gray-700 hover:bg-white'
+                }`}
+              >
+                <span className="mr-1">💰</span>
+                가격
+                {(priceFilter.min || priceFilter.max) && (
+                  <span className="ml-1 text-xs">
+                    ({priceFilter.min || '0'}~{priceFilter.max || '∞'})
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
