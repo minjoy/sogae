@@ -751,13 +751,28 @@ export default function DujjonkuMapPage() {
 
             {/* 상품 이미지 또는 OG 이미지 */}
             {(selectedStore.imageUrl || ogImage) && (
-              <div className="mb-4 -mx-6 -mt-6">
+              <div className="mb-4 -mx-6 -mt-6 relative h-48 overflow-hidden rounded-t-3xl">
+                {/* 블러 배경 이미지 */}
+                <div
+                  className="absolute inset-0 scale-110"
+                  style={{
+                    backgroundImage: `url(${selectedStore.imageUrl || ogImage || ''})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    filter: 'blur(20px)',
+                  }}
+                />
+                {/* 어두운 오버레이 */}
+                <div className="absolute inset-0 bg-black/20" />
+                {/* 메인 이미지 (세로 이미지도 잘리지 않게 contain 사용) */}
                 <img
                   src={selectedStore.imageUrl || ogImage || ''}
                   alt={selectedStore.name}
-                  className="w-full h-48 object-cover rounded-t-3xl"
+                  className="relative w-full h-48 object-contain z-10"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
+                    const target = e.target as HTMLImageElement;
+                    const container = target.parentElement;
+                    if (container) container.style.display = 'none';
                   }}
                 />
               </div>
