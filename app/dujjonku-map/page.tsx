@@ -34,7 +34,7 @@ const extractNumber = (value: string): string => {
 };
 
 // 패스오더 링크인지 확인
-const PASS_ORDER_DOMAINS = ['app.passorder', 'events.passorder', 'xn--100--er5pp93d0icp2n2ic5uttwbs3h6zmqsjc2olyj4na.com'];
+const PASS_ORDER_DOMAINS = ['app.passorder', 'events.passorder', 'xn--100--er5pp93d0icp2n2ic5uttwbs3h6zmqsjc2olyj4na.com', '100원커피이벤트-선착순주문하기.com'];
 const isPassOrderUrl = (url: string | null | undefined): boolean => {
   if (!url) return false;
   return PASS_ORDER_DOMAINS.some(domain => url.includes(domain));
@@ -287,7 +287,8 @@ export default function DujjonkuMapPage() {
           storeUrl.includes('naver.com/maps')
         );
 
-        if (storeUrl && !isNaverLink) {
+        // 패스오더 링크도 OG 이미지 가져오지 않음 (패스오더 기본 이미지가 아닌 매장 이미지를 사용해야 함)
+        if (storeUrl && !isNaverLink && !isPassOrderUrl(storeUrl)) {
           try {
             const ogResponse = await fetch(`/api/og-image?url=${encodeURIComponent(storeUrl)}`);
             const ogData = await ogResponse.json();
