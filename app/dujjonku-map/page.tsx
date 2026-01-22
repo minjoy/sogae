@@ -33,6 +33,13 @@ const extractNumber = (value: string): string => {
   return value.replace(/[^0-9]/g, '');
 };
 
+// 패스오더 링크인지 확인
+const PASS_ORDER_DOMAINS = ['app.passorder', 'events.passorder', 'xn--100--er5pp93d0icp2n2ic5uttwbs3h6zmqsjc2olyj4na.com'];
+const isPassOrderUrl = (url: string | null | undefined): boolean => {
+  if (!url) return false;
+  return PASS_ORDER_DOMAINS.some(domain => url.includes(domain));
+};
+
 // 카테고리 정보
 const CATEGORIES = [
   { key: 'all', label: '전체', emoji: '', color: '#ff6b6b' },
@@ -811,7 +818,7 @@ export default function DujjonkuMapPage() {
               </p>
             )}
 
-            {selectedStore.storeUrl && (
+            {selectedStore.storeUrl && !isPassOrderUrl(selectedStore.storeUrl) && (
               <a
                 href={selectedStore.storeUrl}
                 target="_blank"
@@ -825,9 +832,9 @@ export default function DujjonkuMapPage() {
               </a>
             )}
 
-            {selectedStore.passOrderUrl && (
+            {(selectedStore.passOrderUrl || isPassOrderUrl(selectedStore.storeUrl)) && (
               <a
-                href={selectedStore.passOrderUrl}
+                href={selectedStore.passOrderUrl || selectedStore.storeUrl!}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg mb-2 hover:bg-blue-600 transition-colors"
