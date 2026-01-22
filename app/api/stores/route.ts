@@ -36,8 +36,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 가격 필터 (두쫀쿠 카테고리만 해당)
+    // 가격 필터가 적용된 경우 가격 정보가 없는 매장은 제외
     if (minPrice || maxPrice) {
-      where.price = {};
+      where.price = { not: null };
       if (minPrice) where.price.gte = parseInt(minPrice);
       if (maxPrice) where.price.lte = parseInt(maxPrice);
     }

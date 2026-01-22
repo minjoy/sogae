@@ -24,6 +24,8 @@ export async function GET(
             phone: true,
             description: true,
             imageUrl: true,
+            storeUrl: true,
+            price: true,
           },
         },
       },
@@ -83,7 +85,7 @@ export async function PATCH(
     if (action === 'approve') {
       // 선택된 필드만 적용
       const fieldsToApply = applyFields || [
-        'name', 'category', 'dessertName', 'address', 'lat', 'lng', 'phone', 'description', 'imageUrl'
+        'name', 'category', 'dessertName', 'address', 'lat', 'lng', 'phone', 'description', 'imageUrl', 'storeUrl', 'price'
       ];
 
       const updateData: any = {};
@@ -114,6 +116,12 @@ export async function PATCH(
       }
       if (fieldsToApply.includes('imageUrl') && editRequest.imageUrl !== null) {
         updateData.imageUrl = editRequest.imageUrl;
+      }
+      if (fieldsToApply.includes('storeUrl') && editRequest.storeUrl !== null) {
+        updateData.storeUrl = editRequest.storeUrl;
+      }
+      if (fieldsToApply.includes('price') && editRequest.price !== null) {
+        updateData.price = editRequest.price;
       }
 
       // 매장 업데이트

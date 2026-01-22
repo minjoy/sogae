@@ -49,6 +49,8 @@ interface EditRequest {
   phone: string | null;
   description: string | null;
   imageUrl: string | null;
+  storeUrl: string | null;
+  price: number | null;
   status: string;
   adminNote: string | null;
   createdAt: string;
@@ -64,6 +66,8 @@ interface EditRequest {
     phone: string | null;
     description: string | null;
     imageUrl: string | null;
+    storeUrl: string | null;
+    price: number | null;
   };
 }
 
@@ -704,6 +708,8 @@ export default function AdminDujjonkuPage() {
                           req.phone && '전화번호',
                           req.description && '설명',
                           req.imageUrl && '이미지',
+                          req.storeUrl && '매장링크',
+                          req.price && '가격',
                         ].filter(Boolean).join(', ') || '없음'}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -733,6 +739,8 @@ export default function AdminDujjonkuPage() {
                               req.phone && 'phone',
                               req.description && 'description',
                               req.imageUrl && 'imageUrl',
+                              req.storeUrl && 'storeUrl',
+                              req.price && 'price',
                             ].filter((f): f is string => !!f));
                             setIsEditRequestDetailOpen(true);
                           }}
@@ -1370,6 +1378,56 @@ export default function AdminDujjonkuPage() {
                       <p className="font-medium text-gray-700">이미지 URL</p>
                       <p className="text-sm text-gray-500 break-all">현재: {selectedEditRequest.store.imageUrl || '없음'}</p>
                       <p className="text-sm text-primary-600 break-all">변경: {selectedEditRequest.imageUrl || '없음'}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.storeUrl !== null && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('storeUrl')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'storeUrl']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'storeUrl'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">매장 링크</p>
+                      <p className="text-sm text-gray-500 break-all">현재: {selectedEditRequest.store.storeUrl || '없음'}</p>
+                      <p className="text-sm text-primary-600 break-all">변경: {selectedEditRequest.storeUrl || '없음'}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.price !== null && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('price')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'price']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'price'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">🍪 두쫀쿠 가격</p>
+                      <p className="text-sm text-gray-500">현재: {selectedEditRequest.store.price ? `${formatPrice(selectedEditRequest.store.price)}원` : '없음'}</p>
+                      <p className="text-sm text-primary-600">변경: {selectedEditRequest.price ? `${formatPrice(selectedEditRequest.price)}원` : '없음'}</p>
                     </div>
                   </label>
                 </div>
