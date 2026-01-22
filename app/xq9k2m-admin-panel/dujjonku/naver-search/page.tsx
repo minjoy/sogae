@@ -17,17 +17,59 @@ interface NaverStore {
   mapy: string;
 }
 
+// 확장된 타입: UI 상태 포함
+interface NaverStoreWithState extends NaverStore {
+  price?: string;
+  isRegistered?: boolean;
+}
+
 const SEARCH_KEYWORDS = ['두바이', '두바이 쫀득 쿠키', '두쫀쿠'];
 const ADMIN_KEY = 'sogae-admin-2024';
+
+// 지역 목록
+const REGIONS = [
+  { value: '', label: '전체 지역' },
+  { value: '서울', label: '서울 전체' },
+  { value: '서울 강남', label: '서울 강남' },
+  { value: '서울 홍대', label: '서울 홍대' },
+  { value: '서울 성수', label: '서울 성수' },
+  { value: '서울 잠실', label: '서울 잠실' },
+  { value: '서울 명동', label: '서울 명동' },
+  { value: '서울 이태원', label: '서울 이태원' },
+  { value: '서울 여의도', label: '서울 여의도' },
+  { value: '경기 분당', label: '경기 분당' },
+  { value: '경기 판교', label: '경기 판교' },
+  { value: '경기 수원', label: '경기 수원' },
+  { value: '인천', label: '인천' },
+  { value: '부산', label: '부산' },
+  { value: '대구', label: '대구' },
+  { value: '대전', label: '대전' },
+  { value: '광주', label: '광주' },
+  { value: '제주', label: '제주' },
+];
+
+// 가격 포맷팅 헬퍼 (천단위 콤마)
+const formatPrice = (value: string | number): string => {
+  const numStr = String(value).replace(/[^0-9]/g, '');
+  if (!numStr) return '';
+  return Number(numStr).toLocaleString('ko-KR');
+};
+
+// 숫자만 추출
+const extractNumber = (value: string): string => {
+  return value.replace(/[^0-9]/g, '');
+};
 
 export default function NaverSearchPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [selectedKeyword, setSelectedKeyword] = useState(SEARCH_KEYWORDS[0]);
+  const [selectedRegion, setSelectedRegion] = useState('');
   const [customKeyword, setCustomKeyword] = useState('');
-  const [stores, setStores] = useState<NaverStore[]>([]);
+  const [stores, setStores] = useState<NaverStoreWithState[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingRegistered, setIsCheckingRegistered] = useState(false);
   const [searchedQuery, setSearchedQuery] = useState('');
   const [total, setTotal] = useState(0);
 
@@ -80,13 +122,50 @@ export default function NaverSearchPage() {
     checkAuth();
   }, [router]);
 
+  // 등록된 매장 확인
+  const checkRegisteredStores = async (storeList: NaverStoreWithState[]) => {
+    if (storeList.length === 0) return storeList;
+
+    setIsCheckingRegistered(true);
+    try {
+      // 좌표 목록으로 등록 여부 확인
+      const coords = storeList.map((s) => ({ lat: s.lat, lng: s.lng }));
+      const response = await fetch('/api/admin/stores/check-registered', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': ADMIN_KEY,
+        },
+        body: JSON.stringify({ coordinates: coords }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.registeredIndices) {
+          return storeList.map((store, index) => ({
+            ...store,
+            isRegistered: data.registeredIndices.includes(index),
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Check registered error:', error);
+    } finally {
+      setIsCheckingRegistered(false);
+    }
+    return storeList;
+  };
+
   // 네이버 검색 실행
   const handleSearch = async (keyword?: string) => {
-    const query = keyword || customKeyword || selectedKeyword;
-    if (!query.trim()) {
+    const baseQuery = keyword || customKeyword || selectedKeyword;
+    if (!baseQuery.trim()) {
       alert('검색어를 입력해주세요');
       return;
     }
+
+    // 지역이 선택된 경우 검색어에 추가
+    const query = selectedRegion ? `${baseQuery} ${selectedRegion}` : baseQuery;
 
     setIsLoading(true);
     try {
@@ -94,7 +173,17 @@ export default function NaverSearchPage() {
       const data = await response.json();
 
       if (data.success) {
-        setStores(data.stores);
+        // 초기 상태로 stores 설정 (가격 필드 포함)
+        const storesWithState: NaverStoreWithState[] = data.stores.map((s: NaverStore) => ({
+          ...s,
+          price: '',
+          isRegistered: false,
+        }));
+
+        // 등록 여부 확인
+        const checkedStores = await checkRegisteredStores(storesWithState);
+
+        setStores(checkedStores);
         setSearchedQuery(data.query);
         setTotal(data.total);
       } else {
@@ -108,9 +197,21 @@ export default function NaverSearchPage() {
     }
   };
 
+  // 가격 변경 핸들러
+  const handlePriceChange = (index: number, value: string) => {
+    const formatted = formatPrice(value);
+    setStores((prev) =>
+      prev.map((store, i) =>
+        i === index ? { ...store, price: formatted } : store
+      )
+    );
+  };
+
   // 매장 등록
-  const handleRegisterStore = async (store: NaverStore) => {
-    if (!confirm(`"${store.name}"을(를) 두쫀쿠맵에 등록하시겠습니까?`)) {
+  const handleRegisterStore = async (store: NaverStoreWithState, index: number) => {
+    const priceValue = store.price ? extractNumber(store.price) : null;
+
+    if (!confirm(`"${store.name}"을(를) 두쫀쿠맵에 등록하시겠습니까?${priceValue ? `\n가격: ${store.price}원` : ''}`)) {
       return;
     }
 
@@ -137,6 +238,7 @@ export default function NaverSearchPage() {
           description: store.description || null,
           storeUrl,
           passOrderUrl,
+          price: priceValue,
         }),
       });
 
@@ -146,10 +248,8 @@ export default function NaverSearchPage() {
         alert(`"${store.name}" 매장이 등록되었습니다!`);
         // 등록된 매장 표시를 위해 상태 업데이트
         setStores((prev) =>
-          prev.map((s) =>
-            s.name === store.name && s.address === store.address
-              ? { ...s, registered: true } as NaverStore & { registered: boolean }
-              : s
+          prev.map((s, i) =>
+            i === index ? { ...s, isRegistered: true } : s
           )
         );
       } else {
@@ -199,6 +299,47 @@ export default function NaverSearchPage() {
 
         {/* 검색 영역 */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          {/* 지역 선택 */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">지역 선택</label>
+            <div className="flex flex-wrap gap-2">
+              {REGIONS.slice(0, 10).map((region) => (
+                <button
+                  key={region.value}
+                  onClick={() => setSelectedRegion(region.value)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    selectedRegion === region.value
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {region.label}
+                </button>
+              ))}
+              <select
+                value={REGIONS.slice(10).find((r) => r.value === selectedRegion)?.value || ''}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                  REGIONS.slice(10).some((r) => r.value === selectedRegion)
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-300 text-gray-700'
+                }`}
+              >
+                <option value="">기타 지역...</option>
+                {REGIONS.slice(10).map((region) => (
+                  <option key={region.value} value={region.value}>
+                    {region.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedRegion && (
+              <p className="text-xs text-green-600 mt-1">
+                선택된 지역: <span className="font-semibold">{selectedRegion}</span>
+              </p>
+            )}
+          </div>
+
           <div className="mb-4">
             <label className="block text-sm font-semibold text-gray-700 mb-2">빠른 검색</label>
             <div className="flex flex-wrap gap-2">
@@ -210,7 +351,7 @@ export default function NaverSearchPage() {
                     handleSearch(keyword);
                   }}
                   className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                    selectedKeyword === keyword && searchedQuery === keyword
+                    selectedKeyword === keyword && searchedQuery.includes(keyword)
                       ? 'bg-primary-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
@@ -234,7 +375,7 @@ export default function NaverSearchPage() {
                   }
                 }}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="검색어 입력 (예: 두바이 쿠키 강남)"
+                placeholder={selectedRegion ? `검색어 입력 (지역: ${selectedRegion})` : '검색어 입력 (예: 두바이 쿠키)'}
               />
               <button
                 onClick={() => handleSearch()}
@@ -254,6 +395,14 @@ export default function NaverSearchPage() {
               &ldquo;<span className="font-bold text-primary-600">{searchedQuery}</span>&rdquo; 검색 결과:{' '}
               <span className="font-bold">{total.toLocaleString()}</span>건 중{' '}
               <span className="font-bold">{stores.length}</span>건 표시
+              {isCheckingRegistered && (
+                <span className="ml-2 text-sm text-gray-400">(등록 여부 확인 중...)</span>
+              )}
+              {stores.filter((s) => s.isRegistered).length > 0 && (
+                <span className="ml-2 text-sm text-green-600">
+                  ({stores.filter((s) => s.isRegistered).length}건 등록됨)
+                </span>
+              )}
             </p>
           </div>
         )}
@@ -269,7 +418,9 @@ export default function NaverSearchPage() {
             {stores.map((store, index) => (
               <div
                 key={`${store.name}-${store.address}-${index}`}
-                className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
+                className={`bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow ${
+                  store.isRegistered ? 'border-2 border-green-300 bg-green-50' : ''
+                }`}
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">
@@ -278,6 +429,11 @@ export default function NaverSearchPage() {
                       <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
                         {store.category}
                       </span>
+                      {store.isRegistered && (
+                        <span className="px-2 py-0.5 bg-green-500 text-white rounded text-xs font-semibold">
+                          등록됨
+                        </span>
+                      )}
                     </div>
                     <p className="text-gray-600 text-sm mb-1">{store.address}</p>
                     {store.phone && (
@@ -293,7 +449,7 @@ export default function NaverSearchPage() {
                       <span>경도: {store.lng}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2 min-w-[140px]">
                     {store.link && (
                       <a
                         href={store.link}
@@ -304,12 +460,33 @@ export default function NaverSearchPage() {
                         네이버 보기
                       </a>
                     )}
-                    <button
-                      onClick={() => handleRegisterStore(store)}
-                      className="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-lg text-sm font-medium hover:bg-primary-200"
-                    >
-                      매장 등록
-                    </button>
+                    {!store.isRegistered && (
+                      <>
+                        {/* 가격 입력 필드 */}
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={store.price || ''}
+                            onChange={(e) => handlePriceChange(index, e.target.value)}
+                            className="w-full px-3 py-1.5 pr-6 border border-yellow-300 rounded-lg text-sm focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-yellow-50"
+                            placeholder="가격"
+                            inputMode="numeric"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">원</span>
+                        </div>
+                        <button
+                          onClick={() => handleRegisterStore(store, index)}
+                          className="px-3 py-1.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600"
+                        >
+                          매장 등록
+                        </button>
+                      </>
+                    )}
+                    {store.isRegistered && (
+                      <div className="px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm text-center">
+                        이미 등록됨
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
