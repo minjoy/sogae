@@ -232,6 +232,10 @@ export default function DujjonkuMapPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isPriceFilterOpen, setIsPriceFilterOpen] = useState(false);
   const [priceFilter, setPriceFilter] = useState({ min: '', max: '' });
+  const [isPriceMode, setIsPriceMode] = useState(false); // 가격 표시 모드
+
+  // 가격 모드 ref (idle 이벤트에서 참조)
+  const isPriceModeRef = useRef(false);
 
   // 매장 등록 폼
   const [registerForm, setRegisterForm] = useState({
@@ -292,6 +296,10 @@ export default function DujjonkuMapPage() {
   useEffect(() => {
     priceFilterRef.current = priceFilter;
   }, [priceFilter]);
+
+  useEffect(() => {
+    isPriceModeRef.current = isPriceMode;
+  }, [isPriceMode]);
 
   // SDK 로딩 완료 후 지도 초기화
   useEffect(() => {
@@ -407,12 +415,7 @@ export default function DujjonkuMapPage() {
     );
   }, []);
 
-  // 가격 필터가 적용되었는지 확인
-  const isPriceFilterActive = useCallback(() => {
-    return priceFilter.min !== '' || priceFilter.max !== '';
-  }, [priceFilter]);
-
-  // 마커 업데이트
+  // 마커 업데이트 (가격 모드는 ref에서 직접 참조)
   const updateMarkers = useCallback((storeList: Store[]) => {
     if (!mapRef.current || !clustererRef.current) return;
 
@@ -420,8 +423,8 @@ export default function DujjonkuMapPage() {
     clustererRef.current.clear();
     markersRef.current = [];
 
-    // 가격 필터 적용 여부 확인
-    const showPriceMarker = isPriceFilterActive();
+    // 가격 모드 여부 확인 (ref 사용으로 최신 상태 참조)
+    const showPriceMarker = isPriceModeRef.current;
 
     // 새 마커 생성
     const markers = storeList.map((store) => {
@@ -449,7 +452,7 @@ export default function DujjonkuMapPage() {
 
     markersRef.current = markers;
     clustererRef.current.addMarkers(markers);
-  }, [getMarkerImage, getPriceMarkerImage, isPriceFilterActive]);
+  }, [getMarkerImage, getPriceMarkerImage]);
 
   // 매장 클릭 (상세 조회)
   const handleStoreClick = async (storeId: string) => {
@@ -893,18 +896,18 @@ export default function DujjonkuMapPage() {
               <button
                 onClick={() => setIsPriceFilterOpen(true)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shadow ${
-                  priceFilter.min || priceFilter.max
+                  isPriceMode
                     ? 'bg-yellow-500 text-white'
                     : 'bg-white/90 text-gray-700 hover:bg-white'
                 }`}
               >
                 <span className="mr-1">💰</span>
-                가격
-                {(priceFilter.min || priceFilter.max) && (
-                  <span className="ml-1 text-xs">
-                    ({priceFilter.min || '0'}~{priceFilter.max || '∞'})
-                  </span>
-                )}
+                {isPriceMode ? (
+                  !priceFilter.min && !priceFilter.max ? '전체' :
+                  !priceFilter.min && priceFilter.max ? `~${Number(extractNumber(priceFilter.max)) / 1000}천` :
+                  priceFilter.min && !priceFilter.max ? `${Number(extractNumber(priceFilter.min)) / 1000}천~` :
+                  `${Number(extractNumber(priceFilter.min)) / 1000}~${Number(extractNumber(priceFilter.max)) / 1000}천`
+                ) : '가격'}
               </button>
             )}
           </div>
@@ -1517,7 +1520,7 @@ export default function DujjonkuMapPage() {
             <div className="space-y-4">
               {/* 빠른 선택 버튼 */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">빠른 선택</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">빠른 선택 (토글)</label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { label: '3천원 이하', min: '', max: '3000' },
@@ -1526,21 +1529,35 @@ export default function DujjonkuMapPage() {
                     { label: '7~1만원', min: '7000', max: '10000' },
                     { label: '1만원 이상', min: '10000', max: '' },
                     { label: '전체', min: '', max: '' },
-                  ].map((option) => (
-                    <button
-                      key={option.label}
-                      onClick={() => {
-                        setPriceFilter({ min: formatPrice(option.min), max: formatPrice(option.max) });
-                      }}
-                      className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
-                        extractNumber(priceFilter.min) === option.min && extractNumber(priceFilter.max) === option.max
-                          ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+                  ].map((option) => {
+                    const isSelected = isPriceMode &&
+                      extractNumber(priceFilter.min) === option.min &&
+                      extractNumber(priceFilter.max) === option.max;
+
+                    return (
+                      <button
+                        key={option.label}
+                        onClick={() => {
+                          if (isSelected) {
+                            // 이미 선택된 항목 클릭 시 해제
+                            setPriceFilter({ min: '', max: '' });
+                            setIsPriceMode(false);
+                          } else {
+                            // 새 항목 선택
+                            setPriceFilter({ min: formatPrice(option.min), max: formatPrice(option.max) });
+                            setIsPriceMode(true);
+                          }
+                        }}
+                        className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
+                          isSelected
+                            ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1579,15 +1596,17 @@ export default function DujjonkuMapPage() {
               <button
                 onClick={() => {
                   setPriceFilter({ min: '', max: '' });
+                  setIsPriceMode(false);
                   fetchStores(undefined, { min: '', max: '' });
                   setIsPriceFilterOpen(false);
                 }}
                 className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200"
               >
-                초기화
+                해제
               </button>
               <button
                 onClick={() => {
+                  setIsPriceMode(true);
                   fetchStores(undefined, priceFilter);
                   setIsPriceFilterOpen(false);
                 }}
