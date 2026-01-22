@@ -826,7 +826,6 @@ export default function DujjonkuMapPage() {
 
             <div className="flex items-center gap-4 text-xs text-gray-500 mb-6">
               <span>조회수: {selectedStore.clickCount}</span>
-              <span>등록자: {selectedStore.registeredBy}</span>
             </div>
 
             <div className="flex gap-3">
