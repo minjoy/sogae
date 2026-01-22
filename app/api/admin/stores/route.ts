@@ -67,15 +67,31 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, category, address, lat, lng, phone, description, imageUrl, storeUrl, passOrderUrl, dessertName, price } = body;
 
-    if (!name || !address || !lat || !lng) {
+    if (!name || !address || lat === undefined || lat === null || lng === undefined || lng === null) {
       return NextResponse.json(
         { error: '매장명, 주소, 위치 정보는 필수입니다' },
         { status: 400 }
       );
     }
 
-    const parsedLat = parseFloat(lat);
-    const parsedLng = parseFloat(lng);
+    const parsedLat = typeof lat === 'number' ? lat : parseFloat(lat);
+    const parsedLng = typeof lng === 'number' ? lng : parseFloat(lng);
+
+    // 좌표 유효성 검증
+    if (isNaN(parsedLat) || isNaN(parsedLng)) {
+      return NextResponse.json(
+        { error: '위치 좌표가 올바르지 않습니다' },
+        { status: 400 }
+      );
+    }
+
+    // 대한민국 좌표 범위 검증
+    if (parsedLat < 33 || parsedLat > 43 || parsedLng < 124 || parsedLng > 132) {
+      return NextResponse.json(
+        { error: '대한민국 범위 내의 좌표만 등록할 수 있습니다' },
+        { status: 400 }
+      );
+    }
 
     // 위치 기반 중복 체크 (약 10m 반경 내 동일 매장 확인)
     const DUPLICATE_THRESHOLD = 0.0001; // 약 10m
