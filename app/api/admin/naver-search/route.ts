@@ -52,14 +52,10 @@ export async function GET(request: NextRequest) {
 
     // HTML 태그 제거 및 좌표 변환
     const stores = data.items.map((item) => {
-      // 네이버 좌표를 WGS84로 변환 (카텍 -> WGS84)
-      // 네이버 mapx, mapy는 카텍 좌표계 (KATEC)
-      const katecX = parseInt(item.mapx);
-      const katecY = parseInt(item.mapy);
-
-      // 간단한 변환 공식 (정확도는 떨어지지만 대략적 위치 파악용)
-      // 더 정확한 변환을 위해서는 proj4 라이브러리 사용 권장
-      const { lat, lng } = katecToWgs84(katecX, katecY);
+      // 네이버 지역검색 API의 mapx, mapy는 WGS84 좌표 * 10000000 형태
+      // 예: mapx=1269876543 -> 경도 126.9876543
+      const lng = parseInt(item.mapx) / 10000000;
+      const lat = parseInt(item.mapy) / 10000000;
 
       return {
         name: item.title.replace(/<[^>]*>/g, ''), // HTML 태그 제거
@@ -88,29 +84,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// 카텍(KATEC) 좌표를 WGS84 (위도/경도)로 변환
-// 네이버 지역검색 API의 mapx, mapy는 카텍 좌표계 사용
-function katecToWgs84(x: number, y: number): { lat: number; lng: number } {
-  // 카텍 좌표는 미터 단위의 정수로 표현됨
-  // 네이버 API에서 반환하는 값은 실제 카텍 좌표 * 10 형태
-  const katecX = x / 10;
-  const katecY = y / 10;
-
-  // 카텍 -> WGS84 변환 (근사 공식)
-  // 참고: 정확한 변환을 위해서는 proj4js 라이브러리 사용 권장
-  const KATEC_ORIGIN_LAT = 38.0;
-  const KATEC_ORIGIN_LNG = 128.0;
-  const KATEC_SCALE = 0.9999;
-
-  // 근사 변환 (대략적인 위치 확인용)
-  // TM 좌표계 기반 근사 변환
-  const lng = KATEC_ORIGIN_LNG + (katecX - 400000) / (111319.49079 * Math.cos(36 * Math.PI / 180) * KATEC_SCALE);
-  const lat = KATEC_ORIGIN_LAT + (katecY - 500000) / (111319.49079 * KATEC_SCALE) - 2.05;
-
-  return {
-    lat: Math.round(lat * 1000000) / 1000000,
-    lng: Math.round(lng * 1000000) / 1000000,
-  };
 }
