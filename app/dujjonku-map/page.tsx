@@ -51,25 +51,31 @@ const CATEGORIES = [
 // 마커 이미지 캐시 (성능 최적화)
 const markerImageCache = new Map<string, string>();
 
-// 기본 핀 마커 생성 (Canvas 기반)
+// 고해상도 Canvas를 위한 devicePixelRatio
+const getPixelRatio = () => typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 2;
+
+// 기본 핀 마커 생성 (Canvas 기반, 고해상도)
 const createPinMarkerImage = (color: string): string => {
   const cacheKey = `pin_${color}`;
   if (markerImageCache.has(cacheKey)) {
     return markerImageCache.get(cacheKey)!;
   }
 
+  const ratio = getPixelRatio();
+  const size = 24; // 논리적 크기 (줄임)
+  const tailHeight = 6;
+
   const canvas = document.createElement('canvas');
-  const size = 32;
-  const tailHeight = 8;
-  canvas.width = size;
-  canvas.height = size + tailHeight;
+  canvas.width = size * ratio;
+  canvas.height = (size + tailHeight) * ratio;
   const ctx = canvas.getContext('2d')!;
+  ctx.scale(ratio, ratio);
 
   // 그림자 효과
   ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-  ctx.shadowBlur = 4;
+  ctx.shadowBlur = 3;
   ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 2;
+  ctx.shadowOffsetY = 1;
 
   // 원형 헤드
   ctx.beginPath();
@@ -82,15 +88,15 @@ const createPinMarkerImage = (color: string): string => {
 
   // 뾰족한 꼬리
   ctx.beginPath();
-  ctx.moveTo(size / 2 - 6, size / 2 + 8);
-  ctx.lineTo(size / 2, size + tailHeight - 2);
-  ctx.lineTo(size / 2 + 6, size / 2 + 8);
+  ctx.moveTo(size / 2 - 5, size / 2 + 6);
+  ctx.lineTo(size / 2, size + tailHeight - 1);
+  ctx.lineTo(size / 2 + 5, size / 2 + 6);
   ctx.fillStyle = color;
   ctx.fill();
 
   // 흰색 내부 원 (하이라이트)
   ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 4, 0, Math.PI * 2);
+  ctx.arc(size / 2, size / 2, size / 5, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
   ctx.fill();
 
@@ -99,7 +105,7 @@ const createPinMarkerImage = (color: string): string => {
   return dataUrl;
 };
 
-// 가격 표시 마커 생성 (Canvas 기반)
+// 가격 표시 마커 생성 (Canvas 기반, 고해상도)
 const createPriceMarkerImage = (price: number, color: string): string => {
   // 천원 단위로 변환 (11000 → 11, 5700 → 5.7)
   const priceInK = price / 1000;
@@ -110,29 +116,33 @@ const createPriceMarkerImage = (price: number, color: string): string => {
     return markerImageCache.get(cacheKey)!;
   }
 
-  const canvas = document.createElement('canvas');
-  const padding = 8;
-  const fontSize = 13;
-  const height = 28;
+  const ratio = getPixelRatio();
+  const padding = 6;
+  const fontSize = 11;
+  const height = 22;
+  const tailHeight = 5;
 
   // 텍스트 너비 계산을 위한 임시 컨텍스트
-  const tempCtx = canvas.getContext('2d')!;
-  tempCtx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  const textWidth = tempCtx.measureText(priceText).width;
-  const width = Math.max(36, textWidth + padding * 2);
+  const tempCanvas = document.createElement('canvas');
+  const tempCtx = tempCanvas.getContext('2d')!;
+  tempCtx.font = `bold ${fontSize * ratio}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  const textWidth = tempCtx.measureText(priceText).width / ratio;
+  const width = Math.max(28, textWidth + padding * 2);
 
-  canvas.width = width;
-  canvas.height = height + 8; // 꼬리 공간
+  const canvas = document.createElement('canvas');
+  canvas.width = width * ratio;
+  canvas.height = (height + tailHeight) * ratio;
   const ctx = canvas.getContext('2d')!;
+  ctx.scale(ratio, ratio);
 
   // 그림자
   ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-  ctx.shadowBlur = 4;
+  ctx.shadowBlur = 3;
   ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 2;
+  ctx.shadowOffsetY = 1;
 
   // 둥근 사각형 배경
-  const radius = 6;
+  const radius = 4;
   ctx.beginPath();
   ctx.moveTo(radius, 0);
   ctx.lineTo(width - radius, 0);
@@ -152,9 +162,9 @@ const createPriceMarkerImage = (price: number, color: string): string => {
 
   // 아래쪽 꼬리 (삼각형)
   ctx.beginPath();
-  ctx.moveTo(width / 2 - 5, height);
-  ctx.lineTo(width / 2, height + 6);
-  ctx.lineTo(width / 2 + 5, height);
+  ctx.moveTo(width / 2 - 4, height);
+  ctx.lineTo(width / 2, height + tailHeight);
+  ctx.lineTo(width / 2 + 4, height);
   ctx.closePath();
   ctx.fillStyle = color;
   ctx.fill();
@@ -205,6 +215,10 @@ export default function DujjonkuMapPage() {
   const clustererRef = useRef<any>(null);
   const previewMapRef = useRef<any>(null);
   const previewMarkerRef = useRef<any>(null);
+
+  // 최신 필터 상태를 idle 이벤트에서 참조하기 위한 ref
+  const selectedCategoryRef = useRef<string>('all');
+  const priceFilterRef = useRef<{ min: string; max: string }>({ min: '', max: '' });
 
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
@@ -270,6 +284,15 @@ export default function DujjonkuMapPage() {
     }
   }, []);
 
+  // 필터 상태를 ref와 동기화 (idle 이벤트에서 최신 값 참조용)
+  useEffect(() => {
+    selectedCategoryRef.current = selectedCategory;
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    priceFilterRef.current = priceFilter;
+  }, [priceFilter]);
+
   // SDK 로딩 완료 후 지도 초기화
   useEffect(() => {
     if (!sdkLoaded) return;
@@ -316,9 +339,9 @@ export default function DujjonkuMapPage() {
       }],
     });
 
-    // 지도 이동/확대 이벤트
+    // 지도 이동/확대 이벤트 (ref를 사용해 최신 필터 상태 유지)
     window.kakao.maps.event.addListener(map, 'idle', () => {
-      fetchStores();
+      fetchStores(selectedCategoryRef.current, priceFilterRef.current);
     });
 
     // 초기 매장 로드
@@ -362,8 +385,8 @@ export default function DujjonkuMapPage() {
 
     return new window.kakao.maps.MarkerImage(
       imageUrl,
-      new window.kakao.maps.Size(32, 40),
-      { offset: new window.kakao.maps.Point(16, 40) }
+      new window.kakao.maps.Size(24, 30),
+      { offset: new window.kakao.maps.Point(12, 30) }
     );
   }, []);
 
@@ -375,12 +398,12 @@ export default function DujjonkuMapPage() {
     // 가격 텍스트 길이에 따라 너비 계산
     const priceInK = price / 1000;
     const priceText = priceInK % 1 === 0 ? String(priceInK) : priceInK.toFixed(1);
-    const width = Math.max(36, priceText.length * 10 + 16);
+    const width = Math.max(28, priceText.length * 8 + 12);
 
     return new window.kakao.maps.MarkerImage(
       imageUrl,
-      new window.kakao.maps.Size(width, 36),
-      { offset: new window.kakao.maps.Point(width / 2, 36) }
+      new window.kakao.maps.Size(width, 27),
+      { offset: new window.kakao.maps.Point(width / 2, 27) }
     );
   }, []);
 

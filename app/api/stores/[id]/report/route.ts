@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
-
-type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+import { Prisma } from '@prisma/client';
 
 // POST: 매장 신고
 export async function POST(
@@ -55,7 +54,7 @@ export async function POST(
     }
 
     // 신고 생성 및 신고 수 증가
-    await prisma.$transaction(async (tx: TransactionClient) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.storeReport.create({
         data: {
           storeId,
