@@ -12,29 +12,33 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&#x2F;/g, '/');
 }
 
-// OG 이미지 추출 함수
+// OG 이미지 추출 함수 (여러 개인 경우 마지막 것 반환)
 function extractOgImage(html: string): string | null {
   // 다양한 형태의 og:image 메타 태그 매칭
   const patterns = [
     // 네이버 플레이스 형식: <meta id="og:image" property="og:image" content="...">
-    /<meta[^>]*id=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*id=["']og:image["'][^>]*content=["']([^"']+)["']/gi,
     // <meta property="og:image" content="...">
-    /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/gi,
     // <meta content="..." property="og:image">
-    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/gi,
     // 더 느슨한 패턴: og:image와 content가 있는 메타 태그
-    /<meta[^>]+og:image[^>]+content=["']([^"']+)["']/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+og:image/i,
+    /<meta[^>]+og:image[^>]+content=["']([^"']+)["']/gi,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+og:image/gi,
   ];
 
+  let lastImage: string | null = null;
+
   for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match && match[1]) {
-      return decodeHtmlEntities(match[1]);
+    let match;
+    while ((match = pattern.exec(html)) !== null) {
+      if (match[1]) {
+        lastImage = decodeHtmlEntities(match[1]);
+      }
     }
   }
 
-  return null;
+  return lastImage;
 }
 
 // GET: URL에서 OG 이미지 추출
