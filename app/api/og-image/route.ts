@@ -16,12 +16,15 @@ function decodeHtmlEntities(str: string): string {
 function extractOgImage(html: string): string | null {
   // 다양한 형태의 og:image 메타 태그 매칭
   const patterns = [
+    // 네이버 플레이스 형식: <meta id="og:image" property="og:image" content="...">
+    /<meta[^>]*id=["']og:image["'][^>]*content=["']([^"']+)["']/i,
     // <meta property="og:image" content="...">
     /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
     // <meta content="..." property="og:image">
     /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
-    // <meta id="og:image" property="og:image" content="..."> (네이버 형식)
-    /<meta[^>]*id=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+    // 더 느슨한 패턴: og:image와 content가 있는 메타 태그
+    /<meta[^>]+og:image[^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+og:image/i,
   ];
 
   for (const pattern of patterns) {
