@@ -42,9 +42,10 @@ export async function GET(request: NextRequest) {
     });
 
     // 매장별로 그룹화
+    type RequestWithoutStore = Omit<typeof editRequests[number], 'store'>;
     const groupedByStore: Record<string, {
       store: typeof editRequests[number]['store'];
-      requests: typeof editRequests;
+      requests: RequestWithoutStore[];
     }> = {};
 
     editRequests.forEach((req: typeof editRequests[number]) => {
