@@ -114,8 +114,8 @@ export default function NaverSearchPage() {
       return;
     }
 
-    // link가 app.passorder를 포함하면 패스오더 링크로, 아니면 매장 링크로 저장
-    const isPassOrderLink = store.link && store.link.includes('app.passorder');
+    // link가 events.passorder를 포함하면 패스오더 링크로, 아니면 매장 링크로 저장
+    const isPassOrderLink = store.link && store.link.includes('events.passorder');
     const storeUrl = isPassOrderLink ? null : (store.link || null);
     const passOrderUrl = isPassOrderLink ? store.link : null;
 

@@ -1199,7 +1199,7 @@ export default function AdminDujjonkuPage() {
                   value={createForm.passOrderUrl}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, passOrderUrl: e.target.value }))}
                   className="w-full px-4 py-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-blue-50"
-                  placeholder="https://app.passorder.co.kr/..."
+                  placeholder="https://events.passorder.co.kr/..."
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   패스오더 주문 링크가 있는 경우 입력하세요
