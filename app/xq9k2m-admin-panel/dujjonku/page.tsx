@@ -86,8 +86,9 @@ export default function AdminDujjonkuPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '',
-    category: 'dujjonku',
-    dessertName: '',
+    categories: ['dujjonku'] as string[],
+    dubaiDessertName: '',
+    signatureDessertName: '',
     address: '',
     lat: '',
     lng: '',
@@ -95,6 +96,10 @@ export default function AdminDujjonkuPage() {
     description: '',
     imageUrl: '',
   });
+
+  // 두바이파생/시그니처간식 선택 여부 확인
+  const needsDubaiDessert = createForm.categories.includes('dubai');
+  const needsSignatureDessert = createForm.categories.includes('signature');
 
   // 수정 요청 관련 상태
   const [editRequests, setEditRequests] = useState<EditRequest[]>([]);
@@ -279,6 +284,36 @@ export default function AdminDujjonkuPage() {
       return;
     }
 
+    if (createForm.categories.length === 0) {
+      alert('카테고리를 하나 이상 선택해주세요');
+      return;
+    }
+
+    // 두바이파생 선택 시 디저트명 필수
+    if (createForm.categories.includes('dubai') && !createForm.dubaiDessertName.trim()) {
+      alert('두바이파생 디저트명을 입력해주세요');
+      return;
+    }
+
+    // 시그니처간식 선택 시 디저트명 필수
+    if (createForm.categories.includes('signature') && !createForm.signatureDessertName.trim()) {
+      alert('시그니처간식 디저트명을 입력해주세요');
+      return;
+    }
+
+    // 디저트명 조합
+    const dessertParts: string[] = [];
+    if (createForm.dubaiDessertName.trim()) {
+      dessertParts.push(`[두바이파생] ${createForm.dubaiDessertName.trim()}`);
+    }
+    if (createForm.signatureDessertName.trim()) {
+      dessertParts.push(`[시그니처간식] ${createForm.signatureDessertName.trim()}`);
+    }
+    const combinedDessertName = dessertParts.join(' | ');
+
+    // 카테고리 결정: 첫 번째 선택된 카테고리를 메인으로
+    const mainCategory = createForm.categories[0];
+
     try {
       const response = await fetch('/api/admin/stores', {
         method: 'POST',
@@ -286,12 +321,33 @@ export default function AdminDujjonkuPage() {
           'Content-Type': 'application/json',
           'x-admin-key': ADMIN_KEY,
         },
-        body: JSON.stringify(createForm),
+        body: JSON.stringify({
+          name: createForm.name,
+          category: mainCategory,
+          dessertName: combinedDessertName || null,
+          address: createForm.address,
+          lat: createForm.lat,
+          lng: createForm.lng,
+          phone: createForm.phone,
+          description: createForm.description,
+          imageUrl: createForm.imageUrl,
+        }),
       });
 
       if (response.ok) {
         setIsCreateOpen(false);
-        setCreateForm({ name: '', category: 'dujjonku', dessertName: '', address: '', lat: '', lng: '', phone: '', description: '', imageUrl: '' });
+        setCreateForm({
+          name: '',
+          categories: ['dujjonku'],
+          dubaiDessertName: '',
+          signatureDessertName: '',
+          address: '',
+          lat: '',
+          lng: '',
+          phone: '',
+          description: '',
+          imageUrl: '',
+        });
         fetchStores();
       }
     } catch (error) {
@@ -784,27 +840,185 @@ export default function AdminDujjonkuPage() {
             <h2 className="text-xl font-bold text-gray-900 mb-6">매장 등록 (관리자)</h2>
 
             <div className="space-y-4">
-              {/* 카테고리 선택 */}
+              {/* 카테고리 선택 (복수 선택 가능) */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">카테고리 *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">카테고리 * (복수 선택 가능)</label>
                 <div className="flex gap-2">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.key}
-                      type="button"
-                      onClick={() => setCreateForm((prev) => ({ ...prev, category: cat.key }))}
-                      className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
-                        createForm.category === cat.key
-                          ? 'border-primary-500 bg-primary-50 text-primary-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className="block text-lg mb-1">{cat.emoji}</span>
-                      <span className="block text-xs">{cat.label}</span>
-                    </button>
-                  ))}
+                  {CATEGORIES.map((cat) => {
+                    const isSelected = createForm.categories.includes(cat.key);
+                    return (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => {
+                          setCreateForm((prev) => {
+                            const newCategories = isSelected
+                              ? prev.categories.filter((c) => c !== cat.key)
+                              : [...prev.categories, cat.key];
+                            return {
+                              ...prev,
+                              categories: newCategories.length > 0 ? newCategories : [cat.key],
+                              // 카테고리 해제 시 해당 디저트명도 초기화
+                              dubaiDessertName: cat.key === 'dubai' && isSelected ? '' : prev.dubaiDessertName,
+                              signatureDessertName: cat.key === 'signature' && isSelected ? '' : prev.signatureDessertName,
+                            };
+                          });
+                        }}
+                        className={`relative flex-1 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
+                          isSelected
+                            ? 'border-primary-500 bg-primary-50 text-primary-700'
+                            : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {/* 체크 아이콘 */}
+                        {isSelected && (
+                          <span className="absolute top-1 right-1">
+                            <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        )}
+                        <span className="block text-lg mb-1">{cat.emoji}</span>
+                        <span className="block text-xs">{cat.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              {/* 두바이파생 디저트명 */}
+              {needsDubaiDessert && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    🍫 두바이파생 디저트명 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {createForm.dubaiDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm"
+                      >
+                        {tag.trim()}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const tags = createForm.dubaiDessertName.split(',').filter(t => t.trim());
+                            tags.splice(index, 1);
+                            setCreateForm(prev => ({ ...prev, dubaiDessertName: tags.join(',') }));
+                          }}
+                          className="ml-1 text-amber-500 hover:text-amber-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="디저트명 입력 후 Enter (예: 두바이초콜릿)"
+                    className="w-full px-4 py-3 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-900 bg-amber-50"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        const input = e.currentTarget;
+                        const value = input.value.trim().replace(/,/g, '');
+                        if (value) {
+                          const currentTags = createForm.dubaiDessertName.split(',').filter(t => t.trim());
+                          if (!currentTags.includes(value)) {
+                            setCreateForm(prev => ({
+                              ...prev,
+                              dubaiDessertName: [...currentTags, value].join(',')
+                            }));
+                          }
+                          input.value = '';
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.currentTarget.value.trim().replace(/,/g, '');
+                      if (value) {
+                        const currentTags = createForm.dubaiDessertName.split(',').filter(t => t.trim());
+                        if (!currentTags.includes(value)) {
+                          setCreateForm(prev => ({
+                            ...prev,
+                            dubaiDessertName: [...currentTags, value].join(',')
+                          }));
+                        }
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* 시그니처간식 디저트명 */}
+              {needsSignatureDessert && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    🎂 시그니처간식 디저트명 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {createForm.signatureDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
+                      >
+                        {tag.trim()}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const tags = createForm.signatureDessertName.split(',').filter(t => t.trim());
+                            tags.splice(index, 1);
+                            setCreateForm(prev => ({ ...prev, signatureDessertName: tags.join(',') }));
+                          }}
+                          className="ml-1 text-purple-500 hover:text-purple-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="디저트명 입력 후 Enter (예: 크로플, 마카롱)"
+                    className="w-full px-4 py-3 border border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-purple-50"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        const input = e.currentTarget;
+                        const value = input.value.trim().replace(/,/g, '');
+                        if (value) {
+                          const currentTags = createForm.signatureDessertName.split(',').filter(t => t.trim());
+                          if (!currentTags.includes(value)) {
+                            setCreateForm(prev => ({
+                              ...prev,
+                              signatureDessertName: [...currentTags, value].join(',')
+                            }));
+                          }
+                          input.value = '';
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.currentTarget.value.trim().replace(/,/g, '');
+                      if (value) {
+                        const currentTags = createForm.signatureDessertName.split(',').filter(t => t.trim());
+                        if (!currentTags.includes(value)) {
+                          setCreateForm(prev => ({
+                            ...prev,
+                            signatureDessertName: [...currentTags, value].join(',')
+                          }));
+                        }
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">매장명 *</label>
