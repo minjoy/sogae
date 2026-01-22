@@ -78,7 +78,7 @@ async function handleCreateStore(request: AuthenticatedRequest) {
   try {
     const userId = request.user!.userId;
     const body = await request.json();
-    const { name, category, categories, address, lat, lng, phone, description, imageUrl, storeUrl, dessertName, price } = body;
+    const { name, category, categories, address, lat, lng, phone, description, imageUrl, storeUrl, passOrderUrl, dessertName, price } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -147,6 +147,7 @@ async function handleCreateStore(request: AuthenticatedRequest) {
         description: description || null,
         imageUrl: imageUrl || null,
         storeUrl: storeUrl || null,
+        passOrderUrl: passOrderUrl || null,
         price: parsedPrice,
         userId,
         isAdmin: false,

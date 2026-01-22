@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, category, address, lat, lng, phone, description, imageUrl, storeUrl, dessertName, price } = body;
+    const { name, category, address, lat, lng, phone, description, imageUrl, storeUrl, passOrderUrl, dessertName, price } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         imageUrl: imageUrl || null,
         storeUrl: storeUrl || null,
+        passOrderUrl: passOrderUrl || null,
         price: parsedPrice,
         isAdmin: true,
         userId: null,

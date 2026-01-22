@@ -97,6 +97,7 @@ model DujjonkuStore {
   description String?  @db.Text // 매장 설명
   imageUrl    String?  @map("image_url") // 매장/상품 이미지 URL
   storeUrl    String?  @map("store_url") // 매장 링크 (인스타그램, 네이버 등)
+  passOrderUrl String? @map("pass_order_url") // 패스오더 링크
   price       Int?     // 두쫀쿠 가격 (두쫀쿠 카테고리 선택 시)
   clickCount  Int      @default(0) @map("click_count") // 클릭 수
   reportCount Int      @default(0) @map("report_count") // 신고 수
@@ -150,6 +151,7 @@ model StoreEditRequest {
   description String?  @db.Text // 수정 요청 설명
   imageUrl    String?  @map("image_url") // 수정 요청 이미지 URL
   storeUrl    String?  @map("store_url") // 수정 요청 매장 링크
+  passOrderUrl String? @map("pass_order_url") // 수정 요청 패스오더 링크
   price       Int?     // 수정 요청 두쫀쿠 가격
 
   status      String   @default("pending") // pending, approved, rejected

@@ -50,6 +50,7 @@ interface EditRequest {
   description: string | null;
   imageUrl: string | null;
   storeUrl: string | null;
+  passOrderUrl: string | null;
   price: number | null;
   status: string;
   adminNote: string | null;
@@ -67,6 +68,7 @@ interface EditRequest {
     description: string | null;
     imageUrl: string | null;
     storeUrl: string | null;
+    passOrderUrl: string | null;
     price: number | null;
   };
 }
@@ -113,6 +115,7 @@ export default function AdminDujjonkuPage() {
     description: '',
     imageUrl: '',
     storeUrl: '',
+    passOrderUrl: '',
   });
 
   // 두바이파생/시그니처간식 선택 여부 확인
@@ -350,6 +353,7 @@ export default function AdminDujjonkuPage() {
           description: createForm.description,
           imageUrl: createForm.imageUrl,
           storeUrl: createForm.storeUrl || null,
+          passOrderUrl: createForm.passOrderUrl || null,
           price: createForm.price ? extractNumber(createForm.price) : null,
         }),
       });
@@ -369,6 +373,7 @@ export default function AdminDujjonkuPage() {
           description: '',
           imageUrl: '',
           storeUrl: '',
+          passOrderUrl: '',
         });
         fetchStores();
       }
@@ -717,6 +722,7 @@ export default function AdminDujjonkuPage() {
                           req.description && '설명',
                           req.imageUrl && '이미지',
                           req.storeUrl && '매장링크',
+                          req.passOrderUrl && '패스오더',
                           req.price && '가격',
                         ].filter(Boolean).join(', ') || '없음'}
                       </td>
@@ -748,6 +754,7 @@ export default function AdminDujjonkuPage() {
                               req.description && 'description',
                               req.imageUrl && 'imageUrl',
                               req.storeUrl && 'storeUrl',
+                              req.passOrderUrl && 'passOrderUrl',
                               req.price && 'price',
                             ].filter((f): f is string => !!f));
                             setIsEditRequestDetailOpen(true);
@@ -1172,6 +1179,20 @@ export default function AdminDujjonkuPage() {
                   인스타그램, 네이버 플레이스 등 매장 링크를 입력하세요
                 </p>
               </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">패스오더 링크</label>
+                <input
+                  type="url"
+                  value={createForm.passOrderUrl}
+                  onChange={(e) => setCreateForm((prev) => ({ ...prev, passOrderUrl: e.target.value }))}
+                  className="w-full px-4 py-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-blue-50"
+                  placeholder="https://app.passorder.co.kr/..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  패스오더 주문 링크가 있는 경우 입력하세요
+                </p>
+              </div>
             </div>
 
             <button
@@ -1411,6 +1432,31 @@ export default function AdminDujjonkuPage() {
                       <p className="font-medium text-gray-700">매장 링크</p>
                       <p className="text-sm text-gray-500 break-all">현재: {selectedEditRequest.store.storeUrl || '없음'}</p>
                       <p className="text-sm text-primary-600 break-all">변경: {selectedEditRequest.storeUrl || '없음'}</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedEditRequest.passOrderUrl !== null && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <label className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedFields.includes('passOrderUrl')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedFields([...selectedFields, 'passOrderUrl']);
+                        } else {
+                          setSelectedFields(selectedFields.filter((f) => f !== 'passOrderUrl'));
+                        }
+                      }}
+                      className="mt-1"
+                      disabled={selectedEditRequest.status !== 'pending'}
+                    />
+                    <div>
+                      <p className="font-medium text-gray-700">패스오더 링크</p>
+                      <p className="text-sm text-gray-500 break-all">현재: {selectedEditRequest.store.passOrderUrl || '없음'}</p>
+                      <p className="text-sm text-blue-600 break-all">변경: {selectedEditRequest.passOrderUrl || '없음'}</p>
                     </div>
                   </label>
                 </div>

@@ -25,6 +25,7 @@ export async function GET(
             description: true,
             imageUrl: true,
             storeUrl: true,
+            passOrderUrl: true,
             price: true,
           },
         },
@@ -85,7 +86,7 @@ export async function PATCH(
     if (action === 'approve') {
       // 선택된 필드만 적용
       const fieldsToApply = applyFields || [
-        'name', 'category', 'dessertName', 'address', 'lat', 'lng', 'phone', 'description', 'imageUrl', 'storeUrl', 'price'
+        'name', 'category', 'dessertName', 'address', 'lat', 'lng', 'phone', 'description', 'imageUrl', 'storeUrl', 'passOrderUrl', 'price'
       ];
 
       const updateData: any = {};
@@ -119,6 +120,9 @@ export async function PATCH(
       }
       if (fieldsToApply.includes('storeUrl') && editRequest.storeUrl !== null) {
         updateData.storeUrl = editRequest.storeUrl;
+      }
+      if (fieldsToApply.includes('passOrderUrl') && editRequest.passOrderUrl !== null) {
+        updateData.passOrderUrl = editRequest.passOrderUrl;
       }
       if (fieldsToApply.includes('price') && editRequest.price !== null) {
         updateData.price = editRequest.price;

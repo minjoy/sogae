@@ -41,6 +41,7 @@ export async function GET(
         description: store.description,
         imageUrl: store.imageUrl,
         storeUrl: store.storeUrl,
+        passOrderUrl: store.passOrderUrl,
         price: store.price,
         clickCount: store.clickCount,
         registeredBy: store.isAdmin ? '관리자' : store.user?.nickname || '알 수 없음',

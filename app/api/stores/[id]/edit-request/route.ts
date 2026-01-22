@@ -29,7 +29,7 @@ export async function POST(
     const userId = decoded.userId;
     const { id: storeId } = await context.params;
     const body = await request.json();
-    const { name, category, dessertName, address, lat, lng, phone, description, imageUrl, storeUrl, price } = body;
+    const { name, category, dessertName, address, lat, lng, phone, description, imageUrl, storeUrl, passOrderUrl, price } = body;
 
     // 매장 존재 확인
     const store = await prisma.dujjonkuStore.findUnique({
@@ -72,6 +72,7 @@ export async function POST(
       (description !== undefined && description !== store.description) ||
       (imageUrl !== undefined && imageUrl !== store.imageUrl) ||
       (storeUrl !== undefined && storeUrl !== store.storeUrl) ||
+      (passOrderUrl !== undefined && passOrderUrl !== store.passOrderUrl) ||
       (parsedPrice !== undefined && parsedPrice !== store.price);
 
     if (!hasChanges) {
@@ -96,6 +97,7 @@ export async function POST(
         description: description !== store.description ? description : null,
         imageUrl: imageUrl !== store.imageUrl ? imageUrl : null,
         storeUrl: storeUrl !== store.storeUrl ? storeUrl : null,
+        passOrderUrl: passOrderUrl !== store.passOrderUrl ? passOrderUrl : null,
         price: parsedPrice !== store.price ? parsedPrice : null,
         status: 'pending',
       },

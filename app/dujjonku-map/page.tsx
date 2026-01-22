@@ -53,6 +53,7 @@ interface StoreDetail {
   description: string | null;
   imageUrl: string | null;
   storeUrl: string | null;
+  passOrderUrl: string | null;
   price: number | null;
   clickCount: number;
   registeredBy: string;
@@ -114,6 +115,7 @@ export default function DujjonkuMapPage() {
     description: '',
     imageUrl: '',
     storeUrl: '',
+    passOrderUrl: '',
   });
 
   // 두바이파생/시그니처간식 선택 여부 확인
@@ -380,6 +382,7 @@ export default function DujjonkuMapPage() {
       description: selectedStore.description || '',
       imageUrl: selectedStore.imageUrl || '',
       storeUrl: selectedStore.storeUrl || '',
+      passOrderUrl: selectedStore.passOrderUrl || '',
     });
     setIsDetailOpen(false);
     setIsEditRequestOpen(true);
@@ -412,6 +415,7 @@ export default function DujjonkuMapPage() {
           ...editForm,
           dessertName: combinedDessertName,
           price: editForm.price ? extractNumber(editForm.price) : null,
+          passOrderUrl: editForm.passOrderUrl || null,
         }),
       });
 
@@ -818,6 +822,20 @@ export default function DujjonkuMapPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
                 매장 링크 바로가기
+              </a>
+            )}
+
+            {selectedStore.passOrderUrl && (
+              <a
+                href={selectedStore.passOrderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg mb-2 hover:bg-blue-600 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                패스오더로 주문하기
               </a>
             )}
 
@@ -1520,6 +1538,18 @@ export default function DujjonkuMapPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="https://instagram.com/store 또는 네이버 플레이스 링크"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">패스오더 링크</label>
+                <input
+                  type="url"
+                  value={editForm.passOrderUrl}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, passOrderUrl: e.target.value }))}
+                  className="w-full px-4 py-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-blue-50"
+                  placeholder="https://app.passorder.co.kr/..."
+                />
+                <p className="text-xs text-gray-500 mt-1">패스오더 주문 링크가 있는 경우 입력하세요</p>
               </div>
             </div>
 

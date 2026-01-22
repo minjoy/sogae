@@ -114,6 +114,11 @@ export default function NaverSearchPage() {
       return;
     }
 
+    // link가 app.passorder를 포함하면 패스오더 링크로, 아니면 매장 링크로 저장
+    const isPassOrderLink = store.link && store.link.includes('app.passorder');
+    const storeUrl = isPassOrderLink ? null : (store.link || null);
+    const passOrderUrl = isPassOrderLink ? store.link : null;
+
     try {
       const response = await fetch('/api/admin/stores', {
         method: 'POST',
@@ -129,7 +134,8 @@ export default function NaverSearchPage() {
           lng: store.lng,
           phone: store.phone || null,
           description: store.description || null,
-          storeUrl: store.link || null,
+          storeUrl,
+          passOrderUrl,
         }),
       });
 
