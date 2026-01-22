@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       }
       groupedByStore[req.storeId].requests.push({
         id: req.id,
+        storeId: req.storeId,
         userId: req.userId,
         name: req.name,
         category: req.category,
@@ -68,6 +69,7 @@ export async function GET(request: NextRequest) {
         description: req.description,
         imageUrl: req.imageUrl,
         storeUrl: req.storeUrl,
+        passOrderUrl: req.passOrderUrl,
         price: req.price,
         status: req.status,
         adminNote: req.adminNote,
