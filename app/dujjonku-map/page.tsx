@@ -66,7 +66,8 @@ export default function DujjonkuMapPage() {
   const [registerForm, setRegisterForm] = useState({
     name: '',
     categories: ['dujjonku'] as string[],
-    dessertName: '',
+    dubaiDessertName: '',
+    signatureDessertName: '',
     address: '',
     lat: 0,
     lng: 0,
@@ -83,7 +84,8 @@ export default function DujjonkuMapPage() {
   const [editForm, setEditForm] = useState({
     name: '',
     category: '',
-    dessertName: '',
+    dubaiDessertName: '',
+    signatureDessertName: '',
     address: '',
     lat: 0,
     lng: 0,
@@ -93,7 +95,8 @@ export default function DujjonkuMapPage() {
   });
 
   // 두바이파생/시그니처간식 선택 여부 확인
-  const needsDessertName = registerForm.categories.includes('dubai') || registerForm.categories.includes('signature');
+  const needsDubaiDessert = registerForm.categories.includes('dubai');
+  const needsSignatureDessert = registerForm.categories.includes('signature');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -428,6 +431,26 @@ export default function DujjonkuMapPage() {
       return;
     }
 
+    // 카테고리별 디저트명 필수 체크
+    if (registerForm.categories.includes('dubai') && !registerForm.dubaiDessertName.trim()) {
+      alert('두바이파생 카테고리 선택 시 디저트명을 입력해주세요');
+      return;
+    }
+    if (registerForm.categories.includes('signature') && !registerForm.signatureDessertName.trim()) {
+      alert('시그니처간식 카테고리 선택 시 디저트명을 입력해주세요');
+      return;
+    }
+
+    // 디저트명 조합 (카테고리별로 구분)
+    const dessertParts: string[] = [];
+    if (registerForm.dubaiDessertName.trim()) {
+      dessertParts.push(`[두바이파생] ${registerForm.dubaiDessertName.trim()}`);
+    }
+    if (registerForm.signatureDessertName.trim()) {
+      dessertParts.push(`[시그니처간식] ${registerForm.signatureDessertName.trim()}`);
+    }
+    const combinedDessertName = dessertParts.join(' | ');
+
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -437,7 +460,10 @@ export default function DujjonkuMapPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(registerForm),
+        body: JSON.stringify({
+          ...registerForm,
+          dessertName: combinedDessertName,
+        }),
       });
 
       const data = await response.json();
@@ -765,28 +791,27 @@ export default function DujjonkuMapPage() {
                 </div>
               </div>
 
-              {/* 디저트명 (두바이파생/시그니처간식 선택 시 필수) */}
-              {needsDessertName && (
+              {/* 두바이파생 디저트명 */}
+              {needsDubaiDessert && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    디저트명 <span className="text-red-500">*</span>
+                    🍫 두바이파생 디저트명 <span className="text-red-500">*</span>
                   </label>
-                  {/* 태그 표시 영역 */}
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {registerForm.dessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                    {registerForm.dubaiDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm"
                       >
                         {tag.trim()}
                         <button
                           type="button"
                           onClick={() => {
-                            const tags = registerForm.dessertName.split(',').filter(t => t.trim());
+                            const tags = registerForm.dubaiDessertName.split(',').filter(t => t.trim());
                             tags.splice(index, 1);
-                            setRegisterForm(prev => ({ ...prev, dessertName: tags.join(',') }));
+                            setRegisterForm(prev => ({ ...prev, dubaiDessertName: tags.join(',') }));
                           }}
-                          className="ml-1 text-primary-500 hover:text-primary-700"
+                          className="ml-1 text-amber-500 hover:text-amber-700"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -797,19 +822,19 @@ export default function DujjonkuMapPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="디저트명 입력 후 Enter 또는 콤마(,)로 구분"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
+                    placeholder="디저트명 입력 후 Enter (예: 두바이초콜릿)"
+                    className="w-full px-4 py-3 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-900 bg-amber-50"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ',') {
                         e.preventDefault();
                         const input = e.currentTarget;
                         const value = input.value.trim().replace(/,/g, '');
                         if (value) {
-                          const currentTags = registerForm.dessertName.split(',').filter(t => t.trim());
+                          const currentTags = registerForm.dubaiDessertName.split(',').filter(t => t.trim());
                           if (!currentTags.includes(value)) {
                             setRegisterForm(prev => ({
                               ...prev,
-                              dessertName: [...currentTags, value].join(',')
+                              dubaiDessertName: [...currentTags, value].join(',')
                             }));
                           }
                           input.value = '';
@@ -819,20 +844,84 @@ export default function DujjonkuMapPage() {
                     onBlur={(e) => {
                       const value = e.currentTarget.value.trim().replace(/,/g, '');
                       if (value) {
-                        const currentTags = registerForm.dessertName.split(',').filter(t => t.trim());
+                        const currentTags = registerForm.dubaiDessertName.split(',').filter(t => t.trim());
                         if (!currentTags.includes(value)) {
                           setRegisterForm(prev => ({
                             ...prev,
-                            dessertName: [...currentTags, value].join(',')
+                            dubaiDessertName: [...currentTags, value].join(',')
                           }));
                         }
                         e.currentTarget.value = '';
                       }
                     }}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    여러 개의 디저트명을 입력할 수 있습니다 (예: 두바이초콜릿, 피스타치오쿠키)
-                  </p>
+                </div>
+              )}
+
+              {/* 시그니처간식 디저트명 */}
+              {needsSignatureDessert && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    🎂 시그니처간식 디저트명 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {registerForm.signatureDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
+                      >
+                        {tag.trim()}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const tags = registerForm.signatureDessertName.split(',').filter(t => t.trim());
+                            tags.splice(index, 1);
+                            setRegisterForm(prev => ({ ...prev, signatureDessertName: tags.join(',') }));
+                          }}
+                          className="ml-1 text-purple-500 hover:text-purple-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="디저트명 입력 후 Enter (예: 크로플, 마카롱)"
+                    className="w-full px-4 py-3 border border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-purple-50"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault();
+                        const input = e.currentTarget;
+                        const value = input.value.trim().replace(/,/g, '');
+                        if (value) {
+                          const currentTags = registerForm.signatureDessertName.split(',').filter(t => t.trim());
+                          if (!currentTags.includes(value)) {
+                            setRegisterForm(prev => ({
+                              ...prev,
+                              signatureDessertName: [...currentTags, value].join(',')
+                            }));
+                          }
+                          input.value = '';
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.currentTarget.value.trim().replace(/,/g, '');
+                      if (value) {
+                        const currentTags = registerForm.signatureDessertName.split(',').filter(t => t.trim());
+                        if (!currentTags.includes(value)) {
+                          setRegisterForm(prev => ({
+                            ...prev,
+                            signatureDessertName: [...currentTags, value].join(',')
+                          }));
+                        }
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
                 </div>
               )}
 
