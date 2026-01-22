@@ -1,5 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// HTML 엔티티 디코딩
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/');
+}
+
+// OG 이미지 추출 함수
+function extractOgImage(html: string): string | null {
+  // 다양한 형태의 og:image 메타 태그 매칭
+  const patterns = [
+    // <meta property="og:image" content="...">
+    /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+    // <meta content="..." property="og:image">
+    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+    // <meta id="og:image" property="og:image" content="..."> (네이버 형식)
+    /<meta[^>]*id=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match && match[1]) {
+      return decodeHtmlEntities(match[1]);
+    }
+  }
+
+  return null;
+}
+
 // GET: URL에서 OG 이미지 추출
 export async function GET(request: NextRequest) {
   try {
@@ -25,10 +59,11 @@ export async function GET(request: NextRequest) {
     // 페이지 HTML 가져오기
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Sogae/1.0; +https://sogae.co.kr)',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
       },
-      signal: AbortSignal.timeout(5000), // 5초 타임아웃
+      signal: AbortSignal.timeout(10000), // 10초 타임아웃
     });
 
     if (!response.ok) {
@@ -40,9 +75,12 @@ export async function GET(request: NextRequest) {
 
     const html = await response.text();
 
-    // OG 이미지 추출 (og:image 메타 태그)
-    const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
-      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+    // OG 이미지 추출
+    const ogImage = extractOgImage(html);
+
+    // Twitter 카드 이미지 (fallback)
+    const twitterImageMatch = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i);
 
     // OG 제목 추출
     const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)
@@ -52,24 +90,20 @@ export async function GET(request: NextRequest) {
     const ogDescMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i)
       || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:description["']/i);
 
-    // Twitter 카드 이미지 (fallback)
-    const twitterImageMatch = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i)
-      || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i);
-
-    const ogImage = ogImageMatch?.[1] || twitterImageMatch?.[1] || null;
-    const ogTitle = ogTitleMatch?.[1] || null;
-    const ogDescription = ogDescMatch?.[1] || null;
+    const finalOgImage = ogImage || (twitterImageMatch?.[1] ? decodeHtmlEntities(twitterImageMatch[1]) : null);
+    const ogTitle = ogTitleMatch?.[1] ? decodeHtmlEntities(ogTitleMatch[1]) : null;
+    const ogDescription = ogDescMatch?.[1] ? decodeHtmlEntities(ogDescMatch[1]) : null;
 
     // 상대 경로인 경우 절대 경로로 변환
-    let absoluteOgImage = ogImage;
-    if (ogImage && !ogImage.startsWith('http')) {
+    let absoluteOgImage = finalOgImage;
+    if (finalOgImage && !finalOgImage.startsWith('http')) {
       const urlObj = new URL(url);
-      if (ogImage.startsWith('//')) {
-        absoluteOgImage = `${urlObj.protocol}${ogImage}`;
-      } else if (ogImage.startsWith('/')) {
-        absoluteOgImage = `${urlObj.origin}${ogImage}`;
+      if (finalOgImage.startsWith('//')) {
+        absoluteOgImage = `${urlObj.protocol}${finalOgImage}`;
+      } else if (finalOgImage.startsWith('/')) {
+        absoluteOgImage = `${urlObj.origin}${finalOgImage}`;
       } else {
-        absoluteOgImage = `${urlObj.origin}/${ogImage}`;
+        absoluteOgImage = `${urlObj.origin}/${finalOgImage}`;
       }
     }
 
