@@ -152,11 +152,12 @@ export default function NaverSearchPage() {
           )
         );
       } else {
+        console.error('Register failed:', { status: response.status, data, store: { lat: store.lat, lng: store.lng } });
         alert(data.error || '등록에 실패했습니다');
       }
     } catch (error) {
       console.error('Register error:', error);
-      alert('등록 중 오류가 발생했습니다');
+      alert(`등록 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '네트워크 오류'}`);
     }
   };
 

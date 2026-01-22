@@ -141,8 +141,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Admin store create error:', error);
+    const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
     return NextResponse.json(
-      { error: '매장 등록 중 오류가 발생했습니다' },
+      { error: `매장 등록 중 오류가 발생했습니다: ${errorMessage}` },
       { status: 500 }
     );
   }
