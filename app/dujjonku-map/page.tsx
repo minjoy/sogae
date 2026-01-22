@@ -246,10 +246,18 @@ export default function DujjonkuMapPage() {
         setOgImage(null); // OG 이미지 초기화
         setIsDetailOpen(true);
 
-        // storeUrl이 있으면 OG 이미지 가져오기
-        if (data.store.storeUrl) {
+        // storeUrl이 있고, 네이버 링크가 아닌 경우에만 OG 이미지 가져오기
+        // 네이버 지도는 CSR이라 서버에서 og:image를 가져올 수 없음
+        const storeUrl = data.store.storeUrl;
+        const isNaverLink = storeUrl && (
+          storeUrl.includes('naver.me') ||
+          storeUrl.includes('map.naver.com') ||
+          storeUrl.includes('naver.com/maps')
+        );
+
+        if (storeUrl && !isNaverLink) {
           try {
-            const ogResponse = await fetch(`/api/og-image?url=${encodeURIComponent(data.store.storeUrl)}`);
+            const ogResponse = await fetch(`/api/og-image?url=${encodeURIComponent(storeUrl)}`);
             const ogData = await ogResponse.json();
             if (ogData.success && ogData.data.ogImage) {
               setOgImage(ogData.data.ogImage);
