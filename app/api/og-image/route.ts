@@ -20,17 +20,34 @@ function extractOgImage(html: string): string | null {
     return decodeHtmlEntities(idMatch[1]);
   }
 
-  // 2. 일반적인 og:image 메타 태그
-  const patterns = [
-    /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
-    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
-  ];
+  // 2. data-rh="true" 속성이 있는 og:image (네이버 지도 - 동적 추가)
+  const dataRhMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["'][^>]*data-rh=["']true["']/i)
+    || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["'][^>]*data-rh=["']true["']/i);
+  if (dataRhMatch && dataRhMatch[1]) {
+    return decodeHtmlEntities(dataRhMatch[1]);
+  }
 
-  for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match && match[1]) {
-      return decodeHtmlEntities(match[1]);
+  // 3. 모든 og:image를 찾아서 마지막 것 반환
+  const allMatches: string[] = [];
+  const pattern = /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/gi;
+  let match;
+  while ((match = pattern.exec(html)) !== null) {
+    if (match[1]) {
+      allMatches.push(match[1]);
     }
+  }
+
+  // content가 먼저 오는 패턴도 확인
+  const pattern2 = /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/gi;
+  while ((match = pattern2.exec(html)) !== null) {
+    if (match[1]) {
+      allMatches.push(match[1]);
+    }
+  }
+
+  if (allMatches.length > 0) {
+    // 마지막 og:image 반환
+    return decodeHtmlEntities(allMatches[allMatches.length - 1]);
   }
 
   return null;
