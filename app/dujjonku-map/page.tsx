@@ -18,7 +18,20 @@ interface Store {
   lat: number;
   lng: number;
   clickCount: number;
+  price: number | null;
 }
+
+// 가격 포맷팅 헬퍼 (천단위 콤마)
+const formatPrice = (value: string | number): string => {
+  const numStr = String(value).replace(/[^0-9]/g, '');
+  if (!numStr) return '';
+  return Number(numStr).toLocaleString('ko-KR');
+};
+
+// 숫자만 추출
+const extractNumber = (value: string): string => {
+  return value.replace(/[^0-9]/g, '');
+};
 
 // 카테고리 정보
 const CATEGORIES = [
@@ -40,6 +53,7 @@ interface StoreDetail {
   description: string | null;
   imageUrl: string | null;
   storeUrl: string | null;
+  price: number | null;
   clickCount: number;
   registeredBy: string;
   createdAt: string;
@@ -63,6 +77,8 @@ export default function DujjonkuMapPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isPriceFilterOpen, setIsPriceFilterOpen] = useState(false);
+  const [priceFilter, setPriceFilter] = useState({ min: '', max: '' });
 
   // 매장 등록 폼
   const [registerForm, setRegisterForm] = useState({
@@ -70,6 +86,7 @@ export default function DujjonkuMapPage() {
     categories: ['dujjonku'] as string[],
     dubaiDessertName: '',
     signatureDessertName: '',
+    price: '',
     address: '',
     lat: 0,
     lng: 0,
@@ -89,6 +106,7 @@ export default function DujjonkuMapPage() {
     category: '',
     dubaiDessertName: '',
     signatureDessertName: '',
+    price: '',
     address: '',
     lat: 0,
     lng: 0,
@@ -168,7 +186,7 @@ export default function DujjonkuMapPage() {
   }, []);
 
   // 매장 목록 조회
-  const fetchStores = useCallback(async (category?: string) => {
+  const fetchStores = useCallback(async (category?: string, priceRange?: { min: string; max: string }) => {
     if (!mapRef.current) return;
 
     const bounds = mapRef.current.getBounds();
@@ -176,11 +194,16 @@ export default function DujjonkuMapPage() {
     const sw = bounds.getSouthWest();
     const ne = bounds.getNorthEast();
     const categoryParam = category ?? selectedCategory;
+    const priceParams = priceRange ?? priceFilter;
+
+    let url = `/api/stores?swLat=${sw.getLat()}&swLng=${sw.getLng()}&neLat=${ne.getLat()}&neLng=${ne.getLng()}&level=${level}&category=${categoryParam}`;
+
+    // 가격 필터 추가 (두쫀쿠 카테고리인 경우만)
+    if (priceParams.min) url += `&minPrice=${extractNumber(priceParams.min)}`;
+    if (priceParams.max) url += `&maxPrice=${extractNumber(priceParams.max)}`;
 
     try {
-      const response = await fetch(
-        `/api/stores?swLat=${sw.getLat()}&swLng=${sw.getLng()}&neLat=${ne.getLat()}&neLng=${ne.getLng()}&level=${level}&category=${categoryParam}`
-      );
+      const response = await fetch(url);
       const data = await response.json();
 
       if (data.success) {
@@ -190,7 +213,7 @@ export default function DujjonkuMapPage() {
     } catch (error) {
       console.error('Failed to fetch stores:', error);
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, priceFilter]);
 
   // 카테고리별 마커 이미지 생성
   const getMarkerImage = useCallback((category: string) => {
@@ -311,6 +334,7 @@ export default function DujjonkuMapPage() {
       categories: ['dujjonku'],
       dubaiDessertName: '',
       signatureDessertName: '',
+      price: '',
       address: '',
       lat: 0,
       lng: 0,
@@ -348,6 +372,7 @@ export default function DujjonkuMapPage() {
       category: selectedStore.category,
       dubaiDessertName: dubaiDessert,
       signatureDessertName: signatureDessert,
+      price: selectedStore.price ? formatPrice(selectedStore.price) : '',
       address: selectedStore.address,
       lat: selectedStore.lat,
       lng: selectedStore.lng,
@@ -386,6 +411,7 @@ export default function DujjonkuMapPage() {
         body: JSON.stringify({
           ...editForm,
           dessertName: combinedDessertName,
+          price: editForm.price ? extractNumber(editForm.price) : null,
         }),
       });
 
@@ -516,6 +542,7 @@ export default function DujjonkuMapPage() {
         body: JSON.stringify({
           ...registerForm,
           dessertName: combinedDessertName,
+          price: registerForm.price ? extractNumber(registerForm.price) : null,
         }),
       });
 
@@ -635,6 +662,26 @@ export default function DujjonkuMapPage() {
                   {cat.label}
                 </button>
               ))}
+
+              {/* 가격 필터 버튼 (두쫀쿠 관련 카테고리 선택시만 표시) */}
+              {(selectedCategory === 'all' || selectedCategory === 'dujjonku') && (
+                <button
+                  onClick={() => setIsPriceFilterOpen(true)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                    priceFilter.min || priceFilter.max
+                      ? 'bg-yellow-500 text-white shadow-lg'
+                      : 'bg-white/90 text-gray-700 hover:bg-white shadow'
+                  }`}
+                >
+                  <span className="mr-1">💰</span>
+                  가격
+                  {(priceFilter.min || priceFilter.max) && (
+                    <span className="ml-1 text-xs">
+                      ({priceFilter.min || '0'}~{priceFilter.max || '∞'})
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
           </div>
 
@@ -741,6 +788,13 @@ export default function DujjonkuMapPage() {
             {selectedStore.dessertName && (
               <p className="text-primary-600 text-sm font-medium mb-2">
                 {selectedStore.dessertName}
+              </p>
+            )}
+
+            {/* 두쫀쿠 가격 표시 */}
+            {selectedStore.price && selectedStore.category?.includes('dujjonku') && (
+              <p className="text-yellow-600 text-sm font-bold mb-2">
+                🍪 두쫀쿠 {formatPrice(selectedStore.price)}원
               </p>
             )}
 
@@ -995,6 +1049,30 @@ export default function DujjonkuMapPage() {
                 </div>
               )}
 
+              {/* 두쫀쿠 가격 */}
+              {registerForm.categories.includes('dujjonku') && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    🍪 두쫀쿠 가격
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={registerForm.price}
+                      onChange={(e) => {
+                        const formatted = formatPrice(e.target.value);
+                        setRegisterForm((prev) => ({ ...prev, price: formatted }));
+                      }}
+                      className="w-full px-4 py-3 pr-8 border border-yellow-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 bg-yellow-50"
+                      placeholder="예: 5,000"
+                      inputMode="numeric"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">원</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">두쫀쿠 1개 가격을 입력해주세요</p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   매장명 <span className="text-red-500">*</span>
@@ -1192,6 +1270,111 @@ export default function DujjonkuMapPage() {
         </div>
       )}
 
+      {/* 가격 필터 모달 */}
+      {isPriceFilterOpen && (
+        <div className="fixed inset-0 z-[200] flex items-end justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsPriceFilterOpen(false)}
+          />
+          <div className="relative w-full max-w-lg bg-white rounded-t-3xl p-6 pb-8 animate-slide-up">
+            <button
+              onClick={() => setIsPriceFilterOpen(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-900 mb-4">🍪 두쫀쿠 가격 필터</h2>
+
+            <div className="space-y-4">
+              {/* 빠른 선택 버튼 */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">빠른 선택</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: '3천원 이하', min: '', max: '3000' },
+                    { label: '3~5천원', min: '3000', max: '5000' },
+                    { label: '5~7천원', min: '5000', max: '7000' },
+                    { label: '7~1만원', min: '7000', max: '10000' },
+                    { label: '1만원 이상', min: '10000', max: '' },
+                    { label: '전체', min: '', max: '' },
+                  ].map((option) => (
+                    <button
+                      key={option.label}
+                      onClick={() => {
+                        setPriceFilter({ min: formatPrice(option.min), max: formatPrice(option.max) });
+                      }}
+                      className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
+                        extractNumber(priceFilter.min) === option.min && extractNumber(priceFilter.max) === option.max
+                          ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 직접 입력 */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">직접 입력</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={priceFilter.min}
+                      onChange={(e) => setPriceFilter((prev) => ({ ...prev, min: formatPrice(e.target.value) }))}
+                      className="w-full px-4 py-3 pr-8 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+                      placeholder="최소"
+                      inputMode="numeric"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">원</span>
+                  </div>
+                  <span className="text-gray-400">~</span>
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={priceFilter.max}
+                      onChange={(e) => setPriceFilter((prev) => ({ ...prev, max: formatPrice(e.target.value) }))}
+                      className="w-full px-4 py-3 pr-8 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900"
+                      placeholder="최대"
+                      inputMode="numeric"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">원</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setPriceFilter({ min: '', max: '' });
+                  fetchStores(undefined, { min: '', max: '' });
+                  setIsPriceFilterOpen(false);
+                }}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200"
+              >
+                초기화
+              </button>
+              <button
+                onClick={() => {
+                  fetchStores(undefined, priceFilter);
+                  setIsPriceFilterOpen(false);
+                }}
+                className="flex-1 py-3 bg-yellow-500 text-white rounded-xl font-semibold hover:bg-yellow-600"
+              >
+                적용하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 수정 요청 모달 */}
       {isEditRequestOpen && selectedStore && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -1263,6 +1446,26 @@ export default function DujjonkuMapPage() {
                     className="w-full px-4 py-3 border border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-purple-50 text-gray-900"
                     placeholder="예: 크로플, 마카롱"
                   />
+                </div>
+              )}
+
+              {editForm.category.includes('dujjonku') && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">🍪 두쫀쿠 가격</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={editForm.price}
+                      onChange={(e) => {
+                        const formatted = formatPrice(e.target.value);
+                        setEditForm((prev) => ({ ...prev, price: formatted }));
+                      }}
+                      className="w-full px-4 py-3 pr-8 border border-yellow-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 bg-yellow-50"
+                      placeholder="예: 5,000"
+                      inputMode="numeric"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">원</span>
+                  </div>
                 </div>
               )}
 

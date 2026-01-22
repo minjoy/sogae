@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, category, address, lat, lng, phone, description, imageUrl, storeUrl, dessertName } = body;
+    const { name, category, address, lat, lng, phone, description, imageUrl, storeUrl, dessertName, price } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -77,6 +77,9 @@ export async function POST(request: NextRequest) {
     // 카테고리 검증
     const validCategories = ['dujjonku', 'dubai', 'signature'];
     const validCategory = validCategories.includes(category) ? category : 'dujjonku';
+
+    // 두쫀쿠 카테고리 선택 시 가격 저장
+    const parsedPrice = validCategory.includes('dujjonku') && price ? parseInt(price) : null;
 
     const store = await prisma.dujjonkuStore.create({
       data: {
@@ -90,6 +93,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         imageUrl: imageUrl || null,
         storeUrl: storeUrl || null,
+        price: parsedPrice,
         isAdmin: true,
         userId: null,
       },

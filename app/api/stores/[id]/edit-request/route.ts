@@ -29,7 +29,7 @@ export async function POST(
     const userId = decoded.userId;
     const { id: storeId } = await context.params;
     const body = await request.json();
-    const { name, category, dessertName, address, lat, lng, phone, description, imageUrl, storeUrl } = body;
+    const { name, category, dessertName, address, lat, lng, phone, description, imageUrl, storeUrl, price } = body;
 
     // 매장 존재 확인
     const store = await prisma.dujjonkuStore.findUnique({
@@ -60,6 +60,7 @@ export async function POST(
     }
 
     // 변경 사항 확인 (적어도 하나의 필드가 변경되어야 함)
+    const parsedPrice = price !== undefined ? parseInt(price) || null : undefined;
     const hasChanges =
       (name && name !== store.name) ||
       (category && category !== store.category) ||
@@ -70,7 +71,8 @@ export async function POST(
       (phone !== undefined && phone !== store.phone) ||
       (description !== undefined && description !== store.description) ||
       (imageUrl !== undefined && imageUrl !== store.imageUrl) ||
-      (storeUrl !== undefined && storeUrl !== store.storeUrl);
+      (storeUrl !== undefined && storeUrl !== store.storeUrl) ||
+      (parsedPrice !== undefined && parsedPrice !== store.price);
 
     if (!hasChanges) {
       return NextResponse.json(
@@ -94,6 +96,7 @@ export async function POST(
         description: description !== store.description ? description : null,
         imageUrl: imageUrl !== store.imageUrl ? imageUrl : null,
         storeUrl: storeUrl !== store.storeUrl ? storeUrl : null,
+        price: parsedPrice !== store.price ? parsedPrice : null,
         status: 'pending',
       },
     });

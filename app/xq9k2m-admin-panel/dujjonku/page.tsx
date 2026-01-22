@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// 가격 포맷팅 헬퍼 (천단위 콤마)
+const formatPrice = (value: string | number): string => {
+  const numStr = String(value).replace(/[^0-9]/g, '');
+  if (!numStr) return '';
+  return Number(numStr).toLocaleString('ko-KR');
+};
+
+// 숫자만 추출
+const extractNumber = (value: string): string => {
+  return value.replace(/[^0-9]/g, '');
+};
+
 interface Store {
   id: string;
   name: string;
@@ -89,6 +101,7 @@ export default function AdminDujjonkuPage() {
     categories: ['dujjonku'] as string[],
     dubaiDessertName: '',
     signatureDessertName: '',
+    price: '',
     address: '',
     lat: '',
     lng: '',
@@ -333,6 +346,7 @@ export default function AdminDujjonkuPage() {
           description: createForm.description,
           imageUrl: createForm.imageUrl,
           storeUrl: createForm.storeUrl || null,
+          price: createForm.price ? extractNumber(createForm.price) : null,
         }),
       });
 
@@ -343,6 +357,7 @@ export default function AdminDujjonkuPage() {
           categories: ['dujjonku'],
           dubaiDessertName: '',
           signatureDessertName: '',
+          price: '',
           address: '',
           lat: '',
           lng: '',
@@ -1020,6 +1035,30 @@ export default function AdminDujjonkuPage() {
                       }
                     }}
                   />
+                </div>
+              )}
+
+              {/* 두쫀쿠 가격 */}
+              {createForm.categories.includes('dujjonku') && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    🍪 두쫀쿠 가격
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={createForm.price}
+                      onChange={(e) => {
+                        const formatted = formatPrice(e.target.value);
+                        setCreateForm((prev) => ({ ...prev, price: formatted }));
+                      }}
+                      className="w-full px-4 py-3 pr-8 border border-yellow-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-900 bg-yellow-50"
+                      placeholder="예: 5,000"
+                      inputMode="numeric"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">원</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">두쫀쿠 1개 가격을 입력해주세요</p>
                 </div>
               )}
 

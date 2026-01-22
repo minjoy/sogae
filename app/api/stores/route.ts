@@ -6,7 +6,7 @@ import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 const CATEGORIES = ['dujjonku', 'dubai', 'signature'] as const;
 type Category = typeof CATEGORIES[number];
 
-// GET: 매장 목록 조회 (맵 바운드 기반 + 카테고리 필터)
+// GET: 매장 목록 조회 (맵 바운드 기반 + 카테고리 필터 + 가격 필터)
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
     const neLng = parseFloat(searchParams.get('neLng') || '0');
     const level = parseInt(searchParams.get('level') || '3');
     const category = searchParams.get('category') || 'all'; // all, dujjonku, dubai, signature
+    const minPrice = searchParams.get('minPrice'); // 최소 가격
+    const maxPrice = searchParams.get('maxPrice'); // 최대 가격
 
     // 줌 레벨에 따른 최대 개수 제한
     let limit = 100;
@@ -33,6 +35,13 @@ export async function GET(request: NextRequest) {
       where.category = { contains: category };
     }
 
+    // 가격 필터 (두쫀쿠 카테고리만 해당)
+    if (minPrice || maxPrice) {
+      where.price = {};
+      if (minPrice) where.price.gte = parseInt(minPrice);
+      if (maxPrice) where.price.lte = parseInt(maxPrice);
+    }
+
     const stores = await prisma.dujjonkuStore.findMany({
       where,
       select: {
@@ -43,6 +52,7 @@ export async function GET(request: NextRequest) {
         lat: true,
         lng: true,
         clickCount: true,
+        price: true,
       },
       take: limit,
       orderBy: { clickCount: 'desc' },
@@ -67,7 +77,7 @@ async function handleCreateStore(request: AuthenticatedRequest) {
   try {
     const userId = request.user!.userId;
     const body = await request.json();
-    const { name, category, categories, address, lat, lng, phone, description, imageUrl, storeUrl, dessertName } = body;
+    const { name, category, categories, address, lat, lng, phone, description, imageUrl, storeUrl, dessertName, price } = body;
 
     if (!name || !address || !lat || !lng) {
       return NextResponse.json(
@@ -119,6 +129,10 @@ async function handleCreateStore(request: AuthenticatedRequest) {
       );
     }
 
+    // 두쫀쿠 카테고리 선택 시 가격 저장
+    const hasDujjonku = categoryList.includes('dujjonku');
+    const parsedPrice = hasDujjonku && price ? parseInt(price) : null;
+
     // 매장 생성
     const store = await prisma.dujjonkuStore.create({
       data: {
@@ -132,6 +146,7 @@ async function handleCreateStore(request: AuthenticatedRequest) {
         description: description || null,
         imageUrl: imageUrl || null,
         storeUrl: storeUrl || null,
+        price: parsedPrice,
         userId,
         isAdmin: false,
       },
