@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Stats {
@@ -13,13 +13,66 @@ interface Stats {
   updatedAt: string;
 }
 
+// 세션 만료 시간 (24시간)
+const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
 export default function AdminPage() {
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [stats, setStats] = useState<Stats | null>(null);
+
+  // 페이지 로드 시 저장된 세션 확인
+  useEffect(() => {
+    const checkStoredSession = async () => {
+      if (typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
+      }
+
+      const storedData = localStorage.getItem('adminSession');
+      if (!storedData) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { password: storedPassword, expiry } = JSON.parse(storedData);
+
+        // 세션 만료 확인
+        if (Date.now() > expiry) {
+          localStorage.removeItem('adminSession');
+          setIsLoading(false);
+          return;
+        }
+
+        // 저장된 비밀번호로 자동 로그인 시도
+        const response = await fetch('/api/admin/stats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: storedPassword }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setPassword(storedPassword);
+          setIsAuthenticated(true);
+          setStats(data.stats);
+        } else {
+          localStorage.removeItem('adminSession');
+        }
+      } catch {
+        localStorage.removeItem('adminSession');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkStoredSession();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +91,12 @@ export default function AdminPage() {
       if (data.success) {
         setIsAuthenticated(true);
         setStats(data.stats);
+        // localStorage에 세션 정보 저장 (만료 시간 포함)
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem('adminPassword', password);
+          localStorage.setItem('adminSession', JSON.stringify({
+            password,
+            expiry: Date.now() + SESSION_EXPIRY_MS,
+          }));
         }
       } else {
         setError(data.error || '인증 실패');
@@ -70,6 +127,18 @@ export default function AdminPage() {
       setIsLoading(false);
     }
   };
+
+  // 로딩 중 (세션 확인 중)
+  if (isLoading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mx-auto mb-4"></div>
+          <p>세션 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

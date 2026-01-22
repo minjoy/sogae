@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Store {
   id: string;
@@ -69,8 +70,12 @@ interface Pagination {
 }
 
 const ADMIN_KEY = 'sogae-admin-2024';
+const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 export default function AdminDujjonkuPage() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState<'stores' | 'editRequests'>('stores');
   const [stores, setStores] = useState<Store[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
@@ -98,6 +103,55 @@ export default function AdminDujjonkuPage() {
   const [isEditRequestDetailOpen, setIsEditRequestDetailOpen] = useState(false);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
 
+  // 세션 확인
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (typeof window === 'undefined') {
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      const storedData = localStorage.getItem('adminSession');
+      if (!storedData) {
+        router.push('/xq9k2m-admin-panel');
+        return;
+      }
+
+      try {
+        const { password, expiry } = JSON.parse(storedData);
+
+        if (Date.now() > expiry) {
+          localStorage.removeItem('adminSession');
+          router.push('/xq9k2m-admin-panel');
+          return;
+        }
+
+        // 저장된 비밀번호로 인증 확인
+        const response = await fetch('/api/admin/stats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem('adminSession');
+          router.push('/xq9k2m-admin-panel');
+        }
+      } catch {
+        localStorage.removeItem('adminSession');
+        router.push('/xq9k2m-admin-panel');
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
   const fetchStores = async (page = 1) => {
     setIsLoading(true);
     try {
@@ -119,12 +173,14 @@ export default function AdminDujjonkuPage() {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     if (activeTab === 'stores') {
       fetchStores();
     } else {
       fetchEditRequests();
     }
-  }, [filter, activeTab, editRequestFilter]);
+  }, [filter, activeTab, editRequestFilter, isAuthenticated]);
 
   // 수정 요청 목록 조회
   const fetchEditRequests = async () => {
@@ -258,6 +314,29 @@ export default function AdminDujjonkuPage() {
       console.error('Failed to fetch store detail:', error);
     }
   };
+
+  // 인증 확인 중
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">세션 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 인증되지 않은 경우 (리다이렉트 중)
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">관리자 인증이 필요합니다...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
