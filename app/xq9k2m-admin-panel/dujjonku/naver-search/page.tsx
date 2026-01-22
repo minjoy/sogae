@@ -19,7 +19,6 @@ interface NaverStore {
 
 const SEARCH_KEYWORDS = ['두바이', '두바이 쫀득 쿠키', '두쫀쿠'];
 const ADMIN_KEY = 'sogae-admin-2024';
-const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 export default function NaverSearchPage() {
   const router = useRouter();
@@ -244,7 +243,7 @@ export default function NaverSearchPage() {
         {searchedQuery && (
           <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
             <p className="text-gray-600">
-              "<span className="font-bold text-primary-600">{searchedQuery}</span>" 검색 결과:{' '}
+              &ldquo;<span className="font-bold text-primary-600">{searchedQuery}</span>&rdquo; 검색 결과:{' '}
               <span className="font-bold">{total.toLocaleString()}</span>건 중{' '}
               <span className="font-bold">{stores.length}</span>건 표시
             </p>
