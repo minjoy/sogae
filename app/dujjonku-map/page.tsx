@@ -305,11 +305,22 @@ export default function DujjonkuMapPage() {
 
     if (!selectedStore) return;
 
+    // 기존 디저트명 파싱 (형식: "[두바이파생] xxx | [시그니처간식] yyy")
+    let dubaiDessert = '';
+    let signatureDessert = '';
+    if (selectedStore.dessertName) {
+      const dubaiMatch = selectedStore.dessertName.match(/\[두바이파생\]\s*([^|]*)/);
+      const signatureMatch = selectedStore.dessertName.match(/\[시그니처간식\]\s*([^|]*)/);
+      if (dubaiMatch) dubaiDessert = dubaiMatch[1].trim();
+      if (signatureMatch) signatureDessert = signatureMatch[1].trim();
+    }
+
     // 현재 매장 정보로 폼 초기화
     setEditForm({
       name: selectedStore.name,
       category: selectedStore.category,
-      dessertName: selectedStore.dessertName || '',
+      dubaiDessertName: dubaiDessert,
+      signatureDessertName: signatureDessert,
       address: selectedStore.address,
       lat: selectedStore.lat,
       lng: selectedStore.lng,
