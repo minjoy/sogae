@@ -90,6 +90,12 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
+      <body className="antialiased bg-warm-50 flex flex-col min-h-screen">
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3512251263610351"
@@ -108,12 +114,6 @@ export default function RootLayout({
             gtag('config', 'G-7LK6RWFPHP');
           `}
         </Script>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </head>
-      <body className="antialiased bg-warm-50 flex flex-col min-h-screen">
         <Header />
         <main className="flex-1">
           {children}
