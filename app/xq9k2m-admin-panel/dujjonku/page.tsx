@@ -427,14 +427,22 @@ export default function AdminDujjonkuPage() {
             </Link>
             <h1 className="text-2xl font-bold text-gray-900 mt-1">두쫀쿠맵 관리</h1>
           </div>
-          {activeTab === 'stores' && (
-            <button
-              onClick={() => setIsCreateOpen(true)}
-              className="px-4 py-2 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600"
+          <div className="flex gap-2">
+            <Link
+              href="/xq9k2m-admin-panel/dujjonku/naver-search"
+              className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600"
             >
-              + 매장 등록
-            </button>
-          )}
+              네이버 검색 결과
+            </Link>
+            {activeTab === 'stores' && (
+              <button
+                onClick={() => setIsCreateOpen(true)}
+                className="px-4 py-2 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600"
+              >
+                + 매장 등록
+              </button>
+            )}
+          </div>
         </div>
 
         {/* 탭 */}
