@@ -283,7 +283,8 @@ export default function DujjonkuMapPage() {
     setRegisterForm({
       name: '',
       categories: ['dujjonku'],
-      dessertName: '',
+      dubaiDessertName: '',
+      signatureDessertName: '',
       address: '',
       lat: 0,
       lng: 0,
