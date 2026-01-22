@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 // 가격 포맷팅 헬퍼 (천단위 콤마)
@@ -15,6 +16,13 @@ const formatPrice = (value: string | number): string => {
 const extractNumber = (value: string): string => {
   return value.replace(/[^0-9]/g, '');
 };
+
+interface StoreReport {
+  id: string;
+  reason: string;
+  createdAt: string;
+  user: { nickname: string } | null;
+}
 
 interface Store {
   id: string;
@@ -34,6 +42,7 @@ interface Store {
   createdAt: string;
   user: { nickname: string; email: string } | null;
   _count: { reports: number };
+  reports?: StoreReport[];
 }
 
 interface EditRequest {
@@ -88,7 +97,6 @@ interface Pagination {
 }
 
 const ADMIN_KEY = 'sogae-admin-2024';
-const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 export default function AdminDujjonkuPage() {
   const router = useRouter();
@@ -178,7 +186,7 @@ export default function AdminDujjonkuPage() {
     checkAuth();
   }, [router]);
 
-  const fetchStores = async (page = 1) => {
+  const fetchStores = useCallback(async (page = 1) => {
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -196,20 +204,10 @@ export default function AdminDujjonkuPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    if (activeTab === 'stores') {
-      fetchStores();
-    } else {
-      fetchEditRequests();
-    }
-  }, [filter, activeTab, editRequestFilter, isAuthenticated]);
+  }, [filter]);
 
   // 수정 요청 목록 조회
-  const fetchEditRequests = async () => {
+  const fetchEditRequests = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(
@@ -226,7 +224,17 @@ export default function AdminDujjonkuPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [editRequestFilter]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    if (activeTab === 'stores') {
+      fetchStores();
+    } else {
+      fetchEditRequests();
+    }
+  }, [activeTab, isAuthenticated, fetchStores, fetchEditRequests]);
 
   // 수정 요청 승인/거절
   const handleEditRequestAction = async (
@@ -789,11 +797,13 @@ export default function AdminDujjonkuPage() {
 
             {/* 이미지 */}
             {selectedStore.imageUrl && (
-              <div className="mb-4">
-                <img
+              <div className="mb-4 relative w-full h-48">
+                <Image
                   src={selectedStore.imageUrl}
                   alt={selectedStore.name}
-                  className="w-full h-48 object-cover rounded-xl"
+                  fill
+                  className="object-cover rounded-xl"
+                  unoptimized
                 />
               </div>
             )}
@@ -828,11 +838,11 @@ export default function AdminDujjonkuPage() {
             </div>
 
             {/* 신고 내역 */}
-            {(selectedStore as any).reports?.length > 0 && (
+            {selectedStore.reports && selectedStore.reports.length > 0 && (
               <div className="border-t pt-4">
                 <h3 className="font-semibold text-gray-900 mb-3">신고 내역</h3>
                 <div className="space-y-2">
-                  {(selectedStore as any).reports.map((report: any) => (
+                  {selectedStore.reports.map((report) => (
                     <div key={report.id} className="p-3 bg-red-50 rounded-lg">
                       <p className="text-sm text-red-700">{report.reason}</p>
                       <p className="text-xs text-red-500 mt-1">
@@ -1153,11 +1163,13 @@ export default function AdminDujjonkuPage() {
                   placeholder="https://example.com/image.jpg"
                 />
                 {createForm.imageUrl && (
-                  <div className="mt-2">
-                    <img
+                  <div className="mt-2 relative w-full h-32">
+                    <Image
                       src={createForm.imageUrl}
                       alt="미리보기"
-                      className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                      fill
+                      className="object-cover rounded-xl border border-gray-200"
+                      unoptimized
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
                       }}

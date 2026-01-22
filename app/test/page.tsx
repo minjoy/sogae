@@ -69,7 +69,7 @@ export default function TestListPage() {
         const data = await response.json();
 
         if (data.success) {
-          setCompletedTests(data.results.map((r: Record<string, any>) => r.testType));
+          setCompletedTests(data.results.map((r: { testType: number }) => r.testType));
         }
       } else {
         setIsLoggedIn(false);

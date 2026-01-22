@@ -43,11 +43,11 @@ export async function GET(request: NextRequest) {
 
     // 매장별로 그룹화
     const groupedByStore: Record<string, {
-      store: any;
-      requests: any[];
+      store: typeof editRequests[number]['store'];
+      requests: typeof editRequests;
     }> = {};
 
-    editRequests.forEach((req) => {
+    editRequests.forEach((req: typeof editRequests[number]) => {
       if (!groupedByStore[req.storeId]) {
         groupedByStore[req.storeId] = {
           store: req.store,
