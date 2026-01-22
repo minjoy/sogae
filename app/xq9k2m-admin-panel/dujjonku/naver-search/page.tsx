@@ -26,6 +26,9 @@ interface NaverStoreWithState extends NaverStore {
 const SEARCH_KEYWORDS = ['두바이', '두바이 쫀득 쿠키', '두쫀쿠'];
 const ADMIN_KEY = 'sogae-admin-2024';
 
+// 조회 개수 옵션
+const DISPLAY_OPTIONS = [5, 10, 20, 30, 50];
+
 // 지역 목록
 const REGIONS = [
   { value: '', label: '전체 지역' },
@@ -66,6 +69,7 @@ export default function NaverSearchPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [selectedKeyword, setSelectedKeyword] = useState(SEARCH_KEYWORDS[0]);
   const [selectedRegion, setSelectedRegion] = useState('');
+  const [displayCount, setDisplayCount] = useState(10);
   const [customKeyword, setCustomKeyword] = useState('');
   const [stores, setStores] = useState<NaverStoreWithState[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -169,7 +173,7 @@ export default function NaverSearchPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/admin/naver-search?query=${encodeURIComponent(query)}&display=10`);
+      const response = await fetch(`/api/admin/naver-search?query=${encodeURIComponent(query)}&display=${displayCount}`);
       const data = await response.json();
 
       if (data.success) {
@@ -377,6 +381,17 @@ export default function NaverSearchPage() {
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder={selectedRegion ? `검색어 입력 (지역: ${selectedRegion})` : '검색어 입력 (예: 두바이 쿠키)'}
               />
+              <select
+                value={displayCount}
+                onChange={(e) => setDisplayCount(Number(e.target.value))}
+                className="px-3 py-3 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                {DISPLAY_OPTIONS.map((count) => (
+                  <option key={count} value={count}>
+                    {count}개
+                  </option>
+                ))}
+              </select>
               <button
                 onClick={() => handleSearch()}
                 disabled={isLoading}
