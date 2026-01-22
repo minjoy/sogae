@@ -727,26 +727,8 @@ export default function DujjonkuMapPage() {
         </div>
 
         {/* 광고 영역 (하단 고정) */}
-        <div className="h-16 bg-gray-100 border-t border-gray-200 flex items-center justify-center overflow-hidden">
-          <ins
-            className="adsbygoogle"
-            style={{ display: 'block', width: '100%', height: '100%' }}
-            data-ad-client="ca-pub-3512251263610351"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          />
-          <Script
-            async
-            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3512251263610351"
-            crossOrigin="anonymous"
-            onLoad={() => {
-              try {
-                ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-              } catch (e) {
-                console.error('AdSense error:', e);
-              }
-            }}
-          />
+        <div className="h-16 bg-gray-100 border-t border-gray-200 flex items-center justify-center">
+          <span className="text-gray-400 text-sm">광고 영역</span>
         </div>
       </div>
 

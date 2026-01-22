@@ -91,6 +91,12 @@ export default function RootLayout({
     <html lang="ko">
       <head>
         <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3512251263610351"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+        <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-7LK6RWFPHP"
           strategy="afterInteractive"
         />
