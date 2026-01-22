@@ -336,6 +336,16 @@ export default function DujjonkuMapPage() {
   const handleEditRequest = async () => {
     if (!selectedStore) return;
 
+    // 디저트명 조합
+    const dessertParts: string[] = [];
+    if (editForm.dubaiDessertName.trim()) {
+      dessertParts.push(`[두바이파생] ${editForm.dubaiDessertName.trim()}`);
+    }
+    if (editForm.signatureDessertName.trim()) {
+      dessertParts.push(`[시그니처간식] ${editForm.signatureDessertName.trim()}`);
+    }
+    const combinedDessertName = dessertParts.join(' | ');
+
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -345,7 +355,10 @@ export default function DujjonkuMapPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify({
+          ...editForm,
+          dessertName: combinedDessertName,
+        }),
       });
 
       const data = await response.json();
@@ -1165,15 +1178,28 @@ export default function DujjonkuMapPage() {
                 </select>
               </div>
 
-              {(editForm.category.includes('dubai') || editForm.category.includes('signature')) && (
+              {editForm.category.includes('dubai') && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">디저트명</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">🍫 두바이파생 디저트명</label>
                   <input
                     type="text"
-                    value={editForm.dessertName}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, dessertName: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="예: 두바이초콜릿"
+                    value={editForm.dubaiDessertName}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, dubaiDessertName: e.target.value }))}
+                    className="w-full px-4 py-3 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50 text-gray-900"
+                    placeholder="예: 두바이초콜릿, 피스타치오"
+                  />
+                </div>
+              )}
+
+              {editForm.category.includes('signature') && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">🎂 시그니처간식 디저트명</label>
+                  <input
+                    type="text"
+                    value={editForm.signatureDessertName}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, signatureDessertName: e.target.value }))}
+                    className="w-full px-4 py-3 border border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-purple-50 text-gray-900"
+                    placeholder="예: 크로플, 마카롱"
                   />
                 </div>
               )}
