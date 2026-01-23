@@ -302,50 +302,6 @@ export default function DujjonkuMapPage() {
     isPriceModeRef.current = isPriceMode;
   }, [isPriceMode]);
 
-  // 쿠팡 파트너스 배너 로드
-  useEffect(() => {
-    if (!isOnlineShopOpen) return;
-
-    const bannerConfigs = [
-      { id: 'coupang-banner-1', bannerId: 959911, subId: '' },
-      { id: 'coupang-banner-2', bannerId: 959912, subId: 'dubai119' },
-      { id: 'coupang-banner-3', bannerId: 959913, subId: 'dubai119' },
-      { id: 'coupang-banner-4', bannerId: 959914, subId: 'dubai119' },
-    ];
-
-    // 스크립트가 이미 로드되어 있는지 확인
-    const loadBanners = () => {
-      bannerConfigs.forEach((config) => {
-        const container = document.getElementById(config.id);
-        if (container && (window as any).PartnersCoupang) {
-          container.innerHTML = ''; // 기존 내용 클리어
-          new (window as any).PartnersCoupang.G({
-            id: config.bannerId,
-            template: 'carousel',
-            trackingCode: 'AF2407547',
-            subId: config.subId,
-            width: '680',
-            height: '140',
-            tsource: '',
-          });
-        }
-      });
-    };
-
-    // 쿠팡 파트너스 스크립트 로드
-    if (!(window as any).PartnersCoupang) {
-      const script = document.createElement('script');
-      script.src = 'https://ads-partners.coupang.com/g.js';
-      script.async = true;
-      script.onload = () => {
-        setTimeout(loadBanners, 100);
-      };
-      document.body.appendChild(script);
-    } else {
-      loadBanners();
-    }
-  }, [isOnlineShopOpen]);
-
   // SDK 로딩 완료 후 지도 초기화
   useEffect(() => {
     if (!sdkLoaded) return;
@@ -1685,29 +1641,27 @@ export default function DujjonkuMapPage() {
             className="absolute inset-0 bg-black/50"
             onClick={() => setIsOnlineShopOpen(false)}
           />
-          <div className="relative w-full max-w-[720px] bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-[720px] bg-white rounded-2xl overflow-hidden">
             <button
               onClick={() => setIsOnlineShopOpen(false)}
-              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 z-10"
+              className="absolute top-4 right-4 p-2 bg-white/80 rounded-full text-gray-600 hover:text-gray-800 hover:bg-white z-10"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
 
-            <h2 className="text-xl font-bold text-gray-900 mb-4">🛒 온라인상점</h2>
-            <p className="text-sm text-gray-600 mb-4">두바이초콜릿, 두쫀쿠 관련 상품을 온라인에서 구매해보세요!</p>
-
-            <div className="space-y-4" style={{ maxWidth: '680px' }}>
-              <div id="coupang-banner-1" />
-              <div id="coupang-banner-2" />
-              <div id="coupang-banner-3" />
-              <div id="coupang-banner-4" />
+            <div className="p-4 border-b">
+              <h2 className="text-xl font-bold text-gray-900">🛒 온라인상점</h2>
+              <p className="text-sm text-gray-600">두바이초콜릿, 두쫀쿠 관련 상품을 온라인에서 구매해보세요!</p>
             </div>
 
-            <p className="text-xs text-gray-400 text-center mt-4">
-              쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
-            </p>
+            <iframe
+              src="/coupang-banner.html"
+              className="w-full border-0"
+              style={{ height: '70vh', maxHeight: '700px' }}
+              title="쿠팡 파트너스 배너"
+            />
           </div>
         </div>
       )}
