@@ -26,29 +26,89 @@ interface NaverStoreWithState extends NaverStore {
 const SEARCH_KEYWORDS = ['두바이', '두바이 쫀득 쿠키', '두쫀쿠'];
 const ADMIN_KEY = 'sogae-admin-2024';
 
-// 조회 개수 옵션
-const DISPLAY_OPTIONS = [5, 10, 20, 30, 50, 100];
-
-// 지역 목록
-const REGIONS = [
-  { value: '', label: '전체 지역' },
-  { value: '서울', label: '서울 전체' },
-  { value: '서울 강남', label: '서울 강남' },
-  { value: '서울 홍대', label: '서울 홍대' },
-  { value: '서울 성수', label: '서울 성수' },
-  { value: '서울 잠실', label: '서울 잠실' },
-  { value: '서울 명동', label: '서울 명동' },
-  { value: '서울 이태원', label: '서울 이태원' },
-  { value: '서울 여의도', label: '서울 여의도' },
-  { value: '경기 분당', label: '경기 분당' },
-  { value: '경기 판교', label: '경기 판교' },
-  { value: '경기 수원', label: '경기 수원' },
-  { value: '인천', label: '인천' },
-  { value: '부산', label: '부산' },
-  { value: '대구', label: '대구' },
-  { value: '대전', label: '대전' },
-  { value: '광주', label: '광주' },
-  { value: '제주', label: '제주' },
+// 지역 그룹별 목록
+const REGION_GROUPS = [
+  {
+    label: '서울 상권',
+    regions: [
+      { value: '', label: '전체' },
+      { value: '강남역', label: '강남역' },
+      { value: '홍대', label: '홍대' },
+      { value: '성수동', label: '성수동' },
+      { value: '잠실', label: '잠실' },
+      { value: '명동', label: '명동' },
+      { value: '이태원', label: '이태원' },
+      { value: '여의도', label: '여의도' },
+      { value: '신촌', label: '신촌' },
+      { value: '건대입구', label: '건대입구' },
+      { value: '압구정', label: '압구정' },
+      { value: '청담', label: '청담' },
+      { value: '가로수길', label: '가로수길' },
+      { value: '합정', label: '합정' },
+      { value: '망원', label: '망원' },
+      { value: '연남동', label: '연남동' },
+      { value: '한남동', label: '한남동' },
+      { value: '을지로', label: '을지로' },
+      { value: '익선동', label: '익선동' },
+      { value: '광화문', label: '광화문' },
+      { value: '삼성역', label: '삼성역' },
+      { value: '선릉역', label: '선릉역' },
+      { value: '역삼역', label: '역삼역' },
+      { value: '논현', label: '논현' },
+      { value: '서래마을', label: '서래마을' },
+    ],
+  },
+  {
+    label: '서울 구',
+    regions: [
+      { value: '서울 강남구', label: '강남구' },
+      { value: '서울 서초구', label: '서초구' },
+      { value: '서울 마포구', label: '마포구' },
+      { value: '서울 송파구', label: '송파구' },
+      { value: '서울 용산구', label: '용산구' },
+      { value: '서울 성동구', label: '성동구' },
+      { value: '서울 광진구', label: '광진구' },
+      { value: '서울 종로구', label: '종로구' },
+      { value: '서울 중구', label: '중구' },
+      { value: '서울 영등포구', label: '영등포구' },
+      { value: '서울 강서구', label: '강서구' },
+      { value: '서울 양천구', label: '양천구' },
+      { value: '서울 동작구', label: '동작구' },
+      { value: '서울 관악구', label: '관악구' },
+      { value: '서울 강동구', label: '강동구' },
+      { value: '서울 노원구', label: '노원구' },
+    ],
+  },
+  {
+    label: '수도권',
+    regions: [
+      { value: '분당', label: '분당' },
+      { value: '판교', label: '판교' },
+      { value: '수원', label: '수원' },
+      { value: '일산', label: '일산' },
+      { value: '용인', label: '용인' },
+      { value: '인천 송도', label: '인천 송도' },
+      { value: '인천 부평', label: '인천 부평' },
+      { value: '인천', label: '인천 전체' },
+      { value: '하남', label: '하남' },
+      { value: '김포', label: '김포' },
+    ],
+  },
+  {
+    label: '지방',
+    regions: [
+      { value: '부산 해운대', label: '부산 해운대' },
+      { value: '부산 서면', label: '부산 서면' },
+      { value: '부산 광안리', label: '부산 광안리' },
+      { value: '부산', label: '부산 전체' },
+      { value: '대구', label: '대구' },
+      { value: '대전', label: '대전' },
+      { value: '광주', label: '광주' },
+      { value: '제주 애월', label: '제주 애월' },
+      { value: '제주 협재', label: '제주 협재' },
+      { value: '제주', label: '제주 전체' },
+    ],
+  },
 ];
 
 // 가격 포맷팅 헬퍼 (천단위 콤마)
@@ -69,7 +129,6 @@ export default function NaverSearchPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [selectedKeyword, setSelectedKeyword] = useState(SEARCH_KEYWORDS[0]);
   const [selectedRegion, setSelectedRegion] = useState('');
-  const [displayCount, setDisplayCount] = useState(10);
   const [customKeyword, setCustomKeyword] = useState('');
   const [stores, setStores] = useState<NaverStoreWithState[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -173,7 +232,7 @@ export default function NaverSearchPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/admin/naver-search?query=${encodeURIComponent(query)}&display=${displayCount}`);
+      const response = await fetch(`/api/admin/naver-search?query=${encodeURIComponent(query)}`);
       const data = await response.json();
 
       if (data.success) {
@@ -298,48 +357,48 @@ export default function NaverSearchPage() {
             ← 두쫀쿠맵 관리
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">네이버 검색 결과</h1>
-          <p className="text-gray-500 text-sm mt-1">네이버 지역 검색 API를 통해 매장을 검색하고 등록할 수 있습니다</p>
+          <p className="text-gray-500 text-sm mt-1">
+            네이버 지역 검색 API를 통해 매장을 검색하고 등록할 수 있습니다
+            <span className="text-xs text-gray-400 ml-2">(API 제한: 검색당 최대 5개)</span>
+          </p>
         </div>
 
         {/* 검색 영역 */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           {/* 지역 선택 */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">지역 선택</label>
-            <div className="flex flex-wrap gap-2">
-              {REGIONS.slice(0, 10).map((region) => (
-                <button
-                  key={region.value}
-                  onClick={() => setSelectedRegion(region.value)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    selectedRegion === region.value
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {region.label}
-                </button>
-              ))}
-              <select
-                value={REGIONS.slice(10).find((r) => r.value === selectedRegion)?.value || ''}
-                onChange={(e) => setSelectedRegion(e.target.value)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                  REGIONS.slice(10).some((r) => r.value === selectedRegion)
-                    ? 'border-green-500 bg-green-50 text-green-700'
-                    : 'border-gray-300 text-gray-700'
-                }`}
-              >
-                <option value="">기타 지역...</option>
-                {REGIONS.slice(10).map((region) => (
-                  <option key={region.value} value={region.value}>
-                    {region.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="mb-5">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">지역 선택</label>
+
+            {REGION_GROUPS.map((group) => (
+              <div key={group.label} className="mb-3">
+                <p className="text-xs text-gray-500 mb-1.5">{group.label}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.regions.map((region) => (
+                    <button
+                      key={region.value}
+                      onClick={() => setSelectedRegion(region.value)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                        selectedRegion === region.value
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {region.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
             {selectedRegion && (
-              <p className="text-xs text-green-600 mt-1">
+              <p className="text-xs text-green-600 mt-2">
                 선택된 지역: <span className="font-semibold">{selectedRegion}</span>
+                <button
+                  onClick={() => setSelectedRegion('')}
+                  className="ml-2 text-gray-400 hover:text-gray-600"
+                >
+                  ✕ 해제
+                </button>
               </p>
             )}
           </div>
@@ -381,17 +440,6 @@ export default function NaverSearchPage() {
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder={selectedRegion ? `검색어 입력 (지역: ${selectedRegion})` : '검색어 입력 (예: 두바이 쿠키)'}
               />
-              <select
-                value={displayCount}
-                onChange={(e) => setDisplayCount(Number(e.target.value))}
-                className="px-3 py-3 border border-gray-300 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              >
-                {DISPLAY_OPTIONS.map((count) => (
-                  <option key={count} value={count}>
-                    {count}개
-                  </option>
-                ))}
-              </select>
               <button
                 onClick={() => handleSearch()}
                 disabled={isLoading}

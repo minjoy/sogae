@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 const NAVER_CLIENT_ID = 'sr5mXs64vBDaCu0e9lHq';
 const NAVER_CLIENT_SECRET = 'jP25Af2Xmu';
 
-// 네이버 지역검색 API: 한 번에 최대 5개 반환
+// 네이버 지역검색 API 제한: display 최대 5, start 최대 1
 const NAVER_MAX_DISPLAY = 5;
 
 interface NaverLocalItem {
@@ -59,90 +59,41 @@ function transformNaverItem(item: NaverLocalItem) {
   };
 }
 
-// GET: 네이버 지역 검색 API (페이지네이션으로 요청 개수만큼 수집)
+// GET: 네이버 지역 검색 API (단일 호출, 최대 5개)
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('query') || '두쫀쿠';
-    const requestedCount = parseInt(searchParams.get('display') || '5');
 
-    const allStores: NonNullable<ReturnType<typeof transformNaverItem>>[] = [];
-    const seenKeys = new Set<string>();
-    let totalCount = 0;
-    let apiCallCount = 0;
+    const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${NAVER_MAX_DISPLAY}&start=1&sort=comment`;
 
-    // 페이지네이션으로 요청 개수만큼 수집 (start 1~1000 범위)
-    const maxIterations = Math.ceil(requestedCount / NAVER_MAX_DISPLAY);
+    const response = await fetch(url, {
+      headers: {
+        'X-Naver-Client-Id': NAVER_CLIENT_ID,
+        'X-Naver-Client-Secret': NAVER_CLIENT_SECRET,
+      },
+    });
 
-    for (let i = 0; i < maxIterations; i++) {
-      const start = i * NAVER_MAX_DISPLAY + 1;
-
-      // start가 1000 초과하면 중단
-      if (start > 1000) break;
-
-      const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${NAVER_MAX_DISPLAY}&start=${start}&sort=comment`;
-
-      const response = await fetch(url, {
-        headers: {
-          'X-Naver-Client-Id': NAVER_CLIENT_ID,
-          'X-Naver-Client-Secret': NAVER_CLIENT_SECRET,
-        },
-      });
-
-      apiCallCount++;
-
-      if (!response.ok) {
-        // 첫 요청 실패시 에러 반환, 이후 요청 실패시 현재까지 결과 반환
-        if (i === 0) {
-          const errorText = await response.text();
-          console.error('Naver API error:', response.status, errorText);
-          return NextResponse.json(
-            { error: `네이버 API 오류: ${response.status}` },
-            { status: response.status }
-          );
-        }
-        break;
-      }
-
-      const data: NaverSearchResponse = await response.json();
-
-      if (i === 0) {
-        totalCount = data.total;
-      }
-
-      // 결과가 없으면 중단
-      if (data.items.length === 0) break;
-
-      for (const item of data.items) {
-        const store = transformNaverItem(item);
-        if (store) {
-          const key = `${store.lat.toFixed(6)}-${store.lng.toFixed(6)}`;
-          if (!seenKeys.has(key)) {
-            seenKeys.add(key);
-            allStores.push(store);
-          }
-        }
-
-        if (allStores.length >= requestedCount) break;
-      }
-
-      // 요청 개수 충족 또는 더 이상 결과 없으면 중단
-      if (allStores.length >= requestedCount || data.items.length < NAVER_MAX_DISPLAY) {
-        break;
-      }
-
-      // API 호출 간 딜레이
-      if (i < maxIterations - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Naver API error:', response.status, errorText);
+      return NextResponse.json(
+        { error: `네이버 API 오류: ${response.status}` },
+        { status: response.status }
+      );
     }
+
+    const data: NaverSearchResponse = await response.json();
+
+    const stores = data.items
+      .map(transformNaverItem)
+      .filter((store): store is NonNullable<typeof store> => store !== null);
 
     return NextResponse.json({
       success: true,
       query,
-      total: totalCount,
-      stores: allStores.slice(0, requestedCount),
-      apiCallCount,
+      total: data.total,
+      stores,
     });
   } catch (error) {
     console.error('Naver search error:', error);
