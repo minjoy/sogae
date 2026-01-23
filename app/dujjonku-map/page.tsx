@@ -234,6 +234,7 @@ export default function DujjonkuMapPage() {
   const [priceFilter, setPriceFilter] = useState({ min: '', max: '' });
   const [isPriceMode, setIsPriceMode] = useState(false); // 가격 표시 모드
   const [isOnlineShopOpen, setIsOnlineShopOpen] = useState(false); // 온라인상점 모달
+  const [isLoginRequiredOpen, setIsLoginRequiredOpen] = useState(false); // 로그인 필요 팝업
 
   // 가격 모드 ref (idle 이벤트에서 참조)
   const isPriceModeRef = useRef(false);
@@ -517,8 +518,7 @@ export default function DujjonkuMapPage() {
   // 매장 등록 모달 열기
   const openRegisterModal = () => {
     if (!isLoggedIn) {
-      alert('로그인이 필요합니다');
-      router.push('/login');
+      setIsLoginRequiredOpen(true);
       return;
     }
 
@@ -547,8 +547,7 @@ export default function DujjonkuMapPage() {
   // 수정 요청 모달 열기
   const openEditRequestModal = () => {
     if (!isLoggedIn) {
-      alert('로그인이 필요합니다');
-      router.push('/login');
+      setIsLoginRequiredOpen(true);
       return;
     }
 
@@ -771,8 +770,7 @@ export default function DujjonkuMapPage() {
     }
 
     if (!isLoggedIn) {
-      alert('로그인이 필요합니다');
-      router.push('/login');
+      setIsLoginRequiredOpen(true);
       return;
     }
 
@@ -1833,6 +1831,45 @@ export default function DujjonkuMapPage() {
             >
               {isLoading ? '요청 중...' : '수정 요청하기'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 로그인 필요 팝업 */}
+      {isLoginRequiredOpen && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsLoginRequiredOpen(false)}
+          />
+          <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 text-center">
+            <div className="mb-4">
+              <div className="w-16 h-16 mx-auto mb-4 bg-primary-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">로그인이 필요합니다</h2>
+              <p className="text-gray-600 text-sm">이 기능을 사용하려면 로그인이 필요해요.</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsLoginRequiredOpen(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200"
+              >
+                닫기
+              </button>
+              <button
+                onClick={() => {
+                  setIsLoginRequiredOpen(false);
+                  router.push('/login');
+                }}
+                className="flex-1 py-3 bg-primary-500 text-white rounded-xl font-semibold hover:bg-primary-600"
+              >
+                로그인하러 가기
+              </button>
+            </div>
           </div>
         </div>
       )}
