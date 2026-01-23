@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Next.js API 캐싱 비활성화
+export const dynamic = 'force-dynamic';
+
 const NAVER_CLIENT_ID = 'sr5mXs64vBDaCu0e9lHq';
 const NAVER_CLIENT_SECRET = 'jP25Af2Xmu';
 
@@ -72,8 +75,10 @@ export async function GET(request: NextRequest) {
     const allStores: NonNullable<ReturnType<typeof transformNaverItem>>[] = [];
     const seenKeys = new Set<string>(); // 중복 방지용
     let totalCount = 0;
+    let actualIterations = 0; // 디버깅용
 
     for (let i = 0; i < maxIterations; i++) {
+      actualIterations++;
       const start = i * MAX_DISPLAY_PER_REQUEST + 1;
 
       // start가 1000을 넘으면 네이버 API 제한으로 중단
@@ -151,6 +156,13 @@ export async function GET(request: NextRequest) {
       query,
       total: totalCount,
       stores: allStores.slice(0, requestedCount),
+      // 디버깅 정보
+      debug: {
+        requestedCount,
+        maxIterations,
+        actualIterations,
+        collectedCount: allStores.length,
+      },
     });
   } catch (error) {
     console.error('Naver search error:', error);
