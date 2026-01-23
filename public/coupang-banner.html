@@ -16,6 +16,13 @@
     }
     .banner-item {
       margin-bottom: 16px;
+      overflow: hidden;
+    }
+    /* 680px 이상에서 마지막 아이템(5번째) 숨기기: 680/5=136px, 4개=544px */
+    @media (min-width: 680px) {
+      .banner-item {
+        max-width: 544px;
+      }
     }
     .footer-text {
       font-size: 11px;
