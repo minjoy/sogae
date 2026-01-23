@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
     const seenKeys = new Set<string>(); // 중복 방지용
     let totalCount = 0;
     let actualIterations = 0; // 디버깅용
+    let firstApiResponse: NaverSearchResponse | null = null; // 첫 API 응답 저장
 
     for (let i = 0; i < maxIterations; i++) {
       actualIterations++;
@@ -112,9 +113,10 @@ export async function GET(request: NextRequest) {
 
       const data: NaverSearchResponse = await response.json();
 
-      // 첫 요청에서 총 개수 저장
+      // 첫 요청에서 총 개수 저장 및 raw 응답 저장
       if (i === 0) {
         totalCount = data.total;
+        firstApiResponse = data;
       }
 
       // 더 이상 결과가 없으면 중단
@@ -162,6 +164,12 @@ export async function GET(request: NextRequest) {
         maxIterations,
         actualIterations,
         collectedCount: allStores.length,
+        naverApiFirstResponse: firstApiResponse ? {
+          total: firstApiResponse.total,
+          start: firstApiResponse.start,
+          display: firstApiResponse.display,
+          itemsCount: firstApiResponse.items.length,
+        } : null,
       },
     });
   } catch (error) {
