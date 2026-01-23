@@ -26,9 +26,6 @@ interface NaverSearchResponse {
   items: NaverLocalItem[];
 }
 
-// 네이버 지역검색 API 한 번 호출당 최대 개수 (API 문서상 최대 5개이나, 실제로는 더 가능할 수 있음)
-const MAX_DISPLAY_PER_REQUEST = 100;
-
 // 아이템을 변환하는 헬퍼 함수
 function transformNaverItem(item: NaverLocalItem) {
   // 네이버 지역검색 API의 mapx, mapy는 WGS84 좌표 * 10000000 형태
@@ -70,8 +67,9 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('query') || '두쫀쿠';
     const requestedCount = parseInt(searchParams.get('display') || '10');
 
-    // 요청된 개수만큼 가져오기 위해 필요한 API 호출 횟수 계산
-    const maxIterations = Math.ceil(requestedCount / MAX_DISPLAY_PER_REQUEST);
+    // 페이지네이션을 위한 최대 반복 횟수 (100개씩 가져올 경우)
+    const displayPerRequest = Math.min(requestedCount, 100);
+    const maxIterations = Math.ceil(requestedCount / displayPerRequest);
     const allStores: NonNullable<ReturnType<typeof transformNaverItem>>[] = [];
     const seenKeys = new Set<string>(); // 중복 방지용
     let totalCount = 0;
@@ -80,15 +78,15 @@ export async function GET(request: NextRequest) {
 
     for (let i = 0; i < maxIterations; i++) {
       actualIterations++;
-      const start = i * MAX_DISPLAY_PER_REQUEST + 1;
+      const start = i * displayPerRequest + 1;
 
       // start가 1000을 넘으면 네이버 API 제한으로 중단
       if (start > 1000) {
         break;
       }
 
-      // sort=comment (정확도순) 사용 - random은 페이지네이션과 호환되지 않음
-      const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${MAX_DISPLAY_PER_REQUEST}&start=${start}&sort=comment`;
+      // sort=comment (정확도순) 사용
+      const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${displayPerRequest}&start=${start}&sort=comment`;
 
       const response = await fetch(url, {
         headers: {
@@ -143,7 +141,7 @@ export async function GET(request: NextRequest) {
       }
 
       // 요청된 개수에 도달했거나 더 이상 결과가 없으면 중단
-      if (allStores.length >= requestedCount || data.items.length < MAX_DISPLAY_PER_REQUEST) {
+      if (allStores.length >= requestedCount || data.items.length < displayPerRequest) {
         break;
       }
 
