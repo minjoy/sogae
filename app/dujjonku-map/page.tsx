@@ -232,12 +232,12 @@ export default function DujjonkuMapPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isPriceFilterOpen, setIsPriceFilterOpen] = useState(false);
   const [priceFilter, setPriceFilter] = useState({ min: '', max: '' });
-  const [isPriceMode, setIsPriceMode] = useState(false); // 가격 표시 모드
+  const [isPriceMode, setIsPriceMode] = useState(true); // 가격 표시 모드 (기본: 전체 선택)
   const [isOnlineShopOpen, setIsOnlineShopOpen] = useState(false); // 온라인상점 모달
   const [isLoginRequiredOpen, setIsLoginRequiredOpen] = useState(false); // 로그인 필요 팝업
 
   // 가격 모드 ref (idle 이벤트에서 참조)
-  const isPriceModeRef = useRef(false);
+  const isPriceModeRef = useRef(true);
 
   // 매장 등록 폼
   const [registerForm, setRegisterForm] = useState({
