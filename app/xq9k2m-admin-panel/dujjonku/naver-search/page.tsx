@@ -27,7 +27,7 @@ const SEARCH_KEYWORDS = ['두바이', '두바이 쫀득 쿠키', '두쫀쿠'];
 const ADMIN_KEY = 'sogae-admin-2024';
 
 // 조회 개수 옵션
-const DISPLAY_OPTIONS = [5, 10, 20, 30, 50, 100, 200, 500, 1000, 2000, 5000];
+const DISPLAY_OPTIONS = [5, 10, 20, 30, 50, 100];
 
 // 지역 목록
 const REGIONS = [
@@ -76,10 +76,6 @@ export default function NaverSearchPage() {
   const [isCheckingRegistered, setIsCheckingRegistered] = useState(false);
   const [searchedQuery, setSearchedQuery] = useState('');
   const [total, setTotal] = useState(0);
-  const [debugInfo, setDebugInfo] = useState<{
-    apiCallCount?: number;
-    searchedRegions?: string[];
-  } | null>(null);
 
   // 세션 확인
   useEffect(() => {
@@ -194,7 +190,6 @@ export default function NaverSearchPage() {
         setStores(checkedStores);
         setSearchedQuery(data.query);
         setTotal(data.total);
-        setDebugInfo(data.debug || null);
       } else {
         alert(data.error || '검색에 실패했습니다');
       }
@@ -424,12 +419,6 @@ export default function NaverSearchPage() {
                 </span>
               )}
             </p>
-            {debugInfo && debugInfo.apiCallCount && debugInfo.apiCallCount > 1 && (
-              <p className="text-xs text-gray-400 mt-1">
-                {debugInfo.apiCallCount}개 지역 검색 ({debugInfo.searchedRegions?.slice(0, 5).join(', ')}
-                {debugInfo.searchedRegions && debugInfo.searchedRegions.length > 5 && ` 외 ${debugInfo.searchedRegions.length - 5}개`})
-              </p>
-            )}
           </div>
         )}
 
