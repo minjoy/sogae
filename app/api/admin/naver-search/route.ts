@@ -26,8 +26,8 @@ interface NaverSearchResponse {
   items: NaverLocalItem[];
 }
 
-// 네이버 API 한 번 호출당 최대 개수
-const MAX_DISPLAY_PER_REQUEST = 5;
+// 네이버 지역검색 API 한 번 호출당 최대 개수 (API 문서상 최대 5개이나, 실제로는 더 가능할 수 있음)
+const MAX_DISPLAY_PER_REQUEST = 100;
 
 // 아이템을 변환하는 헬퍼 함수
 function transformNaverItem(item: NaverLocalItem) {
