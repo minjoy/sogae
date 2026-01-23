@@ -233,6 +233,7 @@ export default function DujjonkuMapPage() {
   const [isPriceFilterOpen, setIsPriceFilterOpen] = useState(false);
   const [priceFilter, setPriceFilter] = useState({ min: '', max: '' });
   const [isPriceMode, setIsPriceMode] = useState(false); // 가격 표시 모드
+  const [isOnlineShopOpen, setIsOnlineShopOpen] = useState(false); // 온라인상점 모달
 
   // 가격 모드 ref (idle 이벤트에서 참조)
   const isPriceModeRef = useRef(false);
@@ -300,6 +301,50 @@ export default function DujjonkuMapPage() {
   useEffect(() => {
     isPriceModeRef.current = isPriceMode;
   }, [isPriceMode]);
+
+  // 쿠팡 파트너스 배너 로드
+  useEffect(() => {
+    if (!isOnlineShopOpen) return;
+
+    const bannerConfigs = [
+      { id: 'coupang-banner-1', bannerId: 959911, subId: '' },
+      { id: 'coupang-banner-2', bannerId: 959912, subId: 'dubai119' },
+      { id: 'coupang-banner-3', bannerId: 959913, subId: 'dubai119' },
+      { id: 'coupang-banner-4', bannerId: 959914, subId: 'dubai119' },
+    ];
+
+    // 스크립트가 이미 로드되어 있는지 확인
+    const loadBanners = () => {
+      bannerConfigs.forEach((config) => {
+        const container = document.getElementById(config.id);
+        if (container && (window as any).PartnersCoupang) {
+          container.innerHTML = ''; // 기존 내용 클리어
+          new (window as any).PartnersCoupang.G({
+            id: config.bannerId,
+            template: 'carousel',
+            trackingCode: 'AF2407547',
+            subId: config.subId,
+            width: '680',
+            height: '140',
+            tsource: '',
+          });
+        }
+      });
+    };
+
+    // 쿠팡 파트너스 스크립트 로드
+    if (!(window as any).PartnersCoupang) {
+      const script = document.createElement('script');
+      script.src = 'https://ads-partners.coupang.com/g.js';
+      script.async = true;
+      script.onload = () => {
+        setTimeout(loadBanners, 100);
+      };
+      document.body.appendChild(script);
+    } else {
+      loadBanners();
+    }
+  }, [isOnlineShopOpen]);
 
   // SDK 로딩 완료 후 지도 초기화
   useEffect(() => {
@@ -864,10 +909,10 @@ export default function DujjonkuMapPage() {
             </div>
           </div>
 
-          {/* 현재 위치 버튼 */}
+          {/* 현재 위치 버튼 (하단 고정) */}
           <button
             onClick={moveToCurrentLocation}
-            className="absolute bottom-24 right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center z-10 hover:bg-gray-50"
+            className="absolute bottom-6 right-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center z-10 hover:bg-gray-50"
           >
             <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -875,16 +920,30 @@ export default function DujjonkuMapPage() {
             </svg>
           </button>
 
-          {/* 매장 등록 버튼 */}
-          <button
-            onClick={openRegisterModal}
-            className="absolute bottom-24 left-4 px-4 py-2 bg-primary-500 text-white rounded-full shadow-lg flex items-center gap-2 z-10 hover:bg-primary-600"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span className="text-sm font-semibold">매장 등록</span>
-          </button>
+          {/* 좌측 하단 버튼 그룹 */}
+          <div className="absolute bottom-6 left-4 flex flex-col gap-2 z-10">
+            {/* 온라인상점 버튼 */}
+            <button
+              onClick={() => setIsOnlineShopOpen(true)}
+              className="px-4 py-2 bg-orange-500 text-white rounded-full shadow-lg flex items-center gap-2 hover:bg-orange-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span className="text-sm font-semibold">온라인상점</span>
+            </button>
+
+            {/* 매장 등록 버튼 */}
+            <button
+              onClick={openRegisterModal}
+              className="px-4 py-2 bg-primary-500 text-white rounded-full shadow-lg flex items-center gap-2 hover:bg-primary-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-sm font-semibold">매장 등록</span>
+            </button>
+          </div>
 
           {/* 매장 수 표시 및 가격 필터 */}
           <div className="absolute top-16 left-4 flex items-center gap-2 z-10">
@@ -913,8 +972,8 @@ export default function DujjonkuMapPage() {
           </div>
         </div>
 
-        {/* 광고 영역 (하단 고정) */}
-        <div className="h-16 bg-gray-100 border-t border-gray-200 flex items-center justify-center">
+        {/* 광고 영역 (하단 고정, 모바일 숨김) */}
+        <div className="hidden md:flex h-16 bg-gray-100 border-t border-gray-200 items-center justify-center">
           <span className="text-gray-400 text-sm">광고 영역</span>
         </div>
       </div>
@@ -1615,6 +1674,40 @@ export default function DujjonkuMapPage() {
                 적용하기
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 온라인상점 모달 (쿠팡 파트너스) */}
+      {isOnlineShopOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsOnlineShopOpen(false)}
+          />
+          <div className="relative w-full max-w-[720px] bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setIsOnlineShopOpen(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 z-10"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h2 className="text-xl font-bold text-gray-900 mb-4">🛒 온라인상점</h2>
+            <p className="text-sm text-gray-600 mb-4">두바이초콜릿, 두쫀쿠 관련 상품을 온라인에서 구매해보세요!</p>
+
+            <div className="space-y-4" style={{ maxWidth: '680px' }}>
+              <div id="coupang-banner-1" />
+              <div id="coupang-banner-2" />
+              <div id="coupang-banner-3" />
+              <div id="coupang-banner-4" />
+            </div>
+
+            <p className="text-xs text-gray-400 text-center mt-4">
+              쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+            </p>
           </div>
         </div>
       )}
