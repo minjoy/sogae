@@ -67,9 +67,10 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('query') || '두쫀쿠';
     const requestedCount = parseInt(searchParams.get('display') || '10');
 
-    // 페이지네이션을 위한 최대 반복 횟수 (100개씩 가져올 경우)
-    const displayPerRequest = Math.min(requestedCount, 100);
-    const maxIterations = Math.ceil(requestedCount / displayPerRequest);
+    // 네이버 지역검색 API는 한 번에 최대 5개만 반환
+    // 페이지네이션으로 여러 번 호출하여 요청된 개수만큼 가져옴
+    const NAVER_MAX_PER_REQUEST = 5;
+    const maxIterations = Math.ceil(requestedCount / NAVER_MAX_PER_REQUEST);
     const allStores: NonNullable<ReturnType<typeof transformNaverItem>>[] = [];
     const seenKeys = new Set<string>(); // 중복 방지용
     let totalCount = 0;
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     for (let i = 0; i < maxIterations; i++) {
       actualIterations++;
-      const start = i * displayPerRequest + 1;
+      const start = i * NAVER_MAX_PER_REQUEST + 1;
 
       // start가 1000을 넘으면 네이버 API 제한으로 중단
       if (start > 1000) {
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
       }
 
       // sort=comment (정확도순) 사용
-      const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${displayPerRequest}&start=${start}&sort=comment`;
+      const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${NAVER_MAX_PER_REQUEST}&start=${start}&sort=comment`;
 
       const response = await fetch(url, {
         headers: {
@@ -141,7 +142,7 @@ export async function GET(request: NextRequest) {
       }
 
       // 요청된 개수에 도달했거나 더 이상 결과가 없으면 중단
-      if (allStores.length >= requestedCount || data.items.length < displayPerRequest) {
+      if (allStores.length >= requestedCount || data.items.length < NAVER_MAX_PER_REQUEST) {
         break;
       }
 
