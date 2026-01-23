@@ -81,7 +81,8 @@ export async function GET(request: NextRequest) {
         break;
       }
 
-      const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${MAX_DISPLAY_PER_REQUEST}&start=${start}&sort=random`;
+      // sort=comment (정확도순) 사용 - random은 페이지네이션과 호환되지 않음
+      const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${MAX_DISPLAY_PER_REQUEST}&start=${start}&sort=comment`;
 
       const response = await fetch(url, {
         headers: {
@@ -141,7 +142,7 @@ export async function GET(request: NextRequest) {
 
       // API 호출 간 딜레이 (rate limiting 방지)
       if (i < maxIterations - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
     }
 
