@@ -335,7 +335,7 @@ export default function DujjonkuMapPage() {
       map: map,
       averageCenter: true,
       minLevel: 6,
-      disableClickZoom: true,
+      disableClickZoom: false, // 클러스터 클릭 시 확대 활성화
       styles: [{
         width: '50px',
         height: '50px',
