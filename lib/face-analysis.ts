@@ -110,11 +110,6 @@ function calculateSlope(p1: FacePoint, p2: FacePoint): number {
   return (p2.y - p1.y) / (p2.x - p1.x);
 }
 
-// 두 점 사이의 거리 계산
-function distance(p1: FacePoint, p2: FacePoint): number {
-  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-}
-
 // 각도를 라디안에서 도로 변환
 function toDegrees(radians: number): number {
   return radians * 180 / Math.PI;
@@ -149,10 +144,8 @@ export function analyzeFace(
 
   // === 눈꼬리 각도 분석 ===
   const leftEyeInnerSlope = calculateSlope(fp[23], fp[17]);
-  const leftEyeOuterSlope = calculateSlope(fp[21], fp[19]);
 
   const angleRad = Math.atan(leftEyeInnerSlope);
-  const eyeAngleRef = toDegrees(angleRad);
 
   // 눈꼬리 각도에 따른 y좌표 차이 계산
   const b1_y = leftEyeInnerSlope * fp[6].x + (fp[23].y - leftEyeInnerSlope * fp[23].x);

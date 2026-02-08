@@ -2,14 +2,29 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Button from '@/components/Button';
 
 // MediaPipe 타입 선언
 declare global {
   interface Window {
-    FaceMesh: any;
-    Camera: any;
+    FaceMesh: new (config: { locateFile: (file: string) => string }) => MediaPipeFaceMesh;
+    Camera: new (video: HTMLVideoElement, config: { onFrame: () => Promise<void>; width: number; height: number }) => MediaPipeCamera;
   }
+}
+
+interface MediaPipeFaceMesh {
+  setOptions: (options: Record<string, unknown>) => void;
+  onResults: (callback: (results: MediaPipeResults) => void) => void;
+  initialize: () => Promise<void>;
+  send: (input: { image: HTMLVideoElement | HTMLImageElement }) => Promise<void>;
+}
+
+interface MediaPipeCamera {
+  start: () => void;
+  stop: () => void;
+}
+
+interface MediaPipeResults {
+  multiFaceLandmarks?: FaceLandmark[][];
 }
 
 interface FaceLandmark {
@@ -26,15 +41,14 @@ export default function FaceAnalysisPage() {
 
   const [mode, setMode] = useState<'select' | 'camera' | 'upload'>('select');
   const [isLoading, setIsLoading] = useState(false);
-  const [isCameraReady, setIsCameraReady] = useState(false);
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [faceMeshLoaded, setFaceMeshLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [landmarks, setLandmarks] = useState<FaceLandmark[] | null>(null);
 
-  const faceMeshRef = useRef<any>(null);
-  const cameraRef = useRef<any>(null);
+  const faceMeshRef = useRef<MediaPipeFaceMesh | null>(null);
+  const cameraRef = useRef<MediaPipeCamera | null>(null);
 
   // MediaPipe 스크립트 로드
   useEffect(() => {
@@ -86,7 +100,7 @@ export default function FaceAnalysisPage() {
       minTrackingConfidence: 0.5,
     });
 
-    faceMesh.onResults((results: any) => {
+    faceMesh.onResults((results: MediaPipeResults) => {
       if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
         setLandmarks(results.multiFaceLandmarks[0]);
       }
@@ -123,7 +137,6 @@ export default function FaceAnalysisPage() {
         cameraRef.current.start();
       }
 
-      setIsCameraReady(true);
     } catch (err) {
       console.error('Camera error:', err);
       setError('카메라 접근 권한이 필요합니다.');
@@ -141,7 +154,6 @@ export default function FaceAnalysisPage() {
       tracks.forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
-    setIsCameraReady(false);
     setLandmarks(null);
   }, []);
 
@@ -158,89 +170,8 @@ export default function FaceAnalysisPage() {
     };
   }, [mode, faceMeshLoaded, startCamera, stopCamera]);
 
-  // 사진 촬영
-  const capturePhoto = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || !landmarks) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.drawImage(video, 0, 0);
-    const imageData = canvas.toDataURL('image/jpeg', 0.9);
-    setCapturedImage(imageData);
-    stopCamera();
-    setMode('select');
-
-    // 분석 실행
-    await analyzeWithLandmarks(landmarks, video.videoWidth, video.videoHeight);
-  }, [landmarks, stopCamera]);
-
-  // 파일 업로드 처리
-  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await initFaceMesh();
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
-        img.src = URL.createObjectURL(file);
-      });
-
-      setCapturedImage(img.src);
-
-      // 캔버스에 이미지 그리기
-      if (canvasRef.current && faceMeshRef.current) {
-        const canvas = canvasRef.current;
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-        }
-
-        // FaceMesh로 분석
-        let detectedLandmarks: FaceLandmark[] | null = null;
-        faceMeshRef.current.onResults((results: any) => {
-          if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
-            detectedLandmarks = results.multiFaceLandmarks[0];
-          }
-        });
-
-        await faceMeshRef.current.send({ image: img });
-
-        // 잠시 대기 후 결과 확인
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        if (detectedLandmarks) {
-          await analyzeWithLandmarks(detectedLandmarks, img.width, img.height);
-        } else {
-          setError('얼굴을 찾을 수 없습니다. 다른 사진을 시도해주세요.');
-          setIsLoading(false);
-        }
-      }
-    } catch (err) {
-      console.error('File upload error:', err);
-      setError('이미지 처리 중 오류가 발생했습니다.');
-      setIsLoading(false);
-    }
-  }, [initFaceMesh]);
-
   // 랜드마크로 분석
-  const analyzeWithLandmarks = async (
+  const analyzeWithLandmarks = useCallback(async (
     faceLandmarks: FaceLandmark[],
     imageWidth: number,
     imageHeight: number
@@ -279,7 +210,88 @@ export default function FaceAnalysisPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [gender, capturedImage, router]);
+
+  // 사진 촬영
+  const capturePhoto = useCallback(async () => {
+    if (!videoRef.current || !canvasRef.current || !landmarks) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0);
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    setCapturedImage(imageData);
+    stopCamera();
+    setMode('select');
+
+    // 분석 실행
+    await analyzeWithLandmarks(landmarks, video.videoWidth, video.videoHeight);
+  }, [landmarks, stopCamera, analyzeWithLandmarks]);
+
+  // 파일 업로드 처리
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await initFaceMesh();
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
+        img.src = URL.createObjectURL(file);
+      });
+
+      setCapturedImage(img.src);
+
+      // 캔버스에 이미지 그리기
+      if (canvasRef.current && faceMeshRef.current) {
+        const canvas = canvasRef.current;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+        }
+
+        // FaceMesh로 분석
+        let detectedLandmarks: FaceLandmark[] | null = null;
+        faceMeshRef.current.onResults((results: MediaPipeResults) => {
+          if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
+            detectedLandmarks = results.multiFaceLandmarks[0];
+          }
+        });
+
+        await faceMeshRef.current.send({ image: img });
+
+        // 잠시 대기 후 결과 확인
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        if (detectedLandmarks) {
+          await analyzeWithLandmarks(detectedLandmarks, img.width, img.height);
+        } else {
+          setError('얼굴을 찾을 수 없습니다. 다른 사진을 시도해주세요.');
+          setIsLoading(false);
+        }
+      }
+    } catch (err) {
+      console.error('File upload error:', err);
+      setError('이미지 처리 중 오류가 발생했습니다.');
+      setIsLoading(false);
+    }
+  }, [initFaceMesh, analyzeWithLandmarks]);
 
   // 선택 화면
   if (mode === 'select') {

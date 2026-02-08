@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '@/lib/prisma';
-import { analyzeFace, convertVisionLandmarks, FaceAnalysisResult } from '@/lib/face-analysis';
+import { analyzeFace, convertVisionLandmarks } from '@/lib/face-analysis';
 
 // Google Cloud Vision API를 사용하는 경우
 // import vision from '@google-cloud/vision';

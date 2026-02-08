@@ -72,8 +72,6 @@ const ANALYSIS_NAMES: { [key: string]: string } = {
 export default function FaceAnalysisResultPage() {
   const router = useRouter();
   const [result, setResult] = useState<FaceAnalysisResult | null>(null);
-  const [image, setImage] = useState<string | null>(null);
-  const [gender, setGender] = useState<'male' | 'female'>('male');
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -82,8 +80,6 @@ export default function FaceAnalysisResultPage() {
     if (savedData) {
       const parsed = JSON.parse(savedData);
       setResult(parsed.result);
-      setImage(parsed.image);
-      setGender(parsed.gender);
     }
   }, []);
 
