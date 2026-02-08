@@ -30,6 +30,12 @@ export default function Header() {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => router.push('/face-analysis')}
+              className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
+            >
+              관상분석
+            </button>
+            <button
               onClick={() => router.push('/dujjonku-map')}
               className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
             >
