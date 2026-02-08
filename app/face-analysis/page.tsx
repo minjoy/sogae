@@ -174,7 +174,8 @@ export default function FaceAnalysisPage() {
   const analyzeWithLandmarks = useCallback(async (
     faceLandmarks: FaceLandmark[],
     imageWidth: number,
-    imageHeight: number
+    imageHeight: number,
+    imageData?: string
   ) => {
     setIsLoading(true);
     setError(null);
@@ -194,10 +195,13 @@ export default function FaceAnalysisPage() {
       const data = await response.json();
 
       if (data.success) {
-        // 결과를 sessionStorage에 저장
+        // 결과를 sessionStorage에 저장 (랜드마크 포함)
         sessionStorage.setItem('faceAnalysisResult', JSON.stringify({
           result: data.result,
-          image: capturedImage,
+          image: imageData || capturedImage,
+          landmarks: faceLandmarks,
+          imageWidth,
+          imageHeight,
           gender,
         }));
         router.push('/face-analysis/result');
@@ -230,8 +234,8 @@ export default function FaceAnalysisPage() {
     stopCamera();
     setMode('select');
 
-    // 분석 실행
-    await analyzeWithLandmarks(landmarks, video.videoWidth, video.videoHeight);
+    // 분석 실행 (이미지 데이터 직접 전달)
+    await analyzeWithLandmarks(landmarks, video.videoWidth, video.videoHeight, imageData);
   }, [landmarks, stopCamera, analyzeWithLandmarks]);
 
   // 파일 업로드 처리
@@ -280,7 +284,9 @@ export default function FaceAnalysisPage() {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         if (detectedLandmarks) {
-          await analyzeWithLandmarks(detectedLandmarks, img.width, img.height);
+          // 캔버스에서 이미지 데이터 추출
+          const imageData = canvas.toDataURL('image/jpeg', 0.9);
+          await analyzeWithLandmarks(detectedLandmarks, img.width, img.height, imageData);
         } else {
           setError('얼굴을 찾을 수 없습니다. 다른 사진을 시도해주세요.');
           setIsLoading(false);
