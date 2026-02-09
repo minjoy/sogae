@@ -291,75 +291,55 @@ export function analyzeFace(
   }
   score += eyebrowLevel * 8;
 
-  // === 3. 코 길이 분석 ===
-  // 코 길이 = 코 브릿지(눈 사이, fp[7])에서 코끝(fp[6])까지
-  // 얼굴 세로 길이 대비 비율로 측정
-  const noseLength = Math.abs(fp[6].y - fp[7].y);
-  const noseLengthRatio = noseLength / faceHeight;
+  // === 3. 코 길이 분석 === (draw.py ratio2 공식)
+  // ratio2 = (facepoint[15].y - facepoint[0].y) / widthratio
+  // 코밑 중앙(fp[15])에서 눈 중심(fp[0])까지 / 코 너비
+  const noseLengthRatio = (fp[15].y - fp[0].y) / noseWidth;
 
   let noseLengthAnalysis: { label: string; description: string };
   let noseLevel: number;
 
-  // 얼굴 세로 대비 코 길이 비율 (일반적으로 0.25~0.40)
-  if (noseLengthRatio > 0.38) {
+  // draw.py 임계값: >1.55 (긴), 1.28~1.55 (이상적), <1.28 (짧음)
+  if (noseLengthRatio > 1.55) {
     noseLengthAnalysis = {
-      label: "코가 매우 긴 편",
+      label: "코가 긴 편",
       description: "강한 책임감과 성실함을 바탕으로 일에 임합니다. 꼼꼼하며 자존심이 강해, 일단 결정한 바를 끝까지 밀고 나가는 완고한 면모를 가지고 있습니다."
     };
     noseLevel = 5;
     r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 5;
     r3 += WEIGHTS.r3_social * 3;
     r4 += WEIGHTS.r4_responsibility * 5 + WEIGHTS.r4_sincere * 5;
-  } else if (noseLengthRatio > 0.34) {
-    noseLengthAnalysis = {
-      label: "코가 긴 편",
-      description: "책임감이 강하고 맡은 일을 성실하게 완수합니다. 장기적인 계획을 세우는 데 능하며 신뢰받는 인물입니다."
-    };
-    noseLevel = 4;
-    r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 4;
-    r3 += WEIGHTS.r3_social * 4;
-    r4 += WEIGHTS.r4_responsibility * 4 + WEIGHTS.r4_sincere * 4;
-  } else if (noseLengthRatio > 0.30) {
+  } else if (noseLengthRatio > 1.28) {
     noseLengthAnalysis = {
       label: "코 길이가 이상적",
       description: "균형 잡힌 능력을 지니고 있어 다양한 사회적 상황에서 자신의 역할을 훌륭히 수행합니다. 평온하고 안정적인 성격입니다."
     };
     noseLevel = 3;
-    r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 3;
+    r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 4;
     r3 += WEIGHTS.r3_social * 4;
-    r4 += WEIGHTS.r4_responsibility * 3 + WEIGHTS.r4_sincere * 3;
-  } else if (noseLengthRatio > 0.26) {
-    noseLengthAnalysis = {
-      label: "코가 짧은 편",
-      description: "낙관적이고 긍정적인 성격입니다. 상대방의 기분을 잘 파악하며 사교성이 좋습니다."
-    };
-    noseLevel = 2;
-    r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_love * 2;
-    r3 += WEIGHTS.r3_social * 5;
-    r4 += WEIGHTS.r4_responsibility * 2 + WEIGHTS.r4_sincere * 3;
+    r4 += WEIGHTS.r4_responsibility * 4 + WEIGHTS.r4_sincere * 4;
   } else {
     noseLengthAnalysis = {
-      label: "코가 매우 짧은 편",
-      description: "타고난 낙관주의자로 긍정적인 에너지를 발산합니다. 순발력이 좋고 상황 적응 능력이 뛰어납니다."
+      label: "코가 짧은 편",
+      description: "낙관적이고 긍정적인 성격입니다. 상대방의 기분을 잘 파악하며 사교성이 좋고 장사도 잘 어울립니다. 재물운이 좋지만 신중함이 필요합니다."
     };
     noseLevel = 1;
     r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_love * 2;
-    r3 += WEIGHTS.r3_social * 5;
-    r4 += WEIGHTS.r4_responsibility * 2 + WEIGHTS.r4_sincere * 2;
+    r3 += WEIGHTS.r3_social * 4;
+    r4 += WEIGHTS.r4_responsibility * 2 + WEIGHTS.r4_sincere * 3;
   }
   score += noseLevel * 8;
 
-  // === 4. 인중 길이 분석 ===
-  // 인중 = 코끝(fp[6])에서 윗입술 상단(fp[8])까지의 거리
-  // 코 길이 대비 비율로 측정 (더 정확한 비율)
-  const philtrumLength = Math.abs(fp[8].y - fp[6].y);
-  const philtrumRatio = philtrumLength / noseLength;
+  // === 4. 인중 길이 분석 === (draw.py ratio3 공식)
+  // ratio3 = (facepoint[12].y - facepoint[15].y) / widthratio
+  // 입 중앙(fp[12])에서 코밑 중앙(fp[15])까지 / 코 너비
+  const philtrumRatio = (fp[12].y - fp[15].y) / noseWidth;
 
   let philtrumAnalysis: { label: string; description: string };
   let philtrumLevel: number;
 
-  // 코 길이 대비 인중 비율 (일반적으로 0.30~0.60)
-  if (philtrumRatio > 0.55) {
+  // draw.py 임계값: >0.7 (엄청긴), 0.65~0.7 (긴편), 0.58~0.65 (이상적), 0.5~0.58 (짧음), <0.5 (매우짧음)
+  if (philtrumRatio > 0.7) {
     philtrumAnalysis = {
       label: "인중이 매우 긴 편",
       description: "인간성이 뛰어나고 장수하는 경향이 있습니다. 물질적인 풍요로움과는 별개로 인품 자체가 높은 평가를 받습니다."
@@ -368,33 +348,33 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.47) {
+  } else if (philtrumRatio > 0.65) {
     philtrumAnalysis = {
       label: "인중이 긴 편",
       description: "종종 자신의 노력으로 설명할 수 없는 힘을 발휘하며, 내면적 가치와 성격이 외부 세계에 긍정적인 영향을 끼칩니다."
     };
     philtrumLevel = 4;
-    r1 += WEIGHTS.r1_old * 4;
-    r2 += WEIGHTS.r2_love * 4;
-    r4 += WEIGHTS.r4_sincere * 4;
-  } else if (philtrumRatio > 0.40) {
+    r1 += WEIGHTS.r1_old * 5;
+    r2 += WEIGHTS.r2_love * 5;
+    r4 += WEIGHTS.r4_sincere * 5;
+  } else if (philtrumRatio > 0.58) {
     philtrumAnalysis = {
       label: "인중이 이상적",
       description: "자녀운에 긍정적인 영향을 끌어당기는 경향이 있어, 가정 내에서도 긍정적인 역할을 합니다."
     };
     philtrumLevel = 3;
-    r1 += WEIGHTS.r1_old * 3;
-    r2 += WEIGHTS.r2_love * 3;
-    r4 += WEIGHTS.r4_sincere * 3;
-  } else if (philtrumRatio > 0.33) {
+    r1 += WEIGHTS.r1_old * 5;
+    r2 += WEIGHTS.r2_love * 5;
+    r4 += WEIGHTS.r4_sincere * 5;
+  } else if (philtrumRatio > 0.5) {
     philtrumAnalysis = {
       label: "인중이 짧은 편",
       description: "다양한 관심사를 가지고 있으며 새로운 것에 대한 호기심이 강합니다. 많은 사람과 교류하면 좋은 기회가 찾아옵니다."
     };
     philtrumLevel = 2;
-    r1 += WEIGHTS.r1_power * 3;
-    r3 += WEIGHTS.r3_social * 3;
-    r4 += WEIGHTS.r4_sincere * 2;
+    r1 += WEIGHTS.r1_power * 2;
+    r3 += WEIGHTS.r3_social * 2;
+    r4 += WEIGHTS.r4_sincere * 1;
   } else {
     philtrumAnalysis = {
       label: "인중이 매우 짧은 편",
@@ -407,16 +387,16 @@ export function analyzeFace(
   }
   score += philtrumLevel * 8;
 
-  // === 5. 입 너비 분석 ===
-  // 입 양쪽 끝 사이 거리 / 코 너비 비율
-  const mouthWidth = Math.abs(fp[11].x - fp[10].x);
-  const mouthRatio = mouthWidth / noseWidth;
+  // === 5. 입 너비 분석 === (draw.py ratio7 공식)
+  // ratio7 = (facepoint[11].x - facepoint[10].x) / widthratio
+  const mouthWidthVal = Math.abs(fp[11].x - fp[10].x);
+  const mouthRatio = mouthWidthVal / noseWidth;
 
   let mouthAnalysis: { label: string; description: string };
   let mouthLevel: number;
 
-  // MediaPipe 기준 임계값 (조정됨)
-  if (mouthRatio > 2.2) {
+  // draw.py 임계값: >1.75 (엄청큼), 1.65~1.75 (큼), 1.57~1.65 (이상적), 1.45~1.57 (작음), <1.45 (엄청작음)
+  if (mouthRatio > 1.75) {
     mouthAnalysis = {
       label: "입이 매우 큰 편",
       description: "타고난 리더십과 인상적인 카리스마로 모두를 이끌어가는 성격입니다. 사회적으로도 큰 성공을 거두는 모습을 보여줍니다."
@@ -424,38 +404,38 @@ export function analyzeFace(
     mouthLevel = 5;
     r1 += WEIGHTS.r1_power * 5;
     r3 += WEIGHTS.r3_work * 5;
-  } else if (mouthRatio > 1.9) {
+  } else if (mouthRatio > 1.65) {
     mouthAnalysis = {
       label: "입이 큰 편",
       description: "주변에 운기와 생명력이 넘치는 에너지를 발산합니다. 업무 환경에서 동료들 사이에서 인기가 있습니다."
     };
     mouthLevel = 4;
-    r1 += WEIGHTS.r1_power * 4;
-    r3 += WEIGHTS.r3_work * 4;
-  } else if (mouthRatio > 1.6) {
+    r1 += WEIGHTS.r1_power * 5;
+    r3 += WEIGHTS.r3_work * 5;
+  } else if (mouthRatio > 1.57) {
     mouthAnalysis = {
       label: "입 크기가 이상적",
       description: "진정성과 노력으로 어떤 분야에서든 성공의 정점을 찍을 수 있으며, 균형 잡힌 대인관계를 유지합니다."
     };
     mouthLevel = 3;
-    r1 += WEIGHTS.r1_power * 3;
-    r3 += WEIGHTS.r3_work * 3;
-  } else if (mouthRatio > 1.3) {
+    r1 += WEIGHTS.r1_power * 5;
+    r3 += WEIGHTS.r3_work * 5;
+  } else if (mouthRatio > 1.45) {
     mouthAnalysis = {
       label: "입이 작은 편",
       description: "뛰어난 직관력과 빠른 판단력을 지니고 있습니다. 전략적인 조언자나 중요한 보조 역할에 적합합니다."
     };
     mouthLevel = 2;
-    r1 += WEIGHTS.r1_power * 2;
-    r3 += WEIGHTS.r3_work * 2;
+    r1 += WEIGHTS.r1_power * 3;
+    r3 += WEIGHTS.r3_work * 3;
   } else {
     mouthAnalysis = {
       label: "입이 매우 작은 편",
       description: "성격이 매우 상냥하며, 세심한 배려로 주변 사람들을 서포트하는 데에 특별한 재능을 보입니다."
     };
     mouthLevel = 1;
-    r1 += WEIGHTS.r1_power * 1;
-    r3 += WEIGHTS.r3_work * 2;
+    r1 += WEIGHTS.r1_power * 3;
+    r3 += WEIGHTS.r3_work * 3;
   }
   score += mouthLevel * 10;
 
@@ -570,47 +550,38 @@ export function analyzeFace(
   }
   score += eyeSizeLevel * 8;
 
-  // === 종합 점수 정규화 (100점 만점) ===
-  // score는 각 레벨 * 가중치의 합
-  // 최대: 5*(10+8+8+8+10+8+8) = 5*60 = 300
-  // 최소: 1*(10+8+8+8+10+8+8) = 1*60 = 60
-  // 평균 (레벨3 기준): 3*60 = 180
-  const maxScore = 300;
-  const minScore = 60;
-  const baseScore = score;
+  // === 종합 점수 정규화 === (draw.py 공식 적용)
+  // draw.py: face_color = (150 - (facescore - 172)) / 149 * 100
+  // facescore 범위: 약 100 ~ 350 (가중치 합산)
+  // face_color 범위: 약 -35 ~ 115 (0~100으로 클램프)
 
-  // 실제 분포 범위 (60~300)를 표시 범위 (30~85)로 매핑
-  // 선형 변환: (score - min) / (max - min) * (targetMax - targetMin) + targetMin
-  const targetMin = 30;
-  const targetMax = 82;
+  // r1~r4 합계 기반으로 계산 (draw.py와 유사한 범위)
+  const totalCategoryScore = r1 + r2 + r3 + r4;
+
+  // 총점 공식: 더 넓은 분포를 위한 비선형 변환
+  // 카테고리 점수 합 (약 50~200 범위) -> 표시 점수 (25~95 범위)
   const normalizedScore = clamp(
-    Math.round((baseScore - minScore) / (maxScore - minScore) * (targetMax - targetMin) + targetMin),
-    targetMin,
-    targetMax
+    Math.round((150 - (totalCategoryScore - 120)) / 1.5),
+    25,
+    95
   );
 
   // === 카테고리 점수 정규화 ===
-  // 각 카테고리의 실제 min/max를 계산하여 더 정확한 분포 생성
-  // 가중치 합계를 기준으로 실제 범위 계산
-  const normalizeCategory = (val: number, minVal: number, maxVal: number): number => {
-    if (maxVal === minVal) return 50; // 분모가 0인 경우 방지
-    const ratio = (val - minVal) / (maxVal - minVal);
-    // 20~80 범위로 매핑 (극단적 값 방지)
-    return clamp(Math.round(ratio * 60 + 20), 20, 80);
+  // 각 카테고리 raw 점수를 0~100 범위로 변환
+  // 더 넓은 분포를 위해 비선형 변환 적용
+  const normalizeCategory = (val: number, avgVal: number, spread: number): number => {
+    // 평균값 기준으로 편차 계산, spread로 분산 조절
+    const deviation = (val - avgVal) / spread;
+    // 시그모이드 유사 변환으로 50 중심 분포
+    const normalized = 50 + deviation * 30;
+    return clamp(Math.round(normalized), 15, 85);
   };
 
-  // 실제 가중치 기반 min/max 계산
-  // r1: 눈꼬리(1-5)*3 + 눈썹(1-5)*5 + 인중 r1_old(0-5)*5 또는 r1_power(0-5)*3 + 입(1-5)*5
-  // 최소~최대 추정
-  const r1_min = 15, r1_max = 70;
-  const r2_min = 20, r2_max = 110;
-  const r3_min = 15, r3_max = 95;
-  const r4_min = 15, r4_max = 75;
-
-  r1 = normalizeCategory(r1, r1_min, r1_max);
-  r2 = normalizeCategory(r2, r2_min, r2_max);
-  r3 = normalizeCategory(r3, r3_min, r3_max);
-  r4 = normalizeCategory(r4, r4_min, r4_max);
+  // 각 카테고리의 예상 평균과 분산
+  r1 = normalizeCategory(r1, 35, 20);
+  r2 = normalizeCategory(r2, 50, 25);
+  r3 = normalizeCategory(r3, 45, 25);
+  r4 = normalizeCategory(r4, 40, 20);
 
   // === 종합 해석 생성 ===
   const summaryParts: string[] = [];

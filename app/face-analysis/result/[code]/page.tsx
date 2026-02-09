@@ -53,99 +53,94 @@ const CATEGORY_INFO = {
   },
 };
 
-// 결정적 한줄평 생성 (동일 분석 = 동일 결과)
+// 결정적 한줄평 생성 (동일 분석 = 동일 결과) - draw.py 스타일
 function generateDeterministicOneLiner(
   score: number,
   categories: { r1: number; r2: number; r3: number; r4: number },
   analysis: Record<string, unknown>
 ): string {
-  // 분석값들의 합을 시드로 사용 (객체인 경우 label 길이 사용)
-  const analysisSum = Object.values(analysis).reduce((sum: number, val) => {
-    if (typeof val === 'number') return sum + val;
+  // 분석값에서 label 추출
+  const getLabel = (key: string): string => {
+    const val = analysis[key];
     if (typeof val === 'object' && val !== null && 'label' in val) {
-      const label = (val as { label: string }).label;
-      return sum + label.length;
+      return (val as { label: string }).label;
     }
-    return sum;
-  }, 0);
-  const catSum = categories.r1 + categories.r2 + categories.r3 + categories.r4;
-  const seed = Math.floor(score * 100 + catSum * 10 + analysisSum);
+    return '';
+  };
 
-  // 최대 카테고리 결정
-  const maxCat = Math.max(categories.r1, categories.r2, categories.r3, categories.r4);
-  let dominantCat: 'r1' | 'r2' | 'r3' | 'r4' = 'r1';
-  if (maxCat === categories.r2) dominantCat = 'r2';
-  else if (maxCat === categories.r3) dominantCat = 'r3';
-  else if (maxCat === categories.r4) dominantCat = 'r4';
+  // 돋보이는 특징 찾기 (draw.py 스타일)
+  let featureText = "";
 
-  // 점수 구간별 + 카테고리별 한줄평 (결정적)
-  const oneLiners: Record<string, Record<string, string[]>> = {
-    high: { // 70점 이상
-      r1: [
-        "타고난 리더십, 이 얼굴이면 사장님 소리 듣습니다",
-        "권력자의 상, 부하직원 100명은 기본입니다",
-        "CEO 관상 발견! 명함에 '대표' 새길 준비하세요",
-      ],
-      r2: [
-        "연애하면 상대가 헤어나올 수 없는 매력의 소유자",
-        "사랑꾼 DNA 확정, 이성에게 인기 폭발합니다",
-        "로맨틱한 관상, 드라마 주인공급 연애 예약",
-      ],
-      r3: [
-        "돈이 알아서 따라오는 재물복 가득한 얼굴",
-        "사업하면 대박, 투자하면 수익 보장 관상",
-        "재테크 천재 기질, 부자 DNA 탑재 완료",
-      ],
-      r4: [
-        "신뢰감 100%, 누구나 믿고 맡기는 관상",
-        "책임감의 상징, 약속은 무조건 지키는 타입",
-        "성실함이 얼굴에서 빛나는 진정한 믿음직이",
-      ],
-    },
-    medium: { // 50-69점
-      r1: [
-        "숨겨진 카리스마, 때가 오면 빛날 리더입니다",
-        "지금은 잠복기, 곧 터질 권력 운세를 가졌습니다",
-        "노력하면 꼭대기에 오를 상, 멈추지 마세요",
-      ],
-      r2: [
-        "사랑에 진심인 관상, 진정한 인연을 만납니다",
-        "감정 지능 높은 상, 깊은 관계를 만드는 능력자",
-        "연애 타이밍이 중요, 급하지 않게 기다리세요",
-      ],
-      r3: [
-        "꾸준히 쌓이는 재물운, 대박보다 안정이 답",
-        "사교성이 돈이 되는 관상, 인맥을 넓히세요",
-        "노력형 부자 관상, 시간이 답이에요",
-      ],
-      r4: [
-        "평균 이상의 신뢰감, 관계가 재산이 됩니다",
-        "묵묵히 일하는 스타일, 결국 인정받습니다",
-        "진정성이 강점, 가식 없는 매력을 가졌습니다",
-      ],
-    },
-    low: { // 50점 미만
-      r1: [
-        "역경을 딛고 성공하는 드라마틱 관상입니다",
-        "지금은 수련기, 강해지면 무서울 상입니다",
-        "늦깎이 성공형, 포기하지 않으면 됩니다",
-      ],
-      r2: [
-        "사랑에 신중한 관상, 한 번 선택하면 끝까지",
-        "외유내강, 겉보다 속이 따뜻한 사람입니다",
-        "감정 표현 연습하면 인기 폭발할 상입니다",
-      ],
-      r3: [
-        "흙수저도 금수저로 바꾸는 근성 관상",
-        "적은 것도 모으면 산, 티끌 모아 태산형",
-        "기회를 잡는 눈이 있어요, 기다리세요",
-      ],
-      r4: [
-        "진정성으로 승부하는 타입, 시간이 편입니다",
-        "말보다 행동, 보여주는 게 강점입니다",
-        "조용히 신뢰를 쌓는 관상, 결국 이깁니다",
-      ],
-    },
+  // 눈썹-눈 거리
+  const eyebrowLabel = getLabel('eyebrowDistance');
+  if (eyebrowLabel.includes('매우 넓음')) {
+    featureText = "재물이 넘치는 눈두덩이, ";
+  } else if (eyebrowLabel.includes('넓은 편')) {
+    featureText = "돈을 부르는 눈두덩이, ";
+  }
+
+  // 눈꼬리
+  const eyeLabel = getLabel('eyeAngle');
+  if (eyeLabel.includes('많이 올라감')) {
+    featureText = "눈의 기상이 하늘을 찌르는, ";
+  } else if (eyeLabel.includes('올라감')) {
+    featureText = "날카로운 눈매가 인상적인, ";
+  }
+
+  // 코 길이
+  const noseLabel = getLabel('noseLength');
+  if (noseLabel.includes('긴')) {
+    featureText = "여럿 애간장 녹이는 매력 코, ";
+  } else if (noseLabel.includes('이상적')) {
+    featureText = "완벽한 비율의 코, ";
+  }
+
+  // 입 너비
+  const mouthLabel = getLabel('mouthWidth');
+  if (mouthLabel.includes('매우 큰')) {
+    featureText = "모두를 현혹시키는 매력 입술, ";
+  } else if (mouthLabel.includes('큰')) {
+    featureText = "에너지 넘치는 입매, ";
+  } else if (mouthLabel.includes('이상적')) {
+    featureText = "이상적인 입매, ";
+  }
+
+  // 인중
+  const philtrumLabel = getLabel('philtrumLength');
+  if (philtrumLabel.includes('매우 긴')) {
+    featureText = "강이 흐를법한 매력 인중, ";
+  } else if (philtrumLabel.includes('긴 편')) {
+    featureText = "인중이 참 예쁜, ";
+  }
+
+  // 하관
+  const jawLabel = getLabel('jawWidth');
+  if (jawLabel.includes('매우 튼튼')) {
+    featureText = "최고의 복덩이 하관, ";
+  } else if (jawLabel.includes('튼튼')) {
+    featureText = "하관 최고인, ";
+  }
+
+  // 점수 구간별 운세 풀이
+  const fortunes: Record<string, string[]> = {
+    high: [
+      "연애운과 재물운 모두 대박 예정!",
+      "하는 일마다 대성공 예약!",
+      "사람을 끌어당기는 타고난 복상!",
+      "부자가 될 운명을 타고났어요!",
+    ],
+    medium: [
+      "꾸준히 노력하면 큰 성공이 기다려요!",
+      "좋은 인연이 곧 찾아올 거예요!",
+      "때를 기다리면 빛나는 순간이 와요!",
+      "숨겨진 재능이 곧 발휘될 거예요!",
+    ],
+    low: [
+      "역경을 딛고 성공하는 드라마틱한 인생!",
+      "늦깎이 성공형, 포기하지 마세요!",
+      "노력이 빛나는 자수성가형!",
+      "시간이 편, 결국 인정받아요!",
+    ],
   };
 
   // 점수 구간 결정
@@ -154,11 +149,11 @@ function generateDeterministicOneLiner(
   else if (score >= 50) tier = 'medium';
   else tier = 'low';
 
-  // 결정적 인덱스 계산
-  const lines = oneLiners[tier][dominantCat];
-  const index = seed % lines.length;
+  // 시드 기반 결정적 선택
+  const seed = score * 7 + categories.r1 + categories.r2 * 2 + categories.r3 * 3 + categories.r4 * 4;
+  const fortuneIndex = Math.floor(seed) % fortunes[tier].length;
 
-  return lines[index];
+  return featureText + fortunes[tier][fortuneIndex];
 }
 
 // 점수에 따른 등급
