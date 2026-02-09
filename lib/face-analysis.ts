@@ -102,6 +102,15 @@ export interface FaceAnalysisResult {
     eyeHeight: number;          // 눈 높이
     mouthWidth: number;         // 입 너비
     mouthHeight: number;        // 입 높이
+    // 추가 값들 (눈썹, 눈, 입술)
+    eyebrowGap: number;         // 눈썹 사이 거리
+    leftEyeWidth: number;       // 왼쪽 눈 너비
+    leftEyeHeight: number;      // 왼쪽 눈 높이
+    rightEyeWidth: number;      // 오른쪽 눈 너비
+    rightEyeHeight: number;     // 오른쪽 눈 높이
+    upperLipHeight: number;     // 윗입술 두께
+    lowerLipHeight: number;     // 아랫입술 두께
+    lipRatio: number;           // 입술 비율 (윗/아랫)
   };
 }
 
@@ -710,6 +719,15 @@ export function analyzeFace(
       eyeHeight: eyeHeight, // 눈 높이
       mouthWidth: mouthWidthVal, // 입 너비
       mouthHeight: Math.abs(fp[9].y - fp[8].y), // 입 높이
+      // 추가 값들 (눈썹, 눈, 입술)
+      eyebrowGap: Math.abs(fp[3].x - fp[4].x), // 눈썹 사이 거리 (왼눈썹안쪽 ~ 우눈썹안쪽)
+      leftEyeWidth: Math.abs(fp[17].x - fp[19].x), // 왼쪽 눈 너비
+      leftEyeHeight: Math.abs(fp[18].y - fp[16].y), // 왼쪽 눈 높이
+      rightEyeWidth: Math.abs(fp[21].x - fp[23].x), // 오른쪽 눈 너비
+      rightEyeHeight: Math.abs(fp[22].y - fp[20].y), // 오른쪽 눈 높이
+      upperLipHeight: Math.abs(fp[12].y - fp[8].y), // 윗입술 두께 (입중앙 ~ 윗입술)
+      lowerLipHeight: Math.abs(fp[9].y - fp[12].y), // 아랫입술 두께 (아랫입술 ~ 입중앙)
+      lipRatio: Math.abs(fp[12].y - fp[8].y) / (Math.abs(fp[9].y - fp[12].y) || 1), // 입술 비율
     },
   };
 }

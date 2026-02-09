@@ -203,6 +203,14 @@ function DebugPanel({ analysis, memo, setMemo }: {
     eyeHeight?: number;
     mouthWidth?: number;
     mouthHeight?: number;
+    eyebrowGap?: number;        // 눈썹 사이 거리
+    leftEyeWidth?: number;      // 왼쪽 눈 너비
+    leftEyeHeight?: number;     // 왼쪽 눈 높이
+    rightEyeWidth?: number;     // 오른쪽 눈 너비
+    rightEyeHeight?: number;    // 오른쪽 눈 높이
+    upperLipHeight?: number;    // 윗입술 두께
+    lowerLipHeight?: number;    // 아랫입술 두께
+    lipRatio?: number;          // 입술 비율 (윗/아랫)
   } | undefined;
 
   if (!debug) return null;
@@ -268,10 +276,36 @@ function DebugPanel({ analysis, memo, setMemo }: {
           <div className="text-white font-bold">{debug.faceWidth?.toFixed(1)}</div>
         </div>
 
-        {/* 이마/눈썹 */}
+        {/* 눈 */}
         <div className="bg-black/30 p-1.5 rounded">
-          <div className="text-gray-500 text-[10px]">이마높이</div>
-          <div className="text-white font-bold">{debug.foreheadHeight?.toFixed(1)}</div>
+          <div className="text-gray-500 text-[10px]">왼눈너비</div>
+          <div className="text-white font-bold">{debug.leftEyeWidth?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">왼눈높이</div>
+          <div className="text-white font-bold">{debug.leftEyeHeight?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">우눈너비</div>
+          <div className="text-white font-bold">{debug.rightEyeWidth?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">우눈높이</div>
+          <div className="text-white font-bold">{debug.rightEyeHeight?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈각도</div>
+          <div className="text-cyan-400 font-bold">{debug.eyeAngleDegrees?.toFixed(1)}°</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈썹-눈비</div>
+          <div className="text-yellow-400 font-bold">{debug.eyebrowRatio?.toFixed(2)}</div>
+        </div>
+
+        {/* 눈썹 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈썹사이</div>
+          <div className="text-pink-400 font-bold">{debug.eyebrowGap?.toFixed(1)}</div>
         </div>
         <div className="bg-black/30 p-1.5 rounded">
           <div className="text-gray-500 text-[10px]">눈썹길이</div>
@@ -282,28 +316,28 @@ function DebugPanel({ analysis, memo, setMemo }: {
           <div className="text-cyan-400 font-bold">{debug.eyebrowAngle?.toFixed(1)}°</div>
         </div>
 
-        {/* 눈 */}
+        {/* 입술 */}
         <div className="bg-black/30 p-1.5 rounded">
-          <div className="text-gray-500 text-[10px]">눈너비</div>
-          <div className="text-white font-bold">{debug.eyeWidth?.toFixed(1)}</div>
+          <div className="text-gray-500 text-[10px]">윗입술</div>
+          <div className="text-white font-bold">{debug.upperLipHeight?.toFixed(1)}</div>
         </div>
         <div className="bg-black/30 p-1.5 rounded">
-          <div className="text-gray-500 text-[10px]">눈높이</div>
-          <div className="text-white font-bold">{debug.eyeHeight?.toFixed(1)}</div>
+          <div className="text-gray-500 text-[10px]">아랫입술</div>
+          <div className="text-white font-bold">{debug.lowerLipHeight?.toFixed(1)}</div>
         </div>
         <div className="bg-black/30 p-1.5 rounded">
-          <div className="text-gray-500 text-[10px]">눈각도</div>
-          <div className="text-cyan-400 font-bold">{debug.eyeAngleDegrees?.toFixed(1)}°</div>
+          <div className="text-gray-500 text-[10px]">입술비율</div>
+          <div className="text-orange-400 font-bold">{debug.lipRatio?.toFixed(2)}</div>
         </div>
 
-        {/* 점수 */}
-        <div className="bg-black/30 p-1.5 rounded">
-          <div className="text-gray-500 text-[10px]">눈썹-눈비</div>
-          <div className="text-yellow-400 font-bold">{debug.eyebrowRatio?.toFixed(2)}</div>
-        </div>
+        {/* 기타 */}
         <div className="bg-black/30 p-1.5 rounded">
           <div className="text-gray-500 text-[10px]">코끝~코밑</div>
           <div className="text-white font-bold">{debug.noseTipToBottom?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">이마높이</div>
+          <div className="text-white font-bold">{debug.foreheadHeight?.toFixed(1)}</div>
         </div>
         <div className="bg-black/30 p-1.5 rounded">
           <div className="text-gray-500 text-[10px]">facescore</div>
@@ -350,13 +384,18 @@ const DEBUG_POINTS = {
     leftInner: 133,   // 왼쪽 눈 안쪽
     rightOuter: 263,  // 오른쪽 눈 외곽
     rightInner: 362,  // 오른쪽 눈 안쪽
+    leftTop: 159,     // 왼쪽 눈 위
+    leftBottom: 145,  // 왼쪽 눈 아래
+    rightTop: 386,    // 오른쪽 눈 위
+    rightBottom: 374, // 오른쪽 눈 아래
   },
   mouth: {
     left: 61,         // 입 왼쪽
     right: 291,       // 입 오른쪽
-    top: 0,           // 윗입술 중앙
-    bottom: 17,       // 아랫입술 중앙
-    center: 13,       // 입 중앙
+    top: 0,           // 윗입술 중앙 (바깥)
+    bottom: 17,       // 아랫입술 중앙 (바깥)
+    center: 13,       // 입 중앙 (윗입술 안쪽)
+    innerLower: 14,   // 아랫입술 안쪽
   },
   jaw: {
     chin: 152,        // 턱끝 (gnathion)
@@ -651,20 +690,26 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       drawLabeledPoint(DEBUG_POINTS.nose.leftAla, '#ff6600', '왼콧볼');
       drawLabeledPoint(DEBUG_POINTS.nose.rightAla, '#ff6600', '우콧볼');
 
-      // 눈 관련 점 (파랑)
+      // 눈 관련 점 (파랑/녹색)
       drawLabeledPoint(DEBUG_POINTS.eyes.leftCenter, '#00ff00', '왼눈');
       drawLabeledPoint(DEBUG_POINTS.eyes.rightCenter, '#00ff00', '우눈');
       drawLabeledPoint(DEBUG_POINTS.eyes.leftOuter, '#0088ff', '');
       drawLabeledPoint(DEBUG_POINTS.eyes.leftInner, '#0088ff', '');
       drawLabeledPoint(DEBUG_POINTS.eyes.rightOuter, '#0088ff', '');
       drawLabeledPoint(DEBUG_POINTS.eyes.rightInner, '#0088ff', '');
+      // 눈 위/아래 (눈 크기 측정용)
+      drawLabeledPoint(DEBUG_POINTS.eyes.leftTop, '#00ff88', '눈위');
+      drawLabeledPoint(DEBUG_POINTS.eyes.leftBottom, '#00ff88', '눈아래');
+      drawLabeledPoint(DEBUG_POINTS.eyes.rightTop, '#00ff88', '');
+      drawLabeledPoint(DEBUG_POINTS.eyes.rightBottom, '#00ff88', '');
 
       // 입 관련 점 (분홍)
       drawLabeledPoint(DEBUG_POINTS.mouth.left, '#ff00ff', '입좌');
       drawLabeledPoint(DEBUG_POINTS.mouth.right, '#ff00ff', '입우');
       drawLabeledPoint(DEBUG_POINTS.mouth.top, '#ff00ff', '윗입');
       drawLabeledPoint(DEBUG_POINTS.mouth.bottom, '#ff00ff', '아랫입');
-      drawLabeledPoint(DEBUG_POINTS.mouth.center, '#ff00ff', '입중앙');
+      drawLabeledPoint(DEBUG_POINTS.mouth.center, '#ff88ff', '윗입안');
+      drawLabeledPoint(DEBUG_POINTS.mouth.innerLower, '#ff88ff', '아랫입안');
 
       // 턱 관련 점 (노랑) - 수정됨
       drawLabeledPoint(DEBUG_POINTS.jaw.chin, '#ffff00', '턱끝');
