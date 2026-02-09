@@ -884,21 +884,35 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
           {expandedItem === 'detail' && (
             <div className="px-6 pb-6 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                {Object.entries(data.analysis).map(([key, value]) => (
-                  <div key={key} className="bg-white/5 rounded-xl p-3">
-                    <div className="text-white/70 text-xs mb-1">
-                      {key === 'eyeAngle' && '👁️ 눈꼬리'}
-                      {key === 'eyebrowDistance' && '🎯 눈-눈썹'}
-                      {key === 'noseLength' && '👃 코'}
-                      {key === 'philtrumLength' && '💋 인중'}
-                      {key === 'mouthWidth' && '😊 입'}
-                      {key === 'jawWidth' && '🏛️ 턱'}
-                      {key === 'eyeSize' && '✨ 눈 크기'}
+              <div className="space-y-3">
+                {Object.entries(data.analysis).map(([key, value]) => {
+                  const analysisValue = value as { label?: string; description?: string } | number;
+                  const isObject = typeof analysisValue === 'object' && analysisValue !== null;
+
+                  return (
+                    <div key={key} className="bg-white/5 rounded-xl p-4">
+                      <div className="text-white/70 text-sm mb-1">
+                        {key === 'eyeAngle' && '👁️ 눈꼬리 각도'}
+                        {key === 'eyebrowDistance' && '🎯 눈-눈썹 거리'}
+                        {key === 'noseLength' && '👃 코 길이'}
+                        {key === 'philtrumLength' && '💋 인중 길이'}
+                        {key === 'mouthWidth' && '😊 입 너비'}
+                        {key === 'jawWidth' && '🏛️ 하관(턱)'}
+                        {key === 'eyeSize' && '✨ 눈 크기'}
+                      </div>
+                      {isObject ? (
+                        <>
+                          <div className="text-white font-medium mb-2">{analysisValue.label}</div>
+                          <div className="text-white/60 text-sm">{analysisValue.description}</div>
+                        </>
+                      ) : (
+                        <div className="text-white font-medium">
+                          {typeof analysisValue === 'number' ? analysisValue.toFixed(1) : String(analysisValue)}
+                        </div>
+                      )}
                     </div>
-                    <div className="text-white font-medium">{typeof value === 'number' ? value.toFixed(1) : value}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
