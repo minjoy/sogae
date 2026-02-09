@@ -80,6 +80,7 @@ export interface FaceAnalysisResult {
 
   // 디버그 정보 (ratio 값들)
   debug?: {
+    // 기존 값들
     noseWidth: number;
     noseLengthRatio: number;
     philtrumRatio: number;
@@ -88,6 +89,19 @@ export interface FaceAnalysisResult {
     eyebrowRatio: number;
     eyeAngleDegrees: number;
     facescore: number;
+    // 추가 값들
+    faceWidth: number;          // 얼굴 너비 (볼 간 거리)
+    jawWidth: number;           // 턱 너비 (턱각 간 거리)
+    foreheadHeight: number;     // 이마 높이 (헤어라인~눈썹)
+    noseTipToBottom: number;    // 코끝~코밑 거리 (들창코 판별)
+    noseBottomToLip: number;    // 코밑~윗입술 거리
+    noseTipRatio: number;       // 코끝/코밑 비율 (들창코: 값이 크면 들창코)
+    eyebrowLength: number;      // 눈썹 길이
+    eyebrowAngle: number;       // 눈썹 각도
+    eyeWidth: number;           // 눈 너비
+    eyeHeight: number;          // 눈 높이
+    mouthWidth: number;         // 입 너비
+    mouthHeight: number;        // 입 높이
   };
 }
 
@@ -674,6 +688,7 @@ export function analyzeFace(
     recommendations,
     gender,
     debug: {
+      // 기존 값들
       noseWidth,
       noseLengthRatio,
       philtrumRatio,
@@ -682,6 +697,19 @@ export function analyzeFace(
       eyebrowRatio,
       eyeAngleDegrees,
       facescore,
+      // 추가 값들
+      faceWidth,
+      jawWidth: Math.abs(fp[31].x - fp[30].x),
+      foreheadHeight: Math.abs(fp[24].y - (fp[32]?.y || fp[10]?.y || fp[0].y)), // 눈썹~이마 상단
+      noseTipToBottom: Math.abs((fp[6]?.y || fp[7]?.y || 0) - fp[15].y), // 코끝~코밑
+      noseBottomToLip: Math.abs(fp[15].y - fp[8].y), // 코밑~윗입술
+      noseTipRatio: Math.abs((fp[6]?.y || fp[7]?.y || 0) - fp[15].y) / (Math.abs(fp[15].y - fp[8].y) || 1), // 들창코 비율
+      eyebrowLength: Math.abs(fp[3].x - fp[2].x), // 왼쪽 눈썹 길이
+      eyebrowAngle: Math.atan2(fp[3].y - fp[2].y, fp[3].x - fp[2].x) * (180 / Math.PI), // 눈썹 각도
+      eyeWidth: Math.abs(fp[17].x - fp[19].x), // 눈 너비
+      eyeHeight: eyeHeight, // 눈 높이
+      mouthWidth: mouthWidthVal, // 입 너비
+      mouthHeight: Math.abs(fp[9].y - fp[8].y), // 입 높이
     },
   };
 }

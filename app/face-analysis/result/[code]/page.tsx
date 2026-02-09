@@ -177,7 +177,11 @@ function getScoreGrade(score: number): { grade: string; color: string; emoji: st
 }
 
 // 디버그 패널 컴포넌트
-function DebugPanel({ analysis }: { analysis: Record<string, unknown> }) {
+function DebugPanel({ analysis, memo, setMemo }: {
+  analysis: Record<string, unknown>;
+  memo: string;
+  setMemo: (v: string) => void;
+}) {
   const debug = analysis?.debug as {
     noseWidth?: number;
     noseLengthRatio?: number;
@@ -187,53 +191,130 @@ function DebugPanel({ analysis }: { analysis: Record<string, unknown> }) {
     eyebrowRatio?: number;
     eyeAngleDegrees?: number;
     facescore?: number;
+    faceWidth?: number;
+    jawWidth?: number;
+    foreheadHeight?: number;
+    noseTipToBottom?: number;
+    noseBottomToLip?: number;
+    noseTipRatio?: number;
+    eyebrowLength?: number;
+    eyebrowAngle?: number;
+    eyeWidth?: number;
+    eyeHeight?: number;
+    mouthWidth?: number;
+    mouthHeight?: number;
   } | undefined;
 
   if (!debug) return null;
 
   return (
-    <div className="bg-red-500/10 backdrop-blur rounded-2xl p-4 mb-6 border border-red-500/30">
+    <div className="bg-red-500/10 backdrop-blur rounded-2xl p-4 mb-4 border border-red-500/30">
       <h3 className="text-red-400 font-bold mb-3 flex items-center gap-2">
         <span>🔧</span> 디버그 정보 (개발용)
       </h3>
-      <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-        <div className="bg-black/30 p-2 rounded">
-          <span className="text-gray-400">코너비 (noseWidth):</span>
-          <span className="text-white ml-2">{debug.noseWidth?.toFixed(2)}</span>
+
+      {/* 메모 입력창 */}
+      <div className="mb-3">
+        <input
+          type="text"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          placeholder="특징 메모 입력 (캡쳐용)"
+          className="w-full px-3 py-2 bg-black/50 border border-red-500/30 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-red-400"
+        />
+      </div>
+
+      {/* 비율 정보 - 3열 그리드 */}
+      <div className="grid grid-cols-3 gap-1.5 text-xs font-mono mb-3">
+        {/* 코 관련 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">코너비</div>
+          <div className="text-white font-bold">{debug.noseWidth?.toFixed(1)}</div>
         </div>
-        <div className="bg-black/30 p-2 rounded">
-          <span className="text-gray-400">코길이비 (ratio2):</span>
-          <span className="text-yellow-400 ml-2 font-bold">{debug.noseLengthRatio?.toFixed(3)}</span>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">코길이비</div>
+          <div className="text-yellow-400 font-bold">{debug.noseLengthRatio?.toFixed(2)}</div>
         </div>
-        <div className="bg-black/30 p-2 rounded">
-          <span className="text-gray-400">인중비 (ratio3):</span>
-          <span className="text-yellow-400 ml-2 font-bold">{debug.philtrumRatio?.toFixed(3)}</span>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">들창코비</div>
+          <div className="text-orange-400 font-bold">{debug.noseTipRatio?.toFixed(2)}</div>
         </div>
-        <div className="bg-black/30 p-2 rounded">
-          <span className="text-gray-400">입너비비 (ratio7):</span>
-          <span className="text-yellow-400 ml-2 font-bold">{debug.mouthRatio?.toFixed(3)}</span>
+
+        {/* 인중/입 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">인중비</div>
+          <div className="text-yellow-400 font-bold">{debug.philtrumRatio?.toFixed(2)}</div>
         </div>
-        <div className="bg-black/30 p-2 rounded">
-          <span className="text-gray-400">턱비 (ratio8):</span>
-          <span className="text-yellow-400 ml-2 font-bold">{debug.jawRatio?.toFixed(3)}</span>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">입너비비</div>
+          <div className="text-yellow-400 font-bold">{debug.mouthRatio?.toFixed(2)}</div>
         </div>
-        <div className="bg-black/30 p-2 rounded">
-          <span className="text-gray-400">눈썹비:</span>
-          <span className="text-yellow-400 ml-2 font-bold">{debug.eyebrowRatio?.toFixed(3)}</span>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">입높이</div>
+          <div className="text-white font-bold">{debug.mouthHeight?.toFixed(1)}</div>
         </div>
-        <div className="bg-black/30 p-2 rounded">
-          <span className="text-gray-400">눈각도 (°):</span>
-          <span className="text-cyan-400 ml-2 font-bold">{debug.eyeAngleDegrees?.toFixed(2)}°</span>
+
+        {/* 턱/얼굴 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">턱비</div>
+          <div className="text-yellow-400 font-bold">{debug.jawRatio?.toFixed(2)}</div>
         </div>
-        <div className="bg-black/30 p-2 rounded">
-          <span className="text-gray-400">facescore:</span>
-          <span className="text-green-400 ml-2 font-bold">{debug.facescore}</span>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">턱너비</div>
+          <div className="text-white font-bold">{debug.jawWidth?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">얼굴너비</div>
+          <div className="text-white font-bold">{debug.faceWidth?.toFixed(1)}</div>
+        </div>
+
+        {/* 이마/눈썹 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">이마높이</div>
+          <div className="text-white font-bold">{debug.foreheadHeight?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈썹길이</div>
+          <div className="text-white font-bold">{debug.eyebrowLength?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈썹각도</div>
+          <div className="text-cyan-400 font-bold">{debug.eyebrowAngle?.toFixed(1)}°</div>
+        </div>
+
+        {/* 눈 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈너비</div>
+          <div className="text-white font-bold">{debug.eyeWidth?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈높이</div>
+          <div className="text-white font-bold">{debug.eyeHeight?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈각도</div>
+          <div className="text-cyan-400 font-bold">{debug.eyeAngleDegrees?.toFixed(1)}°</div>
+        </div>
+
+        {/* 점수 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">눈썹-눈비</div>
+          <div className="text-yellow-400 font-bold">{debug.eyebrowRatio?.toFixed(2)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">코끝~코밑</div>
+          <div className="text-white font-bold">{debug.noseTipToBottom?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">facescore</div>
+          <div className="text-green-400 font-bold">{debug.facescore}</div>
         </div>
       </div>
-      <div className="mt-3 text-xs text-gray-400">
-        <p>• draw.py 임계값: 코길이 &gt;1.55(긴), 1.28~1.55(이상적), &lt;1.28(짧음)</p>
-        <p>• draw.py 임계값: 인중 &gt;0.7(매우긴), 0.65~0.7(긴), 0.58~0.65(이상적)</p>
-        <p>• draw.py 임계값: 입너비 &gt;1.75(매우큼), 1.65~1.75(큼), 1.57~1.65(이상적)</p>
+
+      {/* 임계값 참고 */}
+      <div className="text-[10px] text-gray-500 space-y-0.5">
+        <p>코길이: &gt;1.55(긴) | 인중: &gt;0.7(긴) | 입너비: &gt;1.75(큼)</p>
+        <p>들창코비: 값이 클수록 들창코 (코끝~코밑 / 코밑~윗입술)</p>
       </div>
     </div>
   );
@@ -456,6 +537,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [memo, setMemo] = useState('');
 
   // 데이터 로드
   useEffect(() => {
@@ -944,6 +1026,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           )}
         </div>
 
+        {/* 디버그 정보 섹션 - 한줄평 위에 표시 */}
+        <DebugPanel analysis={data.analysis} memo={memo} setMemo={setMemo} />
+
         {/* 한줄평 카드 */}
         <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">
           <span className="text-pink-400 text-sm font-medium">✨ 관상 한줄평</span>
@@ -951,9 +1036,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             {oneLiner}
           </p>
         </div>
-
-        {/* 디버그 정보 섹션 */}
-        <DebugPanel analysis={data.analysis} />
 
         {/* 레이더 차트 (육각형 대신 사각형 - 4개 카테고리) */}
         <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">
