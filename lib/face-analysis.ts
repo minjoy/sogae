@@ -542,15 +542,33 @@ export function analyzeFace(
   score += eyeSizeLevel * 8;
 
   // === 종합 점수 정규화 (100점 만점) ===
-  const normalizedScore = clamp(Math.round(score / 60 * 100), 30, 95);
+  // score는 각 레벨의 합 (최대 약 60) - 더 넓은 분포를 위해 조정
+  const baseScore = score; // 약 20~55 범위
+  // 기존 랜덤 요소 제거하고 결정적인 계산으로 변경
+  const normalizedScore = clamp(Math.round((baseScore / 55) * 50 + 30), 40, 85);
 
   // === 카테고리 점수 정규화 ===
-  // 각 카테고리의 최대값을 기준으로 정규화하여 더 넓은 분포 생성
-  const maxR1 = 60, maxR2 = 120, maxR3 = 80, maxR4 = 80;
-  r1 = Math.round(clamp(r1 / maxR1 * 100, 10, 95));
-  r2 = Math.round(clamp(r2 / maxR2 * 100, 10, 95));
-  r3 = Math.round(clamp(r3 / maxR3 * 100, 10, 95));
-  r4 = Math.round(clamp(r4 / maxR4 * 100, 10, 95));
+  // 실제 발생 가능한 최대값을 기준으로 정규화
+  // r1: 눈꼬리(1-5)*3 + 눈썹(1-5)*5 + 인중(2-5)*5 또는 (1-3)*3 + 입(1-5)*5 = 최대 약 75
+  // r2: 눈꼬리 + 눈썹 + 코 + 인중 + 하관 + 눈 = 최대 약 90
+  // r3: 눈썹 + 코 + 인중 + 입 + 하관 + 눈 = 최대 약 100
+  // r4: 눈꼬리 + 코 + 인중 + 눈 = 최대 약 70
+  const maxR1 = 75, maxR2 = 90, maxR3 = 100, maxR4 = 70;
+
+  // 점수를 더 넓은 분포로 변환 (선형이 아닌 중간값 중심 분포)
+  const normalize = (val: number, max: number): number => {
+    const ratio = val / max;
+    // 중간값 중심으로 분포시키기 (0.3~0.8 범위를 20~80 범위로)
+    if (ratio > 0.8) return Math.round(70 + ratio * 20);
+    if (ratio > 0.6) return Math.round(45 + ratio * 40);
+    if (ratio > 0.4) return Math.round(30 + ratio * 40);
+    return Math.round(15 + ratio * 30);
+  };
+
+  r1 = clamp(normalize(r1, maxR1), 15, 90);
+  r2 = clamp(normalize(r2, maxR2), 15, 90);
+  r3 = clamp(normalize(r3, maxR3), 15, 90);
+  r4 = clamp(normalize(r4, maxR4), 15, 90);
 
   // === 종합 해석 생성 ===
   const summaryParts: string[] = [];
