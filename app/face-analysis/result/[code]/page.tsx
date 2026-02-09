@@ -221,14 +221,20 @@ function DebugPanel({ analysis, memo, setMemo }: {
         <span>🔧</span> 디버그 정보 (개발용)
       </h3>
 
-      {/* 메모 입력창 */}
+      {/* 메모 입력창 - 자동 높이 조절 */}
       <div className="mb-3">
-        <input
-          type="text"
+        <textarea
           value={memo}
-          onChange={(e) => setMemo(e.target.value)}
-          placeholder="특징 메모 입력 (캡쳐용)"
-          className="w-full px-3 py-2 bg-black/50 border border-red-500/30 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-red-400"
+          onChange={(e) => {
+            setMemo(e.target.value);
+            // 자동 높이 조절
+            e.target.style.height = 'auto';
+            e.target.style.height = e.target.scrollHeight + 'px';
+          }}
+          placeholder="특징 메모 입력 (캡쳐용, 줄바꿈 가능)"
+          rows={1}
+          className="w-full px-3 py-2 bg-black/50 border border-red-500/30 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-red-400 resize-none overflow-hidden"
+          style={{ minHeight: '40px' }}
         />
       </div>
 
