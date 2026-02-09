@@ -380,8 +380,10 @@ const DEBUG_POINTS = {
     tip: 1,           // 코끝
     bridge: 6,        // 코 브릿지 (미간)
     bottomCenter: 2,  // 코밑 중앙
-    leftAla: 129,     // 왼쪽 콧볼
-    rightAla: 358,    // 오른쪽 콧볼
+    leftAlaOuter: 129,  // 왼쪽 콧볼 바깥 (원본)
+    rightAlaOuter: 358, // 오른쪽 콧볼 바깥 (원본)
+    leftAla: 48,      // 왼쪽 콧볼 (보정 - 안쪽)
+    rightAla: 278,    // 오른쪽 콧볼 (보정 - 안쪽)
   },
   eyes: {
     leftCenter: 468,  // 왼쪽 눈 중심 (iris)
