@@ -191,6 +191,40 @@ export default function FaceAnalysisPage() {
     };
   }, [mode, faceMeshLoaded, startCamera, stopCamera]);
 
+  // 이미지 리사이즈 (최대 1200px, 품질 0.8)
+  const resizeImage = useCallback((imageDataUrl: string, maxSize: number = 1200): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+
+        // 이미지가 maxSize보다 큰 경우에만 리사이즈
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = (height / width) * maxSize;
+            width = maxSize;
+          } else {
+            width = (width / height) * maxSize;
+            height = maxSize;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
+        } else {
+          resolve(imageDataUrl);
+        }
+      };
+      img.onerror = () => resolve(imageDataUrl);
+      img.src = imageDataUrl;
+    });
+  }, []);
+
   // 랜드마크로 분석
   const analyzeWithLandmarks = useCallback(async (
     faceLandmarks: FaceLandmark[],
@@ -214,10 +248,23 @@ export default function FaceAnalysisPage() {
         }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Analyze API error:', response.status, errorText);
+        setError(`분석 실패 (${response.status})`);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success) {
-        // 2. 결과를 DB에 저장
+        // 2. 이미지 리사이즈 (DB 저장용)
+        let compressedImage = imageData || capturedImage;
+        if (compressedImage) {
+          compressedImage = await resizeImage(compressedImage, 1200);
+        }
+
+        // 3. 결과를 DB에 저장
         const saveResponse = await fetch('/api/face/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -229,23 +276,38 @@ export default function FaceAnalysisPage() {
             landmarks: faceLandmarks.map(lm => [lm.x, lm.y, lm.z]),
             imageWidth,
             imageHeight,
-            imageData: imageData || capturedImage,
+            imageData: compressedImage,
             panAngle: data.result.panAngle,
             tiltAngle: data.result.tiltAngle,
             rollAngle: data.result.rollAngle,
           }),
         });
 
+        if (!saveResponse.ok) {
+          console.error('Save API error:', saveResponse.status);
+          // DB 저장 실패 시 기존 방식으로 폴백
+          sessionStorage.setItem('faceAnalysisResult', JSON.stringify({
+            result: data.result,
+            image: compressedImage,
+            landmarks: faceLandmarks,
+            imageWidth,
+            imageHeight,
+            gender,
+          }));
+          router.push('/face-analysis/result');
+          return;
+        }
+
         const saveData = await saveResponse.json();
 
         if (saveData.success) {
-          // 3. 공유 가능한 결과 페이지로 리다이렉트
+          // 4. 공유 가능한 결과 페이지로 리다이렉트
           router.push(`/face-analysis/result/${saveData.shareCode}`);
         } else {
           // DB 저장 실패 시 기존 방식으로 폴백
           sessionStorage.setItem('faceAnalysisResult', JSON.stringify({
             result: data.result,
-            image: imageData || capturedImage,
+            image: compressedImage,
             landmarks: faceLandmarks,
             imageWidth,
             imageHeight,
@@ -258,11 +320,11 @@ export default function FaceAnalysisPage() {
       }
     } catch (err) {
       console.error('Analysis error:', err);
-      setError('서버 연결에 실패했습니다.');
+      setError(`오류: ${err instanceof Error ? err.message : '서버 연결 실패'}`);
     } finally {
       setIsLoading(false);
     }
-  }, [gender, capturedImage, router]);
+  }, [gender, capturedImage, router, resizeImage]);
 
   // 사진 촬영
   const capturePhoto = useCallback(async () => {
