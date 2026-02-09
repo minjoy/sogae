@@ -514,3 +514,535 @@ export function applyTraitModifiers(
 
   return newTraits;
 }
+
+// ============================================================
+// === 전체 관상 해석 (Overall Face Reading) ===
+// ============================================================
+
+// === 삼정(三停) - 얼굴 3등분 비율 ===
+export interface ThreeSections {
+  upper: number;   // 상정 (이마~눈썹): 초년운 (1-30세)
+  middle: number;  // 중정 (눈썹~코밑): 중년운 (31-50세)
+  lower: number;   // 하정 (코밑~턱끝): 말년운 (51세~)
+  dominant: 'upper' | 'middle' | 'lower' | 'balanced';
+  interpretation: string;
+}
+
+// === 오악(五岳) - 얼굴의 5개 돌출부 ===
+export interface FivePeaks {
+  forehead: string;  // 남악 (이마)
+  chin: string;      // 북악 (턱)
+  nose: string;      // 중악 (코)
+  leftCheek: string; // 동악 (왼볼)
+  rightCheek: string; // 서악 (오른볼)
+  balance: string;   // 균형 상태
+}
+
+// === 얼굴형 ===
+export type FaceShapeType =
+  | '갑자형'   // 이마 넓고 턱 좁음 - 지적, 이상주의
+  | '원형'     // 둥근 얼굴 - 사교적, 낙천적
+  | '방형'     // 각진 얼굴 - 의지력, 리더십
+  | '장형'     // 긴 얼굴 - 신중함, 끈기
+  | '역삼각형' // 턱 뾰족 - 예술적, 예민
+  | '타원형';  // 이상적 비율 - 균형, 조화
+
+export interface FaceShape {
+  type: FaceShapeType;
+  description: string;
+  strengths: string[];
+  weaknesses: string[];
+}
+
+// === 시기별 운세 ===
+export interface LifePeriodFortune {
+  earlyLife: {    // 초년운 (1-30세)
+    score: number;
+    description: string;
+  };
+  middleLife: {   // 중년운 (31-50세)
+    score: number;
+    description: string;
+  };
+  lateLife: {     // 말년운 (51세~)
+    score: number;
+    description: string;
+  };
+  overall: string;
+}
+
+// === 전체 관상 해석 결과 ===
+export interface OverallFaceReading {
+  // 삼정 비율
+  threeSections: ThreeSections;
+
+  // 얼굴형
+  faceShape: FaceShape;
+
+  // 시기별 운세
+  lifePeriodFortune: LifePeriodFortune;
+
+  // 종합 성격
+  personality: {
+    mainType: string;      // 주된 성격 유형
+    description: string;   // 성격 설명
+    strengths: string[];   // 장점
+    weaknesses: string[];  // 단점
+  };
+
+  // 종합 운세
+  fortune: {
+    wealth: string;        // 재물운
+    career: string;        // 직업운
+    love: string;          // 연애/결혼운
+    health: string;        // 건강운
+    social: string;        // 대인관계
+  };
+
+  // 종합 조언
+  advice: string[];
+
+  // 한줄 총평
+  oneLiner: string;
+}
+
+// === 삼정 비율 계산 ===
+export function calculateThreeSections(
+  foreheadToEyebrow: number,  // 이마~눈썹
+  eyebrowToNoseBottom: number, // 눈썹~코밑
+  noseBottomToChin: number     // 코밑~턱끝
+): ThreeSections {
+  const total = foreheadToEyebrow + eyebrowToNoseBottom + noseBottomToChin;
+
+  const upper = foreheadToEyebrow / total;
+  const middle = eyebrowToNoseBottom / total;
+  const lower = noseBottomToChin / total;
+
+  // 어느 부분이 우세한지 판단
+  let dominant: 'upper' | 'middle' | 'lower' | 'balanced';
+  let interpretation: string;
+
+  const idealRatio = 1/3;
+  const threshold = 0.05; // 5% 이상 차이나면 우세
+
+  if (Math.abs(upper - idealRatio) < threshold &&
+      Math.abs(middle - idealRatio) < threshold &&
+      Math.abs(lower - idealRatio) < threshold) {
+    dominant = 'balanced';
+    interpretation = '삼정이 균형 잡힌 이상적인 얼굴입니다. 초년, 중년, 말년 모두 고르게 발전하는 안정적인 인생을 살 가능성이 높습니다.';
+  } else if (upper > middle && upper > lower) {
+    dominant = 'upper';
+    if (upper > 0.38) {
+      interpretation = '상정(이마)이 매우 발달했습니다. 지적 능력이 뛰어나고 초년에 두각을 나타낼 가능성이 높습니다. 학업운과 출세운이 좋으며, 30세 이전에 인생의 기반을 다지게 됩니다.';
+    } else {
+      interpretation = '상정(이마)이 발달한 편입니다. 사고력이 좋고 계획적입니다. 초년운이 좋아 젊은 시절에 기회가 많이 찾아옵니다.';
+    }
+  } else if (middle > upper && middle > lower) {
+    dominant = 'middle';
+    if (middle > 0.38) {
+      interpretation = '중정(코)이 매우 발달했습니다. 31-50세 사이에 인생의 전성기를 맞이할 가능성이 높습니다. 사회적 성공과 재물운이 좋으며, 고위직에 오를 수 있는 상입니다.';
+    } else {
+      interpretation = '중정(코)이 발달한 편입니다. 중년기에 운이 트이며, 40대에 큰 성과를 이룰 수 있습니다.';
+    }
+  } else {
+    dominant = 'lower';
+    if (lower > 0.38) {
+      interpretation = '하정(턱)이 매우 발달했습니다. 말년운이 매우 좋아 노후가 풍요롭습니다. 자녀운과 부동산운이 좋으며, 인생 후반부에 결실을 맺습니다. 단, 지나치게 길 경우 평생 고생이 있을 수도 있습니다.';
+    } else {
+      interpretation = '하정(턱)이 발달한 편입니다. 말년운이 좋아 노후가 안정적입니다. 부동산과 자녀로부터 복을 받습니다.';
+    }
+  }
+
+  return { upper, middle, lower, dominant, interpretation };
+}
+
+// === 얼굴형 판단 ===
+export function determineFaceShape(
+  faceWidth: number,
+  faceHeight: number,
+  foreheadWidth: number,
+  jawWidth: number,
+  cheekWidth: number
+): FaceShape {
+  const ratio = faceHeight / faceWidth;
+  const foreheadToJaw = foreheadWidth / jawWidth;
+  const cheekToJaw = cheekWidth / jawWidth;
+
+  let type: FaceShapeType;
+  let description: string;
+  let strengths: string[];
+  let weaknesses: string[];
+
+  if (foreheadToJaw > 1.3 && ratio > 1.2) {
+    type = '갑자형';
+    description = '이마가 넓고 턱이 좁은 형태로, 지적이고 이상주의적인 성향이 강합니다.';
+    strengths = ['뛰어난 두뇌', '창의력', '분석력', '학문적 성취'];
+    weaknesses = ['현실감각 부족', '말년 고생 가능', '완고함'];
+  } else if (ratio < 1.1 && cheekToJaw > 0.95) {
+    type = '원형';
+    description = '둥글고 부드러운 얼굴형으로, 사교적이고 낙천적인 성격입니다.';
+    strengths = ['사교성', '친화력', '적응력', '낙천성'];
+    weaknesses = ['우유부단함', '결단력 부족', '식탐'];
+  } else if (ratio < 1.2 && foreheadToJaw < 1.1 && cheekToJaw < 1.1) {
+    type = '방형';
+    description = '각지고 뚜렷한 얼굴형으로, 의지력과 리더십이 강합니다.';
+    strengths = ['리더십', '결단력', '책임감', '신뢰성'];
+    weaknesses = ['고집', '융통성 부족', '완고함'];
+  } else if (ratio > 1.4) {
+    type = '장형';
+    description = '길고 좁은 얼굴형으로, 신중하고 끈기 있는 성격입니다.';
+    strengths = ['신중함', '인내력', '성실함', '집중력'];
+    weaknesses = ['우울함', '내성적', '고독'];
+  } else if (foreheadToJaw > 1.2 && jawWidth < cheekWidth * 0.8) {
+    type = '역삼각형';
+    description = '턱이 뾰족하고 이마가 넓은 형태로, 예술적 감각과 예민함을 가지고 있습니다.';
+    strengths = ['예술적 감각', '섬세함', '창의성', '직관력'];
+    weaknesses = ['예민함', '스트레스에 약함', '말년 고생'];
+  } else {
+    type = '타원형';
+    description = '균형 잡힌 이상적인 얼굴형으로, 조화롭고 안정적인 성격입니다.';
+    strengths = ['균형감', '조화', '안정성', '적응력'];
+    weaknesses = ['특별한 약점 없음'];
+  }
+
+  return { type, description, strengths, weaknesses };
+}
+
+// === 시기별 운세 계산 ===
+export function calculateLifePeriodFortune(
+  threeSections: ThreeSections,
+  traits: PhysiognomyTraits,
+  faceShape: FaceShape
+): LifePeriodFortune {
+  // 초년운 (상정 + 관련 특성)
+  const earlyScore = Math.round(
+    (threeSections.upper * 100 * 0.5) +
+    (traits.정신력 / TRAIT_MAX_SCORES.정신력 * 25) +
+    (traits.호기심 / TRAIT_MAX_SCORES.호기심 * 25)
+  );
+
+  // 중년운 (중정 + 관련 특성)
+  const middleScore = Math.round(
+    (threeSections.middle * 100 * 0.5) +
+    (traits.중년운 / TRAIT_MAX_SCORES.중년운 * 20) +
+    (traits.업무 / TRAIT_MAX_SCORES.업무 * 15) +
+    (traits.재물 / TRAIT_MAX_SCORES.재물 * 15)
+  );
+
+  // 말년운 (하정 + 관련 특성)
+  const lateScore = Math.round(
+    (threeSections.lower * 100 * 0.5) +
+    (traits.장수 / TRAIT_MAX_SCORES.장수 * 20) +
+    (traits.사교력 / TRAIT_MAX_SCORES.사교력 * 15) +
+    (traits.체력 / TRAIT_MAX_SCORES.체력 * 15)
+  );
+
+  // 설명 생성
+  const getDescription = (score: number, period: string): string => {
+    if (score >= 70) return `${period}이 매우 좋습니다. 이 시기에 큰 발전과 성취가 기대됩니다.`;
+    if (score >= 55) return `${period}이 좋은 편입니다. 안정적인 발전이 있을 것입니다.`;
+    if (score >= 40) return `${period}은 보통입니다. 꾸준한 노력이 필요합니다.`;
+    return `${period}에 어려움이 있을 수 있습니다. 미리 대비하고 준비하세요.`;
+  };
+
+  // 전체 운세 요약
+  const scores = [earlyScore, middleScore, lateScore];
+  const maxPeriod = scores.indexOf(Math.max(...scores));
+  const periodNames = ['초년', '중년', '말년'];
+
+  let overall: string;
+  if (Math.max(...scores) - Math.min(...scores) < 15) {
+    overall = '인생 전반에 걸쳐 균형 잡힌 운세를 가지고 있습니다. 큰 기복 없이 안정적인 삶을 살 가능성이 높습니다.';
+  } else {
+    overall = `${periodNames[maxPeriod]}에 가장 좋은 운이 찾아옵니다. 이 시기를 잘 활용하여 인생의 기반을 다지세요.`;
+  }
+
+  return {
+    earlyLife: {
+      score: Math.min(100, earlyScore),
+      description: getDescription(earlyScore, '초년운'),
+    },
+    middleLife: {
+      score: Math.min(100, middleScore),
+      description: getDescription(middleScore, '중년운'),
+    },
+    lateLife: {
+      score: Math.min(100, lateScore),
+      description: getDescription(lateScore, '말년운'),
+    },
+    overall,
+  };
+}
+
+// === 종합 성격 분석 ===
+export function analyzePersonality(traits: PhysiognomyTraits, faceShape: FaceShape): {
+  mainType: string;
+  description: string;
+  strengths: string[];
+  weaknesses: string[];
+} {
+  const topTraits = getTopTraits(traits, 3);
+
+  // 주된 성격 유형 결정
+  let mainType: string;
+  let description: string;
+
+  if (traits.정신력 >= 4 && traits.책임감 >= 3) {
+    mainType = '리더형';
+    description = '강한 의지력과 책임감을 바탕으로 조직을 이끄는 리더형 성격입니다. 결단력이 있고 목표 지향적입니다.';
+  } else if (traits.사교력 >= 2 && traits.착함 >= 2) {
+    mainType = '사교형';
+    description = '뛰어난 대인관계 능력과 친절함으로 사람들에게 사랑받는 사교형 성격입니다. 분위기 메이커 역할을 합니다.';
+  } else if (traits.성실함 >= 2 && traits.책임감 >= 3) {
+    mainType = '성실형';
+    description = '꾸준하고 성실한 노력으로 목표를 달성하는 성실형 성격입니다. 신뢰받는 인재입니다.';
+  } else if (traits.호기심 >= 1 && traits.긍정 >= 3) {
+    mainType = '탐험형';
+    description = '새로운 것에 대한 호기심과 긍정적인 마인드로 도전하는 탐험형 성격입니다.';
+  } else if (traits.재물 >= 3 && traits.업무 >= 3) {
+    mainType = '사업형';
+    description = '재물운과 업무 능력이 뛰어나 사업에서 성공할 가능성이 높은 사업형 성격입니다.';
+  } else {
+    mainType = '균형형';
+    description = '다양한 특성이 균형을 이루고 있어 상황에 따라 유연하게 대처하는 균형형 성격입니다.';
+  }
+
+  // 장단점은 얼굴형에서 가져옴
+  return {
+    mainType,
+    description,
+    strengths: [...faceShape.strengths, ...topTraits.map(t => `${t.trait}이(가) 뛰어남`)],
+    weaknesses: faceShape.weaknesses,
+  };
+}
+
+// === 종합 운세 분석 ===
+export function analyzeFortuneAreas(traits: PhysiognomyTraits): {
+  wealth: string;
+  career: string;
+  love: string;
+  health: string;
+  social: string;
+} {
+  // 재물운
+  const wealthScore = (traits.재물 / TRAIT_MAX_SCORES.재물) +
+                     (traits.업무 / TRAIT_MAX_SCORES.업무) / 2;
+  let wealth: string;
+  if (wealthScore > 1.5) {
+    wealth = '재물운이 매우 좋습니다. 돈이 자연스럽게 따라오는 상이며, 투자에도 성공할 가능성이 높습니다.';
+  } else if (wealthScore > 1.0) {
+    wealth = '재물운이 좋은 편입니다. 꾸준한 저축과 현명한 소비로 부를 축적할 수 있습니다.';
+  } else if (wealthScore > 0.5) {
+    wealth = '재물운은 보통입니다. 노력한 만큼 얻는 상이니 꾸준히 노력하세요.';
+  } else {
+    wealth = '재물운에 어려움이 있을 수 있습니다. 저축 습관과 재정 관리에 신경 쓰세요.';
+  }
+
+  // 직업운
+  const careerScore = (traits.업무 / TRAIT_MAX_SCORES.업무) +
+                     (traits.책임감 / TRAIT_MAX_SCORES.책임감) / 2;
+  let career: string;
+  if (careerScore > 1.5) {
+    career = '직업운이 매우 좋습니다. 선택한 분야에서 두각을 나타내고 승진이 빠를 것입니다.';
+  } else if (careerScore > 1.0) {
+    career = '직업운이 좋은 편입니다. 안정적인 직장생활과 꾸준한 발전이 기대됩니다.';
+  } else if (careerScore > 0.5) {
+    career = '직업운은 보통입니다. 자신의 적성을 찾아 전문성을 기르세요.';
+  } else {
+    career = '직업에서 어려움이 있을 수 있습니다. 꾸준한 자기계발이 필요합니다.';
+  }
+
+  // 연애/결혼운
+  const loveScore = (traits.연애운 / TRAIT_MAX_SCORES.연애운) +
+                   (traits.착함 / TRAIT_MAX_SCORES.착함) / 2;
+  let love: string;
+  if (loveScore > 1.5) {
+    love = '연애운이 매우 좋습니다. 좋은 인연을 만나 행복한 가정을 이룰 상입니다.';
+  } else if (loveScore > 1.0) {
+    love = '연애운이 좋은 편입니다. 진실된 마음으로 다가가면 좋은 인연을 만납니다.';
+  } else if (loveScore > 0.5) {
+    love = '연애운은 보통입니다. 급하게 생각하지 말고 천천히 인연을 기다리세요.';
+  } else {
+    love = '연애에 어려움이 있을 수 있습니다. 자신을 먼저 사랑하고 가꾸세요.';
+  }
+
+  // 건강운
+  const healthScore = (traits.장수 / TRAIT_MAX_SCORES.장수) +
+                     (traits.체력 / TRAIT_MAX_SCORES.체력) / 2;
+  let health: string;
+  if (healthScore > 1.5) {
+    health = '건강운이 매우 좋습니다. 타고난 체력이 좋아 장수할 상입니다.';
+  } else if (healthScore > 1.0) {
+    health = '건강운이 좋은 편입니다. 규칙적인 생활을 유지하면 건강하게 살 수 있습니다.';
+  } else if (healthScore > 0.5) {
+    health = '건강운은 보통입니다. 정기적인 건강검진과 운동을 권합니다.';
+  } else {
+    health = '건강에 주의가 필요합니다. 무리하지 말고 충분한 휴식을 취하세요.';
+  }
+
+  // 대인관계
+  const socialScore = (traits.사교력 / TRAIT_MAX_SCORES.사교력) +
+                     (traits.착함 / TRAIT_MAX_SCORES.착함) / 2;
+  let social: string;
+  if (socialScore > 1.5) {
+    social = '대인관계가 매우 좋습니다. 주변에 사람이 많고 귀인의 도움을 받습니다.';
+  } else if (socialScore > 1.0) {
+    social = '대인관계가 좋은 편입니다. 신뢰받는 관계를 형성할 수 있습니다.';
+  } else if (socialScore > 0.5) {
+    social = '대인관계는 보통입니다. 먼저 다가가고 경청하는 태도가 필요합니다.';
+  } else {
+    social = '대인관계에 어려움이 있을 수 있습니다. 열린 마음으로 사람들을 대하세요.';
+  }
+
+  return { wealth, career, love, health, social };
+}
+
+// === 종합 조언 생성 ===
+export function generateOverallAdvice(
+  traits: PhysiognomyTraits,
+  faceShape: FaceShape,
+  lifePeriod: LifePeriodFortune
+): string[] {
+  const advice: string[] = [];
+
+  // 약한 특성에 대한 조언
+  if (traits.정신력 < 2) {
+    advice.push('의지력을 기르기 위해 작은 목표부터 달성하는 습관을 들이세요.');
+  }
+  if (traits.사교력 < 1) {
+    advice.push('대인관계를 넓히기 위해 새로운 모임에 참여해 보세요.');
+  }
+  if (traits.재물 < 2) {
+    advice.push('재정 관리를 위해 저축 습관을 기르고 불필요한 지출을 줄이세요.');
+  }
+  if (traits.성실함 < 1) {
+    advice.push('꾸준함이 성공의 열쇠입니다. 매일 조금씩 실천하세요.');
+  }
+
+  // 부정적 특성에 대한 조언
+  if (traits.외도 > 0) {
+    advice.push('충동적인 결정을 피하고 한 번 더 생각하는 습관을 기르세요.');
+  }
+  if (traits.질투심 > 1) {
+    advice.push('타인과 비교하기보다 자신의 성장에 집중하세요.');
+  }
+
+  // 시기별 조언
+  if (lifePeriod.earlyLife.score < 50) {
+    advice.push('젊은 시절 어려움이 있더라도 포기하지 마세요. 후반에 좋아집니다.');
+  }
+  if (lifePeriod.middleLife.score > 70) {
+    advice.push('중년기가 인생의 전성기입니다. 이 시기를 잘 활용하세요.');
+  }
+  if (lifePeriod.lateLife.score < 50) {
+    advice.push('노후 대비를 미리 하세요. 저축과 건강관리가 중요합니다.');
+  }
+
+  // 얼굴형 기반 조언
+  if (faceShape.type === '갑자형' || faceShape.type === '역삼각형') {
+    advice.push('현실적인 목표 설정과 실행력을 기르세요.');
+  }
+  if (faceShape.type === '원형') {
+    advice.push('결단력을 기르고 우유부단함을 극복하세요.');
+  }
+
+  // 기본 조언
+  if (advice.length === 0) {
+    advice.push('현재의 좋은 운세를 유지하며 긍정적인 마음가짐을 가지세요.');
+    advice.push('꾸준한 자기계발과 건강관리로 더 나은 미래를 준비하세요.');
+  }
+
+  return advice;
+}
+
+// === 한줄 총평 생성 ===
+export function generateOneLiner(
+  score: number,
+  traits: PhysiognomyTraits,
+  faceShape: FaceShape,
+  lifePeriod: LifePeriodFortune
+): string {
+  const topTraits = getTopTraits(traits, 2);
+  const topTraitNames = topTraits.map(t => t.trait).join(', ');
+
+  // 가장 좋은 시기
+  const periods = [
+    { name: '초년', score: lifePeriod.earlyLife.score },
+    { name: '중년', score: lifePeriod.middleLife.score },
+    { name: '말년', score: lifePeriod.lateLife.score },
+  ];
+  const bestPeriod = periods.reduce((a, b) => a.score > b.score ? a : b);
+
+  if (score >= 80) {
+    return `${topTraitNames}이(가) 뛰어난 최상의 관상입니다. ${bestPeriod.name}에 큰 성공이 기대됩니다.`;
+  } else if (score >= 65) {
+    return `${faceShape.type} 얼굴형으로 ${topTraitNames}이(가) 장점입니다. ${bestPeriod.name}운이 특히 좋습니다.`;
+  } else if (score >= 50) {
+    return `균형 잡힌 관상으로 ${topTraitNames}을(를) 살리면 성공할 수 있습니다.`;
+  } else {
+    return `노력형 관상입니다. ${faceShape.strengths[0]}을(를) 살려 꾸준히 정진하세요.`;
+  }
+}
+
+// === 전체 관상 해석 생성 (메인 함수) ===
+export function generateOverallReading(
+  // 삼정 측정값
+  foreheadToEyebrow: number,
+  eyebrowToNoseBottom: number,
+  noseBottomToChin: number,
+  // 얼굴형 측정값
+  faceWidth: number,
+  faceHeight: number,
+  foreheadWidth: number,
+  jawWidth: number,
+  cheekWidth: number,
+  // 특성 점수
+  traits: PhysiognomyTraits,
+  // 총점
+  totalScore: number
+): OverallFaceReading {
+  // 삼정 계산
+  const threeSections = calculateThreeSections(
+    foreheadToEyebrow,
+    eyebrowToNoseBottom,
+    noseBottomToChin
+  );
+
+  // 얼굴형 판단
+  const faceShape = determineFaceShape(
+    faceWidth,
+    faceHeight,
+    foreheadWidth,
+    jawWidth,
+    cheekWidth
+  );
+
+  // 시기별 운세
+  const lifePeriodFortune = calculateLifePeriodFortune(
+    threeSections,
+    traits,
+    faceShape
+  );
+
+  // 성격 분석
+  const personality = analyzePersonality(traits, faceShape);
+
+  // 운세 분석
+  const fortune = analyzeFortuneAreas(traits);
+
+  // 조언
+  const advice = generateOverallAdvice(traits, faceShape, lifePeriodFortune);
+
+  // 한줄 총평
+  const oneLiner = generateOneLiner(totalScore, traits, faceShape, lifePeriodFortune);
+
+  return {
+    threeSections,
+    faceShape,
+    lifePeriodFortune,
+    personality,
+    fortune,
+    advice,
+    oneLiner,
+  };
+}

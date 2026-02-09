@@ -12,6 +12,8 @@ import {
   findInterpretation,
   getRatioLevel,
   TRAIT_MAX_SCORES,
+  OverallFaceReading,
+  generateOverallReading,
 } from './physiognomy-types';
 
 export interface FacePoint {
@@ -99,6 +101,9 @@ export interface FaceAnalysisResult {
 
   // 상위 특성 (점수가 높은 순)
   topTraits?: Array<{ trait: string; value: number; percent: number }>;
+
+  // 전체 관상 해석 (삼정, 얼굴형, 시기별 운세, 종합 운세)
+  overallReading?: OverallFaceReading;
 
   // 디버그 정보 (ratio 값들)
   debug?: {
@@ -735,6 +740,31 @@ export function analyzeFace(
   // 결과 문구 생성
   const resultPhrase = generateResultPhrase(traits, normalizedScore);
 
+  // === 전체 관상 해석 생성 ===
+  // 삼정 측정값 계산
+  const foreheadToEyebrow = Math.abs((fp[32]?.y || fp[10]?.y || fp[0].y) - fp[24].y); // 이마~눈썹
+  const eyebrowToNoseBottom = Math.abs(fp[24].y - fp[15].y); // 눈썹~코밑
+  const noseBottomToChin = Math.abs(fp[15].y - fp[29].y); // 코밑~턱끝
+
+  // 얼굴형 측정값
+  const faceHeightForShape = Math.abs((fp[32]?.y || fp[10]?.y || fp[0].y) - fp[29].y); // 이마~턱끝
+  const foreheadWidthVal = Math.abs(fp[3].x - fp[4].x); // 눈썹 양끝 (이마 너비 추정)
+  const cheekWidthVal = faceWidth; // 볼 너비
+
+  // 전체 관상 해석 생성
+  const overallReading = generateOverallReading(
+    foreheadToEyebrow,
+    eyebrowToNoseBottom,
+    noseBottomToChin,
+    faceWidth,
+    faceHeightForShape,
+    foreheadWidthVal,
+    jawWidth,
+    cheekWidthVal,
+    traits,
+    normalizedScore
+  );
+
   // === 종합 해석 생성 ===
   const summaryParts: string[] = [];
 
@@ -799,6 +829,7 @@ export function analyzeFace(
     traits,
     resultPhrase,
     topTraits: topTraitsArray,
+    overallReading,
     debug: {
       // 기존 값들
       noseWidth,
