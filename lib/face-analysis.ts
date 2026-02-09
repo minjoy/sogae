@@ -77,6 +77,18 @@ export interface FaceAnalysisResult {
 
   // 성별 (분석에 사용)
   gender: 'male' | 'female';
+
+  // 디버그 정보 (ratio 값들)
+  debug?: {
+    noseWidth: number;
+    noseLengthRatio: number;
+    philtrumRatio: number;
+    mouthRatio: number;
+    jawRatio: number;
+    eyebrowRatio: number;
+    eyeAngleDegrees: number;
+    facescore: number;
+  };
 }
 
 // 가중치 설정 (draw.py와 동일)
@@ -154,20 +166,16 @@ export function analyzeFace(
 ): FaceAnalysisResult {
   // 얼굴 기울기 보정 적용
   const fp = normalizeRotation(landmarks.all, rollAngle);
-  let score = 0;
+
+  // draw.py와 동일하게 facescore 직접 누적
+  let facescore = 0;
   let r1 = 0, r2 = 0, r3 = 0, r4 = 0;
 
-  // === 기준 비율 계산 ===
-  // 코 너비 (콧볼 너비)
+  // === 기준 비율 계산 === (draw.py와 동일)
+  // widthratio = 코 너비 (콧볼 너비)
   const noseWidth = Math.abs(fp[13].x - fp[14].x) || 1;
-  // 얼굴 너비 (볼 중앙 간 거리)
+  // widthratio2 = 얼굴 너비 (볼 중앙 간 거리)
   const faceWidth = Math.abs(fp[27].x - fp[26].x) || 1;
-  // 눈 너비 (왼쪽 눈)
-  const leftEyeWidth = Math.abs(fp[17].x - fp[19].x) || 1;
-  // 두 눈 사이 거리
-  const eyeDistance = Math.abs(fp[0].x - fp[1].x) || 1;
-  // 얼굴 세로 길이 (이마에서 턱까지)
-  const faceHeight = Math.abs(fp[29].y - fp[32].y) || 1;
 
   // === 1. 눈꼬리 각도 분석 ===
   // 왼쪽 눈의 안쪽-바깥쪽 기울기 계산
@@ -181,54 +189,62 @@ export function analyzeFace(
   let eyeAngleAnalysis: { label: string; description: string };
   let eyeAngleLevel: number;
 
-  // MediaPipe 기준 각도 임계값 조정 (실제 눈꼬리 각도 범위: -15 ~ +15도)
+  // draw.py와 동일한 방식: faceangle 기준 분류
+  // faceangle = (b2_y-b1_y)/faceratio*100
+  // 여기서는 eyeAngleDegrees를 사용 (유사한 의미)
   if (eyeAngleDegrees > 5) {
+    // 눈꼬리 많이 올라감 (draw.py: faceangle <= -11)
     eyeAngleAnalysis = {
       label: "눈꼬리가 많이 올라감",
       description: "그 기상이 마치 하늘을 찌를 듯이 웅장하며, 모든 면에서 적극적이고 강인한 면모를 발휘합니다. 리더십과 독립적인 성향이 강하지만, 독불장군과 같은 고집스러움이 동반될 수 있습니다."
     };
     eyeAngleLevel = 5;
-    r1 += WEIGHTS.r1_power * 5;
+    facescore += WEIGHTS.r2_spirit * 5;
+    facescore += WEIGHTS.r2_adult * 4;
+    facescore += WEIGHTS.r4_kind * 1;
+    facescore += WEIGHTS.r4_wind * 5;
     r2 += WEIGHTS.r2_spirit * 5 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 1 + WEIGHTS.r4_wind * 5;
   } else if (eyeAngleDegrees > 2) {
+    // 눈꼬리 올라감 (draw.py: -11 < faceangle <= -4)
     eyeAngleAnalysis = {
       label: "눈꼬리가 올라감",
       description: "대담하고 용기 넘치며, 언제나 적극적이고 밝은 에너지를 발산합니다. 실패에 대한 두려움이 없어, 도전적인 상황에서도 적절하고 과감한 행동을 취하는 경향이 있습니다."
     };
     eyeAngleLevel = 4;
-    r1 += WEIGHTS.r1_power * 4;
+    facescore += WEIGHTS.r2_spirit * 4;
+    facescore += WEIGHTS.r2_adult * 4;
+    facescore += WEIGHTS.r4_kind * 4;
+    facescore += WEIGHTS.r4_wind * 4;
     r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 4 + WEIGHTS.r4_wind * 4;
   } else if (eyeAngleDegrees > -2) {
+    // 눈꼬리 일자 (draw.py: -4 < faceangle <= -2)
     eyeAngleAnalysis = {
       label: "눈꼬리가 일자",
       description: "내면에 강한 의지와 결단력을 지니고 있습니다. 감정의 기복이 크지 않아 일관된 태도를 유지하는 데 강점을 가지고 있으며, 안정적인 성격의 소유자입니다."
     };
     eyeAngleLevel = 3;
-    r1 += WEIGHTS.r1_power * 3;
+    facescore += WEIGHTS.r2_spirit * 3;
+    facescore += WEIGHTS.r2_adult * 3;
+    facescore += WEIGHTS.r4_kind * 5;
+    facescore += WEIGHTS.r4_wind * 3;
     r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_adult * 3;
     r4 += WEIGHTS.r4_kind * 5 + WEIGHTS.r4_wind * 3;
-  } else if (eyeAngleDegrees > -5) {
+  } else {
+    // 눈꼬리 내려감 (draw.py: faceangle > -2)
     eyeAngleAnalysis = {
       label: "눈꼬리가 내려감",
       description: "마음이 부드러우며 타인에 대한 배려가 깊습니다. 주변 환경에 능동적으로 적응하는 능력이 뛰어나며, 친화력이 좋아 사람들에게 호감을 받습니다."
     };
     eyeAngleLevel = 2;
-    r1 += WEIGHTS.r1_power * 2;
+    facescore += WEIGHTS.r2_spirit * 1;
+    facescore += WEIGHTS.r2_adult * 1;
+    facescore += WEIGHTS.r4_kind * 2;
+    facescore += WEIGHTS.r4_wind * 1;
     r2 += WEIGHTS.r2_spirit * 1 + WEIGHTS.r2_adult * 1;
-    r4 += WEIGHTS.r4_kind * 5 + WEIGHTS.r4_wind * 1;
-  } else {
-    eyeAngleAnalysis = {
-      label: "눈꼬리가 많이 내려감",
-      description: "매우 부드럽고 온화한 성품의 소유자입니다. 어린이에 대한 애정이 많고, 상대방을 위해 자신을 희생할 줄 아는 따뜻한 마음을 가지고 있습니다."
-    };
-    eyeAngleLevel = 1;
-    r1 += WEIGHTS.r1_power * 1;
-    r2 += WEIGHTS.r2_spirit * 1 + WEIGHTS.r2_adult * 1;
-    r4 += WEIGHTS.r4_kind * 5 + WEIGHTS.r4_wind * 1;
+    r4 += WEIGHTS.r4_kind * 2 + WEIGHTS.r4_wind * 1;
   }
-  score += eyeAngleLevel * 10;
 
   // === 2. 눈썹-눈 거리 분석 ===
   // 눈썹 위쪽 중간점과 눈 중심 사이 거리
@@ -289,7 +305,9 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_spirit * 4;
     r3 += WEIGHTS.r3_money * 2;
   }
-  score += eyebrowLevel * 8;
+  // facescore에 눈썹 분석 점수 추가 (draw.py 방식)
+  facescore += WEIGHTS.r2_spirit * eyebrowLevel;
+  facescore += WEIGHTS.r3_money * eyebrowLevel;
 
   // === 3. 코 길이 분석 === (draw.py ratio2 공식)
   // ratio2 = (facepoint[15].y - facepoint[0].y) / widthratio
@@ -328,7 +346,10 @@ export function analyzeFace(
     r3 += WEIGHTS.r3_social * 4;
     r4 += WEIGHTS.r4_responsibility * 2 + WEIGHTS.r4_sincere * 3;
   }
-  score += noseLevel * 8;
+  // facescore에 코 분석 점수 추가
+  facescore += WEIGHTS.r2_spirit * noseLevel;
+  facescore += WEIGHTS.r2_love * noseLevel;
+  facescore += WEIGHTS.r4_responsibility * noseLevel;
 
   // === 4. 인중 길이 분석 === (draw.py ratio3 공식)
   // ratio3 = (facepoint[12].y - facepoint[15].y) / widthratio
@@ -385,7 +406,10 @@ export function analyzeFace(
     r3 += WEIGHTS.r3_social * 4;
     r4 += WEIGHTS.r4_sincere * 1;
   }
-  score += philtrumLevel * 8;
+  // facescore에 인중 분석 점수 추가
+  facescore += WEIGHTS.r1_old * philtrumLevel;
+  facescore += WEIGHTS.r2_love * philtrumLevel;
+  facescore += WEIGHTS.r4_sincere * philtrumLevel;
 
   // === 5. 입 너비 분석 === (draw.py ratio7 공식)
   // ratio7 = (facepoint[11].x - facepoint[10].x) / widthratio
@@ -437,7 +461,9 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_power * 3;
     r3 += WEIGHTS.r3_work * 3;
   }
-  score += mouthLevel * 10;
+  // facescore에 입 분석 점수 추가
+  facescore += WEIGHTS.r1_power * mouthLevel;
+  facescore += WEIGHTS.r3_work * mouthLevel;
 
   // === 6. 하관(턱) 너비 분석 ===
   // 턱 양쪽 너비 / 얼굴 너비 비율
@@ -489,7 +515,9 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_adult * 1;
     r3 += WEIGHTS.r3_social * 2;
   }
-  score += jawLevel * 8;
+  // facescore에 턱 분석 점수 추가
+  facescore += WEIGHTS.r2_adult * jawLevel;
+  facescore += WEIGHTS.r3_social * jawLevel;
 
   // === 7. 눈 크기 분석 ===
   const eyeSizeLeftX = Math.abs(fp[17].x - fp[19].x);
@@ -548,40 +576,41 @@ export function analyzeFace(
     r3 += WEIGHTS.r3_someone * 3;
     r4 += WEIGHTS.r4_kind * 4;
   }
-  score += eyeSizeLevel * 8;
+  // facescore에 눈 크기 분석 점수 추가
+  facescore += WEIGHTS.r2_spirit * eyeSizeLevel;
+  facescore += WEIGHTS.r3_someone * eyeSizeLevel;
 
   // === 종합 점수 정규화 === (draw.py 공식 적용)
   // draw.py: face_color = (150 - (facescore - 172)) / 149 * 100
-  // facescore 범위: 약 100 ~ 350 (가중치 합산)
-  // face_color 범위: 약 -35 ~ 115 (0~100으로 클램프)
+  // facescore 범위: 약 50 ~ 300 (가중치 합산)
+  // face_color는 "상위 X%"를 의미 (낮을수록 좋음)
 
-  // r1~r4 합계 기반으로 계산 (draw.py와 유사한 범위)
-  const totalCategoryScore = r1 + r2 + r3 + r4;
-
-  // 총점 공식: 더 넓은 분포를 위한 비선형 변환
-  // 카테고리 점수 합 (약 50~200 범위) -> 표시 점수 (25~95 범위)
+  // 우리는 점수를 높을수록 좋게 표시하므로, 100 - face_color 사용
+  const faceColor = (150 - (facescore - 172)) / 149 * 100;
+  // face_color가 10% = 상위 10% = 좋은 점수 = 90점
+  // face_color가 80% = 상위 80% = 보통 점수 = 50점
   const normalizedScore = clamp(
-    Math.round((150 - (totalCategoryScore - 120)) / 1.5),
+    Math.round(100 - faceColor),
     25,
     95
   );
 
   // === 카테고리 점수 정규화 ===
   // 각 카테고리 raw 점수를 0~100 범위로 변환
-  // 더 넓은 분포를 위해 비선형 변환 적용
   const normalizeCategory = (val: number, avgVal: number, spread: number): number => {
-    // 평균값 기준으로 편차 계산, spread로 분산 조절
     const deviation = (val - avgVal) / spread;
-    // 시그모이드 유사 변환으로 50 중심 분포
-    const normalized = 50 + deviation * 30;
+    const normalized = 50 + deviation * 25;
     return clamp(Math.round(normalized), 15, 85);
   };
 
-  // 각 카테고리의 예상 평균과 분산
-  r1 = normalizeCategory(r1, 35, 20);
-  r2 = normalizeCategory(r2, 50, 25);
-  r3 = normalizeCategory(r3, 45, 25);
-  r4 = normalizeCategory(r4, 40, 20);
+  // r1~r4 raw 값 저장 (디버그용)
+  const rawR1 = r1, rawR2 = r2, rawR3 = r3, rawR4 = r4;
+
+  // 각 카테고리 정규화 (표시용)
+  r1 = normalizeCategory(r1, 20, 15);
+  r2 = normalizeCategory(r2, 40, 20);
+  r3 = normalizeCategory(r3, 30, 20);
+  r4 = normalizeCategory(r4, 25, 15);
 
   // === 종합 해석 생성 ===
   const summaryParts: string[] = [];
@@ -644,6 +673,16 @@ export function analyzeFace(
     summary,
     recommendations,
     gender,
+    debug: {
+      noseWidth,
+      noseLengthRatio,
+      philtrumRatio,
+      mouthRatio,
+      jawRatio,
+      eyebrowRatio,
+      eyeAngleDegrees,
+      facescore,
+    },
   };
 }
 
