@@ -23,6 +23,17 @@ interface FaceAnalysisData {
   viewCount: number;
   createdAt: string;
   isImageExpired: boolean;
+  // 디버그 정보
+  debug?: {
+    noseWidth: number;
+    noseLengthRatio: number;
+    philtrumRatio: number;
+    mouthRatio: number;
+    jawRatio: number;
+    eyebrowRatio: number;
+    eyeAngleDegrees: number;
+    facescore: number;
+  };
 }
 
 // 카테고리 정보 (run.py, draw.py 기반)
@@ -165,6 +176,69 @@ function getScoreGrade(score: number): { grade: string; color: string; emoji: st
   return { grade: '평', color: '#A8A8A8', emoji: '🌱' };
 }
 
+// 디버그 패널 컴포넌트
+function DebugPanel({ analysis }: { analysis: Record<string, unknown> }) {
+  const debug = analysis?.debug as {
+    noseWidth?: number;
+    noseLengthRatio?: number;
+    philtrumRatio?: number;
+    mouthRatio?: number;
+    jawRatio?: number;
+    eyebrowRatio?: number;
+    eyeAngleDegrees?: number;
+    facescore?: number;
+  } | undefined;
+
+  if (!debug) return null;
+
+  return (
+    <div className="bg-red-500/10 backdrop-blur rounded-2xl p-4 mb-6 border border-red-500/30">
+      <h3 className="text-red-400 font-bold mb-3 flex items-center gap-2">
+        <span>🔧</span> 디버그 정보 (개발용)
+      </h3>
+      <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+        <div className="bg-black/30 p-2 rounded">
+          <span className="text-gray-400">코너비 (noseWidth):</span>
+          <span className="text-white ml-2">{debug.noseWidth?.toFixed(2)}</span>
+        </div>
+        <div className="bg-black/30 p-2 rounded">
+          <span className="text-gray-400">코길이비 (ratio2):</span>
+          <span className="text-yellow-400 ml-2 font-bold">{debug.noseLengthRatio?.toFixed(3)}</span>
+        </div>
+        <div className="bg-black/30 p-2 rounded">
+          <span className="text-gray-400">인중비 (ratio3):</span>
+          <span className="text-yellow-400 ml-2 font-bold">{debug.philtrumRatio?.toFixed(3)}</span>
+        </div>
+        <div className="bg-black/30 p-2 rounded">
+          <span className="text-gray-400">입너비비 (ratio7):</span>
+          <span className="text-yellow-400 ml-2 font-bold">{debug.mouthRatio?.toFixed(3)}</span>
+        </div>
+        <div className="bg-black/30 p-2 rounded">
+          <span className="text-gray-400">턱비 (ratio8):</span>
+          <span className="text-yellow-400 ml-2 font-bold">{debug.jawRatio?.toFixed(3)}</span>
+        </div>
+        <div className="bg-black/30 p-2 rounded">
+          <span className="text-gray-400">눈썹비:</span>
+          <span className="text-yellow-400 ml-2 font-bold">{debug.eyebrowRatio?.toFixed(3)}</span>
+        </div>
+        <div className="bg-black/30 p-2 rounded">
+          <span className="text-gray-400">눈각도 (°):</span>
+          <span className="text-cyan-400 ml-2 font-bold">{debug.eyeAngleDegrees?.toFixed(2)}°</span>
+        </div>
+        <div className="bg-black/30 p-2 rounded">
+          <span className="text-gray-400">facescore:</span>
+          <span className="text-green-400 ml-2 font-bold">{debug.facescore}</span>
+        </div>
+      </div>
+      <div className="mt-3 text-xs text-gray-400">
+        <p>• draw.py 임계값: 코길이 &gt;1.55(긴), 1.28~1.55(이상적), &lt;1.28(짧음)</p>
+        <p>• draw.py 임계값: 인중 &gt;0.7(매우긴), 0.65~0.7(긴), 0.58~0.65(이상적)</p>
+        <p>• draw.py 임계값: 입너비 &gt;1.75(매우큼), 1.65~1.75(큼), 1.57~1.65(이상적)</p>
+      </div>
+    </div>
+  );
+}
+
 // MediaPipe 랜드마크 연결선 정의
 const FACE_CONNECTIONS = {
   silhouette: [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10],
@@ -176,7 +250,49 @@ const FACE_CONNECTIONS = {
   lipsOuter: [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185, 61],
 };
 
+// 기존 주요 포인트
 const KEY_POINTS = [33, 133, 362, 263, 159, 386, 70, 300, 107, 336, 1, 4, 5, 195, 61, 291, 0, 17, 152, 234, 454, 10];
+
+// 디버그용 추가 포인트 (코끝, 콧볼, 입, 턱 등)
+const DEBUG_POINTS = {
+  nose: {
+    tip: 1,           // 코끝
+    bridge: 6,        // 코 브릿지 (미간)
+    bottomCenter: 2,  // 코밑 중앙
+    leftAla: 129,     // 왼쪽 콧볼
+    rightAla: 358,    // 오른쪽 콧볼
+  },
+  eyes: {
+    leftCenter: 468,  // 왼쪽 눈 중심 (iris)
+    rightCenter: 473, // 오른쪽 눈 중심 (iris)
+    leftOuter: 33,    // 왼쪽 눈 외곽
+    leftInner: 133,   // 왼쪽 눈 안쪽
+    rightOuter: 263,  // 오른쪽 눈 외곽
+    rightInner: 362,  // 오른쪽 눈 안쪽
+  },
+  mouth: {
+    left: 61,         // 입 왼쪽
+    right: 291,       // 입 오른쪽
+    top: 0,           // 윗입술 중앙
+    bottom: 17,       // 아랫입술 중앙
+    center: 13,       // 입 중앙
+  },
+  jaw: {
+    chin: 152,        // 턱 끝
+    leftJaw: 234,     // 왼쪽 턱
+    rightJaw: 454,    // 오른쪽 턱
+  },
+  eyebrow: {
+    leftOuter: 70,    // 왼쪽 눈썹 외곽
+    leftInner: 107,   // 왼쪽 눈썹 안쪽
+    rightOuter: 300,  // 오른쪽 눈썹 외곽
+    rightInner: 336,  // 오른쪽 눈썹 안쪽
+  },
+  cheek: {
+    left: 234,        // 왼쪽 볼
+    right: 454,       // 오른쪽 볼
+  },
+};
 
 // 레이더 차트 컴포넌트
 function RadarChart({ categories }: { categories: { r1: number; r2: number; r3: number; r4: number } }) {
@@ -356,7 +472,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
     const img = new Image();
     img.onload = () => {
-      const canvasSize = 400;
+      const canvasSize = 500; // 크기 증가
       canvas.width = canvasSize;
       canvas.height = canvasSize;
 
@@ -366,23 +482,18 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       ctx.fillStyle = '#1a1a2e';
       ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-      // 원형 마스크
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, Math.PI * 2);
-      ctx.clip();
-
-      // 이미지 그리기 (이미 크롭된 정사각형 이미지를 그대로 표시)
+      // 이미지 그리기 (원형 마스크 없이)
       ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
 
       // 랜드마크 좌표 변환 (0-1 정규화 좌표를 캔버스 좌표로)
       const transformPoint = (idx: number) => {
+        if (idx >= landmarks.length) return null;
         const [lx, ly] = landmarks[idx];
         return { x: lx * canvasSize, y: ly * canvasSize };
       };
 
-      // 연결선 그리기 (투명도 적용)
-      ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+      // 연결선 그리기
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
       ctx.lineWidth = 1.5;
 
       const drawConnections = (indices: number[]) => {
@@ -390,6 +501,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         for (let i = 0; i < indices.length; i++) {
           if (indices[i] >= landmarks.length) continue;
           const point = transformPoint(indices[i]);
+          if (!point) continue;
           if (i === 0) ctx.moveTo(point.x, point.y);
           else ctx.lineTo(point.x, point.y);
         }
@@ -400,27 +512,73 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         drawConnections(connection);
       });
 
-      // 주요 포인트 (50% 투명도)
-      const pointSize = 4;
-      ctx.globalAlpha = 0.5;
-      KEY_POINTS.forEach(idx => {
-        if (idx >= landmarks.length) return;
+      // 라벨이 있는 점 그리기 함수
+      const drawLabeledPoint = (idx: number, color: string, label: string) => {
         const point = transformPoint(idx);
+        if (!point) return;
+
+        // 점 그리기
         ctx.beginPath();
-        ctx.arc(point.x, point.y, pointSize, 0, Math.PI * 2);
+        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // 라벨 그리기
+        ctx.font = 'bold 10px Arial';
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.strokeText(label, point.x + 7, point.y + 3);
+        ctx.fillText(label, point.x + 7, point.y + 3);
+      };
+
+      // 코 관련 점 (빨강)
+      drawLabeledPoint(DEBUG_POINTS.nose.tip, '#ff0000', '코끝');
+      drawLabeledPoint(DEBUG_POINTS.nose.bridge, '#ff0000', '미간');
+      drawLabeledPoint(DEBUG_POINTS.nose.bottomCenter, '#ff0000', '코밑');
+      drawLabeledPoint(DEBUG_POINTS.nose.leftAla, '#ff6600', '왼콧볼');
+      drawLabeledPoint(DEBUG_POINTS.nose.rightAla, '#ff6600', '우콧볼');
+
+      // 눈 관련 점 (파랑)
+      drawLabeledPoint(DEBUG_POINTS.eyes.leftCenter, '#00ff00', '왼눈');
+      drawLabeledPoint(DEBUG_POINTS.eyes.rightCenter, '#00ff00', '우눈');
+      drawLabeledPoint(DEBUG_POINTS.eyes.leftOuter, '#0088ff', '');
+      drawLabeledPoint(DEBUG_POINTS.eyes.leftInner, '#0088ff', '');
+      drawLabeledPoint(DEBUG_POINTS.eyes.rightOuter, '#0088ff', '');
+      drawLabeledPoint(DEBUG_POINTS.eyes.rightInner, '#0088ff', '');
+
+      // 입 관련 점 (분홍)
+      drawLabeledPoint(DEBUG_POINTS.mouth.left, '#ff00ff', '입좌');
+      drawLabeledPoint(DEBUG_POINTS.mouth.right, '#ff00ff', '입우');
+      drawLabeledPoint(DEBUG_POINTS.mouth.top, '#ff00ff', '윗입');
+      drawLabeledPoint(DEBUG_POINTS.mouth.bottom, '#ff00ff', '아랫입');
+      drawLabeledPoint(DEBUG_POINTS.mouth.center, '#ff00ff', '입중앙');
+
+      // 턱 관련 점 (노랑)
+      drawLabeledPoint(DEBUG_POINTS.jaw.chin, '#ffff00', '턱끝');
+      drawLabeledPoint(DEBUG_POINTS.jaw.leftJaw, '#ffff00', '왼턱');
+      drawLabeledPoint(DEBUG_POINTS.jaw.rightJaw, '#ffff00', '우턱');
+
+      // 눈썹 관련 점 (청록)
+      drawLabeledPoint(DEBUG_POINTS.eyebrow.leftOuter, '#00ffff', '');
+      drawLabeledPoint(DEBUG_POINTS.eyebrow.leftInner, '#00ffff', '');
+      drawLabeledPoint(DEBUG_POINTS.eyebrow.rightOuter, '#00ffff', '');
+      drawLabeledPoint(DEBUG_POINTS.eyebrow.rightInner, '#00ffff', '');
+
+      // 기존 KEY_POINTS 표시 (작은 점)
+      ctx.globalAlpha = 0.4;
+      KEY_POINTS.forEach(idx => {
+        const point = transformPoint(idx);
+        if (!point) return;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
         ctx.fillStyle = '#ff00ff';
         ctx.fill();
       });
       ctx.globalAlpha = 1;
-
-      ctx.restore();
-
-      // 원형 테두리
-      ctx.beginPath();
-      ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.lineWidth = 4;
-      ctx.stroke();
     };
     img.src = data.imageData;
   }, [data]);
@@ -739,6 +897,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             {oneLiner}
           </p>
         </div>
+
+        {/* 디버그 정보 섹션 */}
+        <DebugPanel analysis={data.analysis} />
 
         {/* 레이더 차트 (육각형 대신 사각형 - 4개 카테고리) */}
         <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">

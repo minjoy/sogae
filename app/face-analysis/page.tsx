@@ -324,6 +324,12 @@ export default function FaceAnalysisPage() {
         }
 
         // 3. 결과를 DB에 저장 (변환된 랜드마크 사용)
+        // analysis에 debug 정보도 포함
+        const analysisWithDebug = {
+          ...data.result.analysis,
+          debug: data.result.debug,
+        };
+
         const saveResponse = await fetch('/api/face/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -331,7 +337,7 @@ export default function FaceAnalysisPage() {
             score: data.result.score,
             gender: data.result.gender,
             categories: data.result.categories,
-            analysis: data.result.analysis,
+            analysis: analysisWithDebug,
             landmarks: croppedData.landmarks,
             imageWidth: 600, // 크롭된 이미지 크기
             imageHeight: 600,
