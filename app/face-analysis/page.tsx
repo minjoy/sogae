@@ -191,31 +191,65 @@ export default function FaceAnalysisPage() {
     };
   }, [mode, faceMeshLoaded, startCamera, stopCamera]);
 
-  // 이미지 리사이즈 (최대 1200px, 품질 0.8)
-  const resizeImage = useCallback((imageDataUrl: string, maxSize: number = 1200): Promise<string> => {
+  // 얼굴 영역만 크롭하여 압축 (600px, 품질 0.6)
+  const cropFaceImage = useCallback((
+    imageDataUrl: string,
+    faceLandmarks: FaceLandmark[],
+    imgWidth: number,
+    imgHeight: number
+  ): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
-        let { width, height } = img;
+        // 얼굴 바운딩 박스 계산
+        let minX = 1, maxX = 0, minY = 1, maxY = 0;
+        faceLandmarks.forEach(lm => {
+          minX = Math.min(minX, lm.x);
+          maxX = Math.max(maxX, lm.x);
+          minY = Math.min(minY, lm.y);
+          maxY = Math.max(maxY, lm.y);
+        });
 
-        // 이미지가 maxSize보다 큰 경우에만 리사이즈
-        if (width > maxSize || height > maxSize) {
-          if (width > height) {
-            height = (height / width) * maxSize;
-            width = maxSize;
-          } else {
-            width = (width / height) * maxSize;
-            height = maxSize;
-          }
-        }
+        // 패딩 추가 (30%)
+        const padding = 0.3;
+        const faceWidth = maxX - minX;
+        const faceHeight = maxY - minY;
+
+        const cropMinX = Math.max(0, minX - faceWidth * padding);
+        const cropMaxX = Math.min(1, maxX + faceWidth * padding);
+        const cropMinY = Math.max(0, minY - faceHeight * padding);
+        const cropMaxY = Math.min(1, maxY + faceHeight * padding);
+
+        // 픽셀 좌표로 변환
+        const sx = cropMinX * img.width;
+        const sy = cropMinY * img.height;
+        const sw = (cropMaxX - cropMinX) * img.width;
+        const sh = (cropMaxY - cropMinY) * img.height;
+
+        // 정사각형으로 만들기
+        const size = Math.max(sw, sh);
+        const centerX = sx + sw / 2;
+        const centerY = sy + sh / 2;
+        const finalSx = Math.max(0, centerX - size / 2);
+        const finalSy = Math.max(0, centerY - size / 2);
+        const finalSize = Math.min(size, img.width - finalSx, img.height - finalSy);
+
+        // 출력 크기 (최대 600px)
+        const outputSize = Math.min(600, finalSize);
 
         const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = outputSize;
+        canvas.height = outputSize;
         const ctx = canvas.getContext('2d');
+
         if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.8));
+          ctx.drawImage(
+            img,
+            finalSx, finalSy, finalSize, finalSize,
+            0, 0, outputSize, outputSize
+          );
+          // 품질 0.6으로 압축
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
         } else {
           resolve(imageDataUrl);
         }
@@ -258,10 +292,10 @@ export default function FaceAnalysisPage() {
       const data = await response.json();
 
       if (data.success) {
-        // 2. 이미지 리사이즈 (DB 저장용)
+        // 2. 얼굴 영역만 크롭하여 압축 (저장소 절약)
         let compressedImage = imageData || capturedImage;
         if (compressedImage) {
-          compressedImage = await resizeImage(compressedImage, 1200);
+          compressedImage = await cropFaceImage(compressedImage, faceLandmarks, imageWidth, imageHeight);
         }
 
         // 3. 결과를 DB에 저장
@@ -324,7 +358,7 @@ export default function FaceAnalysisPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [gender, capturedImage, router, resizeImage]);
+  }, [gender, capturedImage, router, cropFaceImage]);
 
   // 사진 촬영
   const capturePhoto = useCallback(async () => {
