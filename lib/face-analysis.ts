@@ -111,6 +111,10 @@ export interface FaceAnalysisResult {
     upperLipHeight: number;     // 윗입술 두께
     lowerLipHeight: number;     // 아랫입술 두께
     lipRatio: number;           // 입술 비율 (윗/아랫)
+    // 턱각 관련
+    leftJawAngle: number;       // 왼쪽 턱각 각도 (각질수록 작음)
+    rightJawAngle: number;      // 오른쪽 턱각 각도
+    avgJawAngle: number;        // 평균 턱각 각도
   };
 }
 
@@ -728,6 +732,39 @@ export function analyzeFace(
       upperLipHeight: Math.abs(fp[12].y - fp[8].y), // 윗입술 두께 (입중앙 ~ 윗입술)
       lowerLipHeight: Math.abs(fp[9].y - fp[12].y), // 아랫입술 두께 (아랫입술 ~ 입중앙)
       lipRatio: Math.abs(fp[12].y - fp[8].y) / (Math.abs(fp[9].y - fp[12].y) || 1), // 입술 비율
+      // 턱각 각도 계산 (볼→턱각→턱끝 사이 각도, 작을수록 각진 턱)
+      leftJawAngle: (() => {
+        // 왼쪽: 볼(fp[26]) → 턱각(fp[30]) → 턱끝(fp[29])
+        const v1x = fp[26].x - fp[30].x, v1y = fp[26].y - fp[30].y;
+        const v2x = fp[29].x - fp[30].x, v2y = fp[29].y - fp[30].y;
+        const dot = v1x * v2x + v1y * v2y;
+        const mag1 = Math.sqrt(v1x * v1x + v1y * v1y) || 1;
+        const mag2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
+        return Math.acos(Math.min(1, Math.max(-1, dot / (mag1 * mag2)))) * (180 / Math.PI);
+      })(),
+      rightJawAngle: (() => {
+        // 오른쪽: 볼(fp[27]) → 턱각(fp[31]) → 턱끝(fp[29])
+        const v1x = fp[27].x - fp[31].x, v1y = fp[27].y - fp[31].y;
+        const v2x = fp[29].x - fp[31].x, v2y = fp[29].y - fp[31].y;
+        const dot = v1x * v2x + v1y * v2y;
+        const mag1 = Math.sqrt(v1x * v1x + v1y * v1y) || 1;
+        const mag2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
+        return Math.acos(Math.min(1, Math.max(-1, dot / (mag1 * mag2)))) * (180 / Math.PI);
+      })(),
+      avgJawAngle: (() => {
+        // 평균 턱각
+        const calcAngle = (cheek: FacePoint, jaw: FacePoint, chin: FacePoint) => {
+          const v1x = cheek.x - jaw.x, v1y = cheek.y - jaw.y;
+          const v2x = chin.x - jaw.x, v2y = chin.y - jaw.y;
+          const dot = v1x * v2x + v1y * v2y;
+          const mag1 = Math.sqrt(v1x * v1x + v1y * v1y) || 1;
+          const mag2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
+          return Math.acos(Math.min(1, Math.max(-1, dot / (mag1 * mag2)))) * (180 / Math.PI);
+        };
+        const left = calcAngle(fp[26], fp[30], fp[29]);
+        const right = calcAngle(fp[27], fp[31], fp[29]);
+        return (left + right) / 2;
+      })(),
     },
   };
 }

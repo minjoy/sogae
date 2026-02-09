@@ -211,6 +211,9 @@ function DebugPanel({ analysis, memo, setMemo }: {
     upperLipHeight?: number;    // 윗입술 두께
     lowerLipHeight?: number;    // 아랫입술 두께
     lipRatio?: number;          // 입술 비율 (윗/아랫)
+    leftJawAngle?: number;      // 왼쪽 턱각 각도
+    rightJawAngle?: number;     // 오른쪽 턱각 각도
+    avgJawAngle?: number;       // 평균 턱각 각도
   } | undefined;
 
   if (!debug) return null;
@@ -336,6 +339,20 @@ function DebugPanel({ analysis, memo, setMemo }: {
           <div className="text-orange-400 font-bold">{debug.lipRatio?.toFixed(2)}</div>
         </div>
 
+        {/* 턱각 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">왼턱각</div>
+          <div className="text-yellow-400 font-bold">{debug.leftJawAngle?.toFixed(1)}°</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">우턱각</div>
+          <div className="text-yellow-400 font-bold">{debug.rightJawAngle?.toFixed(1)}°</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">평균턱각</div>
+          <div className="text-orange-400 font-bold">{debug.avgJawAngle?.toFixed(1)}°</div>
+        </div>
+
         {/* 기타 */}
         <div className="bg-black/30 p-1.5 rounded">
           <div className="text-gray-500 text-[10px]">코끝~코밑</div>
@@ -362,11 +379,16 @@ function DebugPanel({ analysis, memo, setMemo }: {
 
 // MediaPipe 랜드마크 연결선 정의
 const FACE_CONNECTIONS = {
-  silhouette: [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10],
+  // 상단 윤곽 (이마~관자놀이)
+  upperSilhouette: [10, 338, 297, 332, 284, 251, 389, 356, 454],
+  upperSilhouetteLeft: [234, 127, 162, 21, 54, 103, 67, 109, 10],
   // 턱각 강조 윤곽선 (직선으로 연결하여 각진 턱 표현)
   jawLine: [234, 172, 152, 397, 454],
-  // 하관 윤곽 (더 세밀하게)
-  lowerJaw: [234, 132, 172, 150, 149, 152, 148, 176, 397, 361, 454],
+  // 실제 턱 외곽선 (더 바깥쪽 점 사용 - 각진 턱용)
+  jawContourLeft: [234, 93, 132, 58, 172, 136, 150, 152],
+  jawContourRight: [152, 149, 176, 397, 288, 361, 323, 454],
+  // 하관 내측 윤곽 (부드러운 턱용)
+  lowerJawInner: [172, 150, 149, 152, 148, 176, 397],
   leftEye: [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246, 33],
   rightEye: [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398, 362],
   leftEyebrow: [70, 63, 105, 66, 107, 55, 65, 52, 53, 46],
@@ -667,16 +689,25 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         ctx.stroke();
       };
 
-      // 기본 연결선 그리기 (턱선 제외)
-      const { jawLine, lowerJaw, ...otherConnections } = FACE_CONNECTIONS;
-      Object.values(otherConnections).forEach(connection => {
+      // 기본 연결선 그리기 (눈, 눈썹, 코, 입)
+      const { jawLine, jawContourLeft, jawContourRight, lowerJawInner, upperSilhouette, upperSilhouetteLeft, ...faceFeatures } = FACE_CONNECTIONS;
+      Object.values(faceFeatures).forEach(connection => {
         drawConnections(connection, 'rgba(0, 255, 255, 0.6)', 1.5);
       });
 
-      // 턱각 강조 윤곽선 (노란색, 두껍게)
+      // 상단 윤곽선 (이마~관자놀이)
+      drawConnections(upperSilhouette, 'rgba(0, 255, 255, 0.5)', 1.5);
+      drawConnections(upperSilhouetteLeft, 'rgba(0, 255, 255, 0.5)', 1.5);
+
+      // 실제 턱 외곽선 (주황색, 두껍게 - 각진 턱도 잘 표현)
+      drawConnections(jawContourLeft, 'rgba(255, 165, 0, 0.8)', 2.5);
+      drawConnections(jawContourRight, 'rgba(255, 165, 0, 0.8)', 2.5);
+
+      // 턱각 강조 직선 (노란색, 가장 두껍게)
       drawConnections(jawLine, 'rgba(255, 255, 0, 0.9)', 3);
-      // 하관 세밀 윤곽 (주황색)
-      drawConnections(lowerJaw, 'rgba(255, 165, 0, 0.7)', 2);
+
+      // 하관 내측 윤곽 (연한 주황)
+      drawConnections(lowerJawInner, 'rgba(255, 200, 100, 0.5)', 1.5);
 
       // 라벨이 있는 점 그리기 함수
       const drawLabeledPoint = (idx: number, color: string, label: string) => {
