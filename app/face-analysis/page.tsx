@@ -191,13 +191,13 @@ export default function FaceAnalysisPage() {
     };
   }, [mode, faceMeshLoaded, startCamera, stopCamera]);
 
-  // 얼굴 영역만 크롭하여 압축 (600px, 품질 0.6)
+  // 얼굴 영역만 크롭하여 압축 + 랜드마크 좌표 변환
   const cropFaceImage = useCallback((
     imageDataUrl: string,
     faceLandmarks: FaceLandmark[],
     imgWidth: number,
     imgHeight: number
-  ): Promise<string> => {
+  ): Promise<{ image: string; landmarks: number[][] }> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
@@ -237,6 +237,17 @@ export default function FaceAnalysisPage() {
         // 출력 크기 (최대 600px)
         const outputSize = Math.min(600, finalSize);
 
+        // 랜드마크 좌표 변환 (크롭된 이미지 기준으로)
+        const transformedLandmarks = faceLandmarks.map(lm => {
+          // 원본 픽셀 좌표
+          const origX = lm.x * img.width;
+          const origY = lm.y * img.height;
+          // 크롭 영역 기준 상대 좌표 (0-1)
+          const newX = (origX - finalSx) / finalSize;
+          const newY = (origY - finalSy) / finalSize;
+          return [newX, newY, lm.z];
+        });
+
         const canvas = document.createElement('canvas');
         canvas.width = outputSize;
         canvas.height = outputSize;
@@ -249,12 +260,22 @@ export default function FaceAnalysisPage() {
             0, 0, outputSize, outputSize
           );
           // 품질 0.6으로 압축
-          resolve(canvas.toDataURL('image/jpeg', 0.6));
+          resolve({
+            image: canvas.toDataURL('image/jpeg', 0.6),
+            landmarks: transformedLandmarks
+          });
         } else {
-          resolve(imageDataUrl);
+          // 실패 시 원본 반환
+          resolve({
+            image: imageDataUrl,
+            landmarks: faceLandmarks.map(lm => [lm.x, lm.y, lm.z])
+          });
         }
       };
-      img.onerror = () => resolve(imageDataUrl);
+      img.onerror = () => resolve({
+        image: imageDataUrl,
+        landmarks: faceLandmarks.map(lm => [lm.x, lm.y, lm.z])
+      });
       img.src = imageDataUrl;
     });
   }, []);
@@ -292,13 +313,17 @@ export default function FaceAnalysisPage() {
       const data = await response.json();
 
       if (data.success) {
-        // 2. 얼굴 영역만 크롭하여 압축 (저장소 절약)
-        let compressedImage = imageData || capturedImage;
-        if (compressedImage) {
-          compressedImage = await cropFaceImage(compressedImage, faceLandmarks, imageWidth, imageHeight);
+        // 2. 얼굴 영역만 크롭하여 압축 + 랜드마크 변환
+        let croppedData = {
+          image: imageData || capturedImage || '',
+          landmarks: faceLandmarks.map(lm => [lm.x, lm.y, lm.z])
+        };
+
+        if (croppedData.image) {
+          croppedData = await cropFaceImage(croppedData.image, faceLandmarks, imageWidth, imageHeight);
         }
 
-        // 3. 결과를 DB에 저장
+        // 3. 결과를 DB에 저장 (변환된 랜드마크 사용)
         const saveResponse = await fetch('/api/face/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -307,10 +332,10 @@ export default function FaceAnalysisPage() {
             gender: data.result.gender,
             categories: data.result.categories,
             analysis: data.result.analysis,
-            landmarks: faceLandmarks.map(lm => [lm.x, lm.y, lm.z]),
-            imageWidth,
-            imageHeight,
-            imageData: compressedImage,
+            landmarks: croppedData.landmarks,
+            imageWidth: 600, // 크롭된 이미지 크기
+            imageHeight: 600,
+            imageData: croppedData.image,
             panAngle: data.result.panAngle,
             tiltAngle: data.result.tiltAngle,
             rollAngle: data.result.rollAngle,
@@ -322,10 +347,10 @@ export default function FaceAnalysisPage() {
           // DB 저장 실패 시 기존 방식으로 폴백
           sessionStorage.setItem('faceAnalysisResult', JSON.stringify({
             result: data.result,
-            image: compressedImage,
-            landmarks: faceLandmarks,
-            imageWidth,
-            imageHeight,
+            image: croppedData.image,
+            landmarks: croppedData.landmarks.map(([x, y, z]) => ({ x, y, z })),
+            imageWidth: 600,
+            imageHeight: 600,
             gender,
           }));
           router.push('/face-analysis/result');
@@ -341,10 +366,10 @@ export default function FaceAnalysisPage() {
           // DB 저장 실패 시 기존 방식으로 폴백
           sessionStorage.setItem('faceAnalysisResult', JSON.stringify({
             result: data.result,
-            image: compressedImage,
-            landmarks: faceLandmarks,
-            imageWidth,
-            imageHeight,
+            image: croppedData.image,
+            landmarks: croppedData.landmarks.map(([x, y, z]) => ({ x, y, z })),
+            imageWidth: 600,
+            imageHeight: 600,
             gender,
           }));
           router.push('/face-analysis/result');

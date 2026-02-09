@@ -344,7 +344,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     fetchData();
   }, [resolvedParams.code]);
 
-  // 얼굴 랜드마크 그리기 (80% 확대, 투명 점)
+  // 얼굴 랜드마크 그리기 (이미지가 이미 크롭됨, 랜드마크도 변환됨)
   const drawFaceMesh = useCallback(() => {
     if (!canvasRef.current || !data?.imageData || !data?.landmarks) return;
 
@@ -358,31 +358,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       canvas.width = canvasSize;
       canvas.height = canvasSize;
 
-      // 얼굴 영역 계산 (랜드마크 기반)
       const landmarks = data.landmarks!;
-      let minX = 1, maxX = 0, minY = 1, maxY = 0;
-      landmarks.forEach(([x, y]) => {
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
-      });
-
-      // 얼굴 크기 (픽셀)
-      const faceWidth = (maxX - minX) * img.width;
-      const faceHeight = (maxY - minY) * img.height;
-      const faceCenterX = ((minX + maxX) / 2) * img.width;
-      const faceCenterY = ((minY + maxY) / 2) * img.height;
-
-      // 80% 채우기 위한 스케일 계산
-      const targetSize = canvasSize * 0.8;
-      const faceSize = Math.max(faceWidth, faceHeight);
-      const scale = targetSize / faceSize;
-
-      // 크롭 영역 계산
-      const sourceSize = canvasSize / scale;
-      const sx = faceCenterX - sourceSize / 2;
-      const sy = faceCenterY - sourceSize / 2;
 
       // 배경 (검정)
       ctx.fillStyle = '#1a1a2e';
@@ -394,15 +370,13 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       ctx.arc(canvasSize / 2, canvasSize / 2, canvasSize / 2 - 10, 0, Math.PI * 2);
       ctx.clip();
 
-      // 이미지 그리기 (80% 확대)
-      ctx.drawImage(img, sx, sy, sourceSize, sourceSize, 0, 0, canvasSize, canvasSize);
+      // 이미지 그리기 (이미 크롭된 정사각형 이미지를 그대로 표시)
+      ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
 
-      // 랜드마크 좌표 변환
+      // 랜드마크 좌표 변환 (0-1 정규화 좌표를 캔버스 좌표로)
       const transformPoint = (idx: number) => {
         const [lx, ly] = landmarks[idx];
-        const x = (lx * img.width - sx) * scale;
-        const y = (ly * img.height - sy) * scale;
-        return { x, y };
+        return { x: lx * canvasSize, y: ly * canvasSize };
       };
 
       // 연결선 그리기 (투명도 적용)
@@ -424,8 +398,8 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         drawConnections(connection);
       });
 
-      // 주요 포인트 (50% 투명도, 얼굴 크기에 비례)
-      const pointSize = Math.max(2, (faceSize / img.width) * 8);
+      // 주요 포인트 (50% 투명도)
+      const pointSize = 4;
       ctx.globalAlpha = 0.5;
       KEY_POINTS.forEach(idx => {
         if (idx >= landmarks.length) return;
@@ -509,41 +483,21 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       });
 
       if (img.complete && img.naturalWidth > 0) {
-        // 얼굴 영역 계산
         const landmarks = data.landmarks;
-        let minX = 1, maxX = 0, minY = 1, maxY = 0;
-        landmarks.forEach(([x, y]) => {
-          minX = Math.min(minX, x);
-          maxX = Math.max(maxX, x);
-          minY = Math.min(minY, y);
-          maxY = Math.max(maxY, y);
-        });
-
-        const faceWidth = (maxX - minX) * img.width;
-        const faceHeight = (maxY - minY) * img.height;
-        const faceCenterX = ((minX + maxX) / 2) * img.width;
-        const faceCenterY = ((minY + maxY) / 2) * img.height;
-
-        const targetSize = faceSize * 0.8;
-        const sourceFaceSize = Math.max(faceWidth, faceHeight);
-        const scale = targetSize / sourceFaceSize;
-        const sourceSize = faceSize / scale;
-
-        const sx = faceCenterX - sourceSize / 2;
-        const sy = faceCenterY - sourceSize / 2;
 
         ctx.save();
         ctx.beginPath();
         ctx.arc(540, faceY, faceSize / 2, 0, Math.PI * 2);
         ctx.clip();
 
-        ctx.drawImage(img, sx, sy, sourceSize, sourceSize, 540 - faceSize/2, faceY - faceSize/2, faceSize, faceSize);
+        // 이미 크롭된 이미지를 그대로 표시
+        ctx.drawImage(img, 0, 0, img.width, img.height, 540 - faceSize/2, faceY - faceSize/2, faceSize, faceSize);
 
-        // 랜드마크 그리기
+        // 랜드마크 좌표 변환 (0-1 정규화 좌표를 공유카드 좌표로)
         const transformPoint = (idx: number) => {
           const [lx, ly] = landmarks[idx];
-          const x = (lx * img.width - sx) * scale + (540 - faceSize/2);
-          const y = (ly * img.height - sy) * scale + (faceY - faceSize/2);
+          const x = lx * faceSize + (540 - faceSize/2);
+          const y = ly * faceSize + (faceY - faceSize/2);
           return { x, y };
         };
 
