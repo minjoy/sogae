@@ -526,32 +526,76 @@ export function analyzeFace(
   facescore += WEIGHTS.r1_power * mouthLevel;
   facescore += WEIGHTS.r3_work * mouthLevel;
 
-  // === 6. 하관(턱) 너비 분석 ===
-  // 턱 양쪽 너비 / 얼굴 너비 비율
+  // === 6. 하관(턱) 분석 ===
+  // 턱의 튼튼함 = 넓이 + 각도 (길이가 아님)
+  // 긴 턱은 오히려 약한 경우가 많음 - 넓고 각진 턱이 튼튼한 턱
+
   const jawWidth = Math.abs(fp[31].x - fp[30].x);
   const jawRatio = jawWidth / faceWidth;
+
+  // 턱각 계산 (볼-턱각-턱끝 사이의 각도)
+  // 작을수록 각진 턱 (강함), 클수록 둥근 턱 (부드러움)
+  const calcJawAngle = (cheek: FacePoint, jaw: FacePoint, chin: FacePoint) => {
+    const v1x = cheek.x - jaw.x, v1y = cheek.y - jaw.y;
+    const v2x = chin.x - jaw.x, v2y = chin.y - jaw.y;
+    const dot = v1x * v2x + v1y * v2y;
+    const mag1 = Math.sqrt(v1x * v1x + v1y * v1y) || 1;
+    const mag2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
+    return Math.acos(Math.min(1, Math.max(-1, dot / (mag1 * mag2)))) * (180 / Math.PI);
+  };
+  const leftJawAngle = calcJawAngle(fp[26], fp[30], fp[29]);
+  const rightJawAngle = calcJawAngle(fp[27], fp[31], fp[29]);
+  const avgJawAngle = (leftJawAngle + rightJawAngle) / 2;
+
+  // 하관 길이 (턱끝 ~ 턱각 거리)
+  const jawLengthLeft = Math.sqrt(
+    Math.pow(fp[29].x - fp[30].x, 2) + Math.pow(fp[29].y - fp[30].y, 2)
+  );
+  const jawLengthRight = Math.sqrt(
+    Math.pow(fp[29].x - fp[31].x, 2) + Math.pow(fp[29].y - fp[31].y, 2)
+  );
+  const avgJawLength = (jawLengthLeft + jawLengthRight) / 2;
+
+  // 턱 넓이 대비 길이 비율 (낮을수록 넓고 짧은 턱 = 튼튼)
+  const jawWidthToLengthRatio = avgJawLength / (jawWidth || 1);
+
+  // 종합 턱 강도 점수 계산
+  // 1. 넓이 점수: jawRatio가 높을수록 좋음 (0~1 범위)
+  const widthScore = Math.min(1, jawRatio / 0.9);
+
+  // 2. 각도 점수: 각도가 낮을수록 좋음 (90도 기준)
+  // 일반적인 턱각 범위: 80~130도
+  // 80도 이하: 매우 각진 턱 (1점), 130도 이상: 매우 둥근 턱 (0점)
+  const angleScore = Math.max(0, Math.min(1, (130 - avgJawAngle) / 50));
+
+  // 3. 넓이/길이 비율 점수: 낮을수록 좋음 (넓고 짧은 턱)
+  // 비율이 0.7 이하: 넓고 짧은 턱 (1점), 1.3 이상: 좁고 긴 턱 (0점)
+  const proportionScore = Math.max(0, Math.min(1, (1.3 - jawWidthToLengthRatio) / 0.6));
+
+  // 종합 점수 (넓이 40%, 각도 40%, 비율 20%)
+  const jawStrengthScore = widthScore * 0.4 + angleScore * 0.4 + proportionScore * 0.2;
 
   let jawAnalysis: { label: string; description: string };
   let jawLevel: number;
 
-  // MediaPipe 기준 임계값
-  if (jawRatio > 0.85) {
+  // 종합 점수 기반 분석 (0~1 범위)
+  if (jawStrengthScore > 0.8) {
     jawAnalysis = {
       label: "하관이 매우 튼튼함",
-      description: "말년에 재물과 자녀의 복으로 큰 풍요를 누릴 예정입니다. 안정적인 재정 상태와 편안한 삶을 즐길 수 있습니다."
+      description: "넓고 각진 턱으로, 말년에 재물과 자녀의 복으로 큰 풍요를 누릴 예정입니다. 강한 의지력과 추진력을 가지고 있습니다."
     };
     jawLevel = 5;
     r2 += WEIGHTS.r2_adult * 5;
     r3 += WEIGHTS.r3_social * 5;
-  } else if (jawRatio > 0.75) {
+  } else if (jawStrengthScore > 0.65) {
     jawAnalysis = {
       label: "하관이 튼튼함",
-      description: "말년에 재물과 자녀의 복으로 풍요를 누릴 예정입니다. 삶의 후반기에 편안한 삶을 즐길 수 있습니다."
+      description: "안정적인 턱 구조로, 말년에 재물과 자녀의 복으로 풍요를 누릴 예정입니다. 삶의 후반기에 편안한 삶을 즐길 수 있습니다."
     };
     jawLevel = 4;
     r2 += WEIGHTS.r2_adult * 4;
     r3 += WEIGHTS.r3_social * 4;
-  } else if (jawRatio > 0.65) {
+  } else if (jawStrengthScore > 0.5) {
     jawAnalysis = {
       label: "하관이 이상적",
       description: "균형 잡힌 얼굴형으로 안정적인 인상을 줍니다. 말년에도 편안하고 충족된 삶을 즐길 수 있습니다."
@@ -559,17 +603,17 @@ export function analyzeFace(
     jawLevel = 3;
     r2 += WEIGHTS.r2_adult * 3;
     r3 += WEIGHTS.r3_social * 3;
-  } else if (jawRatio > 0.55) {
+  } else if (jawStrengthScore > 0.35) {
     jawAnalysis = {
-      label: "턱이 좁은 편",
-      description: "끊임없는 노력으로 자수성가의 길을 걷게 됩니다. 꾸준한 열정과 헌신은 결국 성공을 가져올 것입니다."
+      label: "턱이 가는 편",
+      description: "섬세하고 예민한 성격의 소유자입니다. 끊임없는 노력으로 자수성가의 길을 걷게 됩니다."
     };
     jawLevel = 2;
     r2 += WEIGHTS.r2_adult * 2;
     r3 += WEIGHTS.r3_social * 2;
   } else {
     jawAnalysis = {
-      label: "턱이 매우 뾰족함",
+      label: "턱이 가늘고 긴 편",
       description: "세련되고 날카로운 인상을 줍니다. 자신만의 스타일과 개성이 뚜렷하며, 창의적인 분야에서 재능을 발휘합니다."
     };
     jawLevel = 1;
