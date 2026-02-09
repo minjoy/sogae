@@ -278,9 +278,11 @@ const DEBUG_POINTS = {
     center: 13,       // 입 중앙
   },
   jaw: {
-    chin: 152,        // 턱 끝
-    leftJaw: 234,     // 왼쪽 턱
-    rightJaw: 454,    // 오른쪽 턱
+    chin: 152,        // 턱끝 (gnathion)
+    leftAngle: 172,   // 왼쪽 턱각 (jaw angle) - 실제 하관
+    rightAngle: 397,  // 오른쪽 턱각 (jaw angle) - 실제 하관
+    leftTemple: 234,  // 왼쪽 관자놀이 (temple)
+    rightTemple: 454, // 오른쪽 관자놀이 (temple)
   },
   eyebrow: {
     leftOuter: 70,    // 왼쪽 눈썹 외곽
@@ -288,9 +290,34 @@ const DEBUG_POINTS = {
     rightOuter: 300,  // 오른쪽 눈썹 외곽
     rightInner: 336,  // 오른쪽 눈썹 안쪽
   },
+  forehead: {
+    hairlineCenter: 10,   // 헤어라인 중앙
+    hairlineLeft: 109,    // 왼쪽 헤어라인
+    hairlineRight: 338,   // 오른쪽 헤어라인
+    center: 151,          // 이마 중앙
+  },
   cheek: {
-    left: 234,        // 왼쪽 볼
-    right: 454,       // 오른쪽 볼
+    leftCenter: 117,      // 왼쪽 볼 중앙
+    rightCenter: 346,     // 오른쪽 볼 중앙
+  },
+  // 얼굴 윤곽선 주요 포인트 (위에서 아래로)
+  contour: {
+    // 왼쪽 윤곽
+    left1: 127,   // 왼쪽 이마
+    left2: 162,   // 왼쪽 관자놀이 위
+    left3: 21,    // 왼쪽 눈 옆
+    left4: 54,    // 왼쪽 광대
+    left5: 103,   // 왼쪽 볼
+    left6: 67,    // 왼쪽 턱선
+    left7: 58,    // 왼쪽 턱각 근처
+    // 오른쪽 윤곽
+    right1: 356,  // 오른쪽 이마
+    right2: 389,  // 오른쪽 관자놀이 위
+    right3: 251,  // 오른쪽 눈 옆
+    right4: 284,  // 오른쪽 광대
+    right5: 332,  // 오른쪽 볼
+    right6: 297,  // 오른쪽 턱선
+    right7: 288,  // 오른쪽 턱각 근처
   },
 };
 
@@ -557,10 +584,12 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       drawLabeledPoint(DEBUG_POINTS.mouth.bottom, '#ff00ff', '아랫입');
       drawLabeledPoint(DEBUG_POINTS.mouth.center, '#ff00ff', '입중앙');
 
-      // 턱 관련 점 (노랑)
+      // 턱 관련 점 (노랑) - 수정됨
       drawLabeledPoint(DEBUG_POINTS.jaw.chin, '#ffff00', '턱끝');
-      drawLabeledPoint(DEBUG_POINTS.jaw.leftJaw, '#ffff00', '왼턱');
-      drawLabeledPoint(DEBUG_POINTS.jaw.rightJaw, '#ffff00', '우턱');
+      drawLabeledPoint(DEBUG_POINTS.jaw.leftAngle, '#ffff00', '왼턱각');
+      drawLabeledPoint(DEBUG_POINTS.jaw.rightAngle, '#ffff00', '우턱각');
+      drawLabeledPoint(DEBUG_POINTS.jaw.leftTemple, '#ff9900', '왼관자놀이');
+      drawLabeledPoint(DEBUG_POINTS.jaw.rightTemple, '#ff9900', '우관자놀이');
 
       // 눈썹 관련 점 (청록)
       drawLabeledPoint(DEBUG_POINTS.eyebrow.leftOuter, '#00ffff', '');
@@ -568,13 +597,38 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       drawLabeledPoint(DEBUG_POINTS.eyebrow.rightOuter, '#00ffff', '');
       drawLabeledPoint(DEBUG_POINTS.eyebrow.rightInner, '#00ffff', '');
 
-      // 기존 KEY_POINTS 표시 (작은 점)
-      ctx.globalAlpha = 0.4;
-      KEY_POINTS.forEach(idx => {
+      // 이마/헤어라인 관련 점 (보라)
+      drawLabeledPoint(DEBUG_POINTS.forehead.hairlineCenter, '#aa00ff', '헤어라인');
+      drawLabeledPoint(DEBUG_POINTS.forehead.hairlineLeft, '#aa00ff', '');
+      drawLabeledPoint(DEBUG_POINTS.forehead.hairlineRight, '#aa00ff', '');
+      drawLabeledPoint(DEBUG_POINTS.forehead.center, '#cc66ff', '이마');
+
+      // 볼 관련 점 (연녹색)
+      drawLabeledPoint(DEBUG_POINTS.cheek.leftCenter, '#66ff66', '왼볼');
+      drawLabeledPoint(DEBUG_POINTS.cheek.rightCenter, '#66ff66', '우볼');
+
+      // 얼굴 윤곽선 점들 (흰색 작은 점)
+      ctx.globalAlpha = 0.7;
+      Object.values(DEBUG_POINTS.contour).forEach(idx => {
         const point = transformPoint(idx);
         if (!point) return;
         ctx.beginPath();
         ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+
+      // 기존 KEY_POINTS 표시 (작은 점)
+      ctx.globalAlpha = 0.3;
+      KEY_POINTS.forEach(idx => {
+        const point = transformPoint(idx);
+        if (!point) return;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
         ctx.fillStyle = '#ff00ff';
         ctx.fill();
       });
