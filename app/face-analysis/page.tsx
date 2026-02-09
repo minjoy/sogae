@@ -101,8 +101,29 @@ export default function FaceAnalysisPage() {
     });
 
     faceMesh.onResults((results: MediaPipeResults) => {
-      if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
-        setLandmarks(results.multiFaceLandmarks[0]);
+      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+        // 여러 얼굴이 감지된 경우 가장 큰 얼굴 선택
+        let selectedLandmarks = results.multiFaceLandmarks[0];
+
+        if (results.multiFaceLandmarks.length > 1) {
+          let maxArea = 0;
+          results.multiFaceLandmarks.forEach((landmarks) => {
+            let minX = 1, maxX = 0, minY = 1, maxY = 0;
+            landmarks.forEach(lm => {
+              minX = Math.min(minX, lm.x);
+              maxX = Math.max(maxX, lm.x);
+              minY = Math.min(minY, lm.y);
+              maxY = Math.max(maxY, lm.y);
+            });
+            const area = (maxX - minX) * (maxY - minY);
+            if (area > maxArea) {
+              maxArea = area;
+              selectedLandmarks = landmarks;
+            }
+          });
+        }
+
+        setLandmarks(selectedLandmarks);
       }
     });
 
@@ -298,10 +319,10 @@ export default function FaceAnalysisPage() {
         }
 
         // FaceMesh로 분석
-        let detectedLandmarks: FaceLandmark[] | null = null;
+        let allFaceLandmarks: FaceLandmark[][] = [];
         faceMeshRef.current.onResults((results: MediaPipeResults) => {
-          if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
-            detectedLandmarks = results.multiFaceLandmarks[0];
+          if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            allFaceLandmarks = results.multiFaceLandmarks;
           }
         });
 
@@ -310,10 +331,35 @@ export default function FaceAnalysisPage() {
         // 잠시 대기 후 결과 확인
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (detectedLandmarks) {
+        if (allFaceLandmarks.length > 0) {
+          // 여러 얼굴이 감지된 경우 가장 큰 얼굴 선택
+          let selectedLandmarks = allFaceLandmarks[0];
+
+          if (allFaceLandmarks.length > 1) {
+            // 각 얼굴의 바운딩 박스 크기 계산하여 가장 큰 것 선택
+            let maxArea = 0;
+            allFaceLandmarks.forEach((landmarks) => {
+              let minX = 1, maxX = 0, minY = 1, maxY = 0;
+              landmarks.forEach(lm => {
+                minX = Math.min(minX, lm.x);
+                maxX = Math.max(maxX, lm.x);
+                minY = Math.min(minY, lm.y);
+                maxY = Math.max(maxY, lm.y);
+              });
+              const area = (maxX - minX) * (maxY - minY);
+              if (area > maxArea) {
+                maxArea = area;
+                selectedLandmarks = landmarks;
+              }
+            });
+
+            // 여러 얼굴 감지 알림 (에러 아님, 정보성)
+            console.log(`${allFaceLandmarks.length}개의 얼굴이 감지되어 가장 큰 얼굴을 선택했습니다.`);
+          }
+
           // 캔버스에서 이미지 데이터 추출
           const imageData = canvas.toDataURL('image/jpeg', 0.9);
-          await analyzeWithLandmarks(detectedLandmarks, img.width, img.height, imageData);
+          await analyzeWithLandmarks(selectedLandmarks, img.width, img.height, imageData);
         } else {
           setError('얼굴을 찾을 수 없습니다. 다른 사진을 시도해주세요.');
           setIsLoading(false);
