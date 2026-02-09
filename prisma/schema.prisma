@@ -167,3 +167,67 @@ model StoreEditRequest {
   @@index([status])
   @@map("store_edit_requests")
 }
+
+// 관상 분석 결과 테이블
+model FaceAnalysis {
+  id              String   @id @default(uuid())
+  shareCode       String   @unique @map("share_code") // 공유용 짧은 코드
+
+  // 분석 결과
+  score           Int      // 종합 점수 (0-100)
+  gender          String   // male, female
+
+  // 카테고리별 점수 (JSON)
+  categories      Json     // { r1, r2, r3, r4 }
+
+  // 부위별 분석 결과 (JSON)
+  analysis        Json     // eyeAngle, eyebrowDistance, noseLength, etc.
+
+  // 랜드마크 데이터 (JSON) - 이미지 재생성용
+  landmarks       Json?    @db.MediumText
+  imageWidth      Int?     @map("image_width")
+  imageHeight     Int?     @map("image_height")
+
+  // 이미지 (base64)
+  imageData       String?  @map("image_data") @db.MediumText
+
+  // 메타 정보
+  panAngle        Float?   @map("pan_angle")
+  tiltAngle       Float?   @map("tilt_angle")
+  rollAngle       Float?   @map("roll_angle")
+
+  // 만료 관리
+  expiresAt       DateTime @map("expires_at") // 이미지 만료일 (1주일 후)
+  viewCount       Int      @default(0) @map("view_count")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([shareCode])
+  @@index([expiresAt])
+  @@map("face_analyses")
+}
+
+// 얼굴 궁합 분석 결과 테이블 (유료)
+model FaceCompatibility {
+  id              String   @id @default(uuid())
+  shareCode       String   @unique @map("share_code")
+
+  // 분석 대상
+  maleAnalysisId  String   @map("male_analysis_id")
+  femaleAnalysisId String  @map("female_analysis_id")
+
+  // 궁합 결과
+  compatibilityScore Int   @map("compatibility_score") // 0-100
+  categoryScores  Json     @map("category_scores") // 카테고리별 궁합 점수
+  analysis        Json     // 상세 궁합 분석
+
+  // 결제 정보
+  isPaid          Boolean  @default(false) @map("is_paid")
+  paymentId       String?  @map("payment_id")
+
+  expiresAt       DateTime @map("expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([shareCode])
+  @@map("face_compatibilities")
+}

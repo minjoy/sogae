@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
+// 이 페이지는 sessionStorage 기반 폴백용입니다.
+// 새로운 공유 가능한 결과는 /face-analysis/result/[code]로 리다이렉트됩니다.
+
 interface FaceLandmark {
   x: number;
   y: number;
@@ -168,7 +171,6 @@ export default function FaceAnalysisResultPage() {
   const [result, setResult] = useState<FaceAnalysisResult | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [landmarks, setLandmarks] = useState<FaceLandmark[] | null>(null);
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [oneLiner, setOneLiner] = useState<string>('');
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
   const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
@@ -181,7 +183,6 @@ export default function FaceAnalysisResultPage() {
       setResult(parsed.result);
       setImage(parsed.image);
       setLandmarks(parsed.landmarks);
-      setImageSize({ width: parsed.imageWidth, height: parsed.imageHeight });
 
       // 한줄평 생성
       if (parsed.result) {
@@ -277,7 +278,7 @@ export default function FaceAnalysisResultPage() {
     canvas.width = 1080;
     canvas.height = 1080;
 
-    const { bgGradient, emoji, grade } = getScoreGrade(result.score);
+    const { emoji, grade } = getScoreGrade(result.score);
 
     // 배경 그라데이션
     const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
@@ -504,7 +505,7 @@ export default function FaceAnalysisResultPage() {
     );
   }
 
-  const { grade, emoji, bgGradient } = getScoreGrade(result.score);
+  const { grade, emoji } = getScoreGrade(result.score);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">

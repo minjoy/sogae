@@ -181,6 +181,7 @@ export default function FaceAnalysisPage() {
     setError(null);
 
     try {
+      // 1. 얼굴 분석 실행
       const response = await fetch('/api/face/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -195,16 +196,42 @@ export default function FaceAnalysisPage() {
       const data = await response.json();
 
       if (data.success) {
-        // 결과를 sessionStorage에 저장 (랜드마크 포함)
-        sessionStorage.setItem('faceAnalysisResult', JSON.stringify({
-          result: data.result,
-          image: imageData || capturedImage,
-          landmarks: faceLandmarks,
-          imageWidth,
-          imageHeight,
-          gender,
-        }));
-        router.push('/face-analysis/result');
+        // 2. 결과를 DB에 저장
+        const saveResponse = await fetch('/api/face/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            score: data.result.score,
+            gender: data.result.gender,
+            categories: data.result.categories,
+            analysis: data.result.analysis,
+            landmarks: faceLandmarks.map(lm => [lm.x, lm.y, lm.z]),
+            imageWidth,
+            imageHeight,
+            imageData: imageData || capturedImage,
+            panAngle: data.result.panAngle,
+            tiltAngle: data.result.tiltAngle,
+            rollAngle: data.result.rollAngle,
+          }),
+        });
+
+        const saveData = await saveResponse.json();
+
+        if (saveData.success) {
+          // 3. 공유 가능한 결과 페이지로 리다이렉트
+          router.push(`/face-analysis/result/${saveData.shareCode}`);
+        } else {
+          // DB 저장 실패 시 기존 방식으로 폴백
+          sessionStorage.setItem('faceAnalysisResult', JSON.stringify({
+            result: data.result,
+            image: imageData || capturedImage,
+            landmarks: faceLandmarks,
+            imageWidth,
+            imageHeight,
+            gender,
+          }));
+          router.push('/face-analysis/result');
+        }
       } else {
         setError(data.error || '분석에 실패했습니다.');
       }

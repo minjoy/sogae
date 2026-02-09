@@ -110,10 +110,6 @@ function calculateSlope(p1: FacePoint, p2: FacePoint): number {
   return (p2.y - p1.y) / (p2.x - p1.x);
 }
 
-// 각도를 라디안에서 도로 변환
-function toDegrees(radians: number): number {
-  return radians * 180 / Math.PI;
-}
 
 // UUID 생성
 function generateUUID(): string {
@@ -144,8 +140,6 @@ export function analyzeFace(
 
   // === 눈꼬리 각도 분석 ===
   const leftEyeInnerSlope = calculateSlope(fp[23], fp[17]);
-
-  const angleRad = Math.atan(leftEyeInnerSlope);
 
   // 눈꼬리 각도에 따른 y좌표 차이 계산
   const b1_y = leftEyeInnerSlope * fp[6].x + (fp[23].y - leftEyeInnerSlope * fp[23].x);
