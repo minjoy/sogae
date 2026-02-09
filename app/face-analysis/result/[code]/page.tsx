@@ -363,6 +363,10 @@ function DebugPanel({ analysis, memo, setMemo }: {
 // MediaPipe 랜드마크 연결선 정의
 const FACE_CONNECTIONS = {
   silhouette: [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109, 10],
+  // 턱각 강조 윤곽선 (직선으로 연결하여 각진 턱 표현)
+  jawLine: [234, 172, 152, 397, 454],
+  // 하관 윤곽 (더 세밀하게)
+  lowerJaw: [234, 132, 172, 150, 149, 152, 148, 176, 397, 361, 454],
   leftEye: [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246, 33],
   rightEye: [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398, 362],
   leftEyebrow: [70, 63, 105, 66, 107, 55, 65, 52, 53, 46],
@@ -649,10 +653,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       };
 
       // 연결선 그리기
-      ctx.strokeStyle = 'rgba(0, 255, 255, 0.6)';
-      ctx.lineWidth = 1.5;
-
-      const drawConnections = (indices: number[]) => {
+      const drawConnections = (indices: number[], color: string = 'rgba(0, 255, 255, 0.6)', lineWidth: number = 1.5) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
         ctx.beginPath();
         for (let i = 0; i < indices.length; i++) {
           if (indices[i] >= landmarks.length) continue;
@@ -664,9 +667,16 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         ctx.stroke();
       };
 
-      Object.values(FACE_CONNECTIONS).forEach(connection => {
-        drawConnections(connection);
+      // 기본 연결선 그리기 (턱선 제외)
+      const { jawLine, lowerJaw, ...otherConnections } = FACE_CONNECTIONS;
+      Object.values(otherConnections).forEach(connection => {
+        drawConnections(connection, 'rgba(0, 255, 255, 0.6)', 1.5);
       });
+
+      // 턱각 강조 윤곽선 (노란색, 두껍게)
+      drawConnections(jawLine, 'rgba(255, 255, 0, 0.9)', 3);
+      // 하관 세밀 윤곽 (주황색)
+      drawConnections(lowerJaw, 'rgba(255, 165, 0, 0.7)', 2);
 
       // 라벨이 있는 점 그리기 함수
       const drawLabeledPoint = (idx: number, color: string, label: string) => {
