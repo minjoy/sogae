@@ -16,11 +16,12 @@ function convertMediaPipeLandmarks(landmarks: Array<{ x: number; y: number; z: n
     'LEFT_OF_RIGHT_EYEBROW': 293, // 오른쪽 눈썹 왼쪽 끝
     'RIGHT_OF_RIGHT_EYEBROW': 300, // 오른쪽 눈썹 오른쪽 끝
     'NOSE_TIP': 1, // 코 끝
-    'UPPER_LIP': 13, // 윗입술 중앙
-    'LOWER_LIP': 14, // 아랫입술 중앙
+    'NOSE_BRIDGE': 6, // 코 브릿지 (눈 사이, 코 시작점)
+    'UPPER_LIP': 0, // 윗입술 상단 경계선 (입술 가장 위)
+    'LOWER_LIP': 17, // 아랫입술 하단 경계선
     'MOUTH_LEFT': 61, // 입 왼쪽 끝
     'MOUTH_RIGHT': 291, // 입 오른쪽 끝
-    'MOUTH_CENTER': 13, // 입 중앙 (윗입술과 아랫입술 사이)
+    'MOUTH_CENTER': 13, // 입 중앙 (윗입술)
     'NOSE_BOTTOM_RIGHT': 358, // 코 아래 오른쪽 (콧볼 오른쪽)
     'NOSE_BOTTOM_LEFT': 129, // 코 아래 왼쪽 (콧볼 왼쪽)
     'NOSE_BOTTOM_CENTER': 2, // 코 아래 중앙
@@ -32,8 +33,8 @@ function convertMediaPipeLandmarks(landmarks: Array<{ x: number; y: number; z: n
     'RIGHT_EYE_RIGHT_CORNER': 263, // 오른쪽 눈 바깥쪽 모서리
     'RIGHT_EYE_BOTTOM_BOUNDARY': 374, // 오른쪽 눈 아래쪽 경계
     'RIGHT_EYE_LEFT_CORNER': 362, // 오른쪽 눈 안쪽 모서리
-    'LEFT_EYEBROW_UPPER_MIDPOINT': 105, // 왼쪽 눈썹 위쪽 중간점 (66보다 더 정확한 위치)
-    'RIGHT_EYEBROW_UPPER_MIDPOINT': 334, // 오른쪽 눈썹 위쪽 중간점 (296보다 더 정확한 위치)
+    'LEFT_EYEBROW_UPPER_MIDPOINT': 105, // 왼쪽 눈썹 위쪽 중간점
+    'RIGHT_EYEBROW_UPPER_MIDPOINT': 334, // 오른쪽 눈썹 위쪽 중간점
     'LEFT_CHEEK_CENTER': 234, // 왼쪽 볼 중앙
     'RIGHT_CHEEK_CENTER': 454, // 오른쪽 볼 중앙
     'CHIN_GNATHION': 152, // 턱 끝

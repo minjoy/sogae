@@ -14,7 +14,7 @@ interface FaceAnalysisData {
     r3: number;
     r4: number;
   };
-  analysis: Record<string, number>;
+  analysis: Record<string, unknown>;
   landmarks?: number[][];
   imageWidth?: number;
   imageHeight?: number;
@@ -57,10 +57,17 @@ const CATEGORY_INFO = {
 function generateDeterministicOneLiner(
   score: number,
   categories: { r1: number; r2: number; r3: number; r4: number },
-  analysis: Record<string, number>
+  analysis: Record<string, unknown>
 ): string {
-  // 분석값들의 합을 시드로 사용
-  const analysisSum = Object.values(analysis).reduce((a, b) => a + b, 0);
+  // 분석값들의 합을 시드로 사용 (객체인 경우 label 길이 사용)
+  const analysisSum = Object.values(analysis).reduce((sum: number, val) => {
+    if (typeof val === 'number') return sum + val;
+    if (typeof val === 'object' && val !== null && 'label' in val) {
+      const label = (val as { label: string }).label;
+      return sum + label.length;
+    }
+    return sum;
+  }, 0);
   const catSum = categories.r1 + categories.r2 + categories.r3 + categories.r4;
   const seed = Math.floor(score * 100 + catSum * 10 + analysisSum);
 

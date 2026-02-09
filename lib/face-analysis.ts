@@ -16,6 +16,7 @@ export interface FaceLandmarks {
   rightEyebrowLeft: FacePoint;  // 4
   rightEyebrowRight: FacePoint; // 5
   noseTip: FacePoint;           // 6
+  noseBridge: FacePoint;        // 7 (코 브릿지 - 눈 사이, 코 시작점)
   upperLip: FacePoint;          // 8
   lowerLip: FacePoint;          // 9
   mouthLeft: FacePoint;         // 10
@@ -120,6 +121,30 @@ function ratioToLevel(value: number, thresholds: [number, number, number, number
   return 1;
 }
 
+// 얼굴 기울기(roll) 보정 - 모든 랜드마크를 정면으로 회전
+function normalizeRotation(points: FacePoint[], rollAngle: number): FacePoint[] {
+  if (Math.abs(rollAngle) < 0.5) return points; // 기울기가 작으면 보정 불필요
+
+  // 얼굴 중심점 계산 (두 눈 사이)
+  const centerX = (points[0].x + points[1].x) / 2;
+  const centerY = (points[0].y + points[1].y) / 2;
+
+  // 라디안으로 변환 (반대 방향으로 회전하여 정면으로 맞춤)
+  const angleRad = -rollAngle * Math.PI / 180;
+  const cos = Math.cos(angleRad);
+  const sin = Math.sin(angleRad);
+
+  return points.map(p => {
+    const dx = p.x - centerX;
+    const dy = p.y - centerY;
+    return {
+      x: centerX + dx * cos - dy * sin,
+      y: centerY + dx * sin + dy * cos,
+      z: p.z
+    };
+  });
+}
+
 export function analyzeFace(
   landmarks: FaceLandmarks,
   gender: 'male' | 'female',
@@ -127,19 +152,22 @@ export function analyzeFace(
   tiltAngle: number = 0,
   rollAngle: number = 0
 ): FaceAnalysisResult {
-  const fp = landmarks.all;
+  // 얼굴 기울기 보정 적용
+  const fp = normalizeRotation(landmarks.all, rollAngle);
   let score = 0;
   let r1 = 0, r2 = 0, r3 = 0, r4 = 0;
 
   // === 기준 비율 계산 ===
-  // 코 너비 (기준 단위)
+  // 코 너비 (콧볼 너비)
   const noseWidth = Math.abs(fp[13].x - fp[14].x) || 1;
-  // 얼굴 너비
+  // 얼굴 너비 (볼 중앙 간 거리)
   const faceWidth = Math.abs(fp[27].x - fp[26].x) || 1;
   // 눈 너비 (왼쪽 눈)
   const leftEyeWidth = Math.abs(fp[17].x - fp[19].x) || 1;
   // 두 눈 사이 거리
   const eyeDistance = Math.abs(fp[0].x - fp[1].x) || 1;
+  // 얼굴 세로 길이 (이마에서 턱까지)
+  const faceHeight = Math.abs(fp[29].y - fp[32].y) || 1;
 
   // === 1. 눈꼬리 각도 분석 ===
   // 왼쪽 눈의 안쪽-바깥쪽 기울기 계산
@@ -264,16 +292,16 @@ export function analyzeFace(
   score += eyebrowLevel * 8;
 
   // === 3. 코 길이 분석 ===
-  // 코 끝에서 눈 중심까지 / 코 끝에서 입술까지 비율
-  const noseToEye = Math.abs(fp[6].y - fp[0].y);
-  const noseToLip = Math.abs(fp[8].y - fp[6].y);
-  const noseLengthRatio = noseToEye / (noseToLip || 1);
+  // 코 길이 = 코 브릿지(눈 사이, fp[7])에서 코끝(fp[6])까지
+  // 얼굴 세로 길이 대비 비율로 측정
+  const noseLength = Math.abs(fp[6].y - fp[7].y);
+  const noseLengthRatio = noseLength / faceHeight;
 
   let noseLengthAnalysis: { label: string; description: string };
   let noseLevel: number;
 
-  // MediaPipe 기준 임계값
-  if (noseLengthRatio > 2.5) {
+  // 얼굴 세로 대비 코 길이 비율 (일반적으로 0.25~0.40)
+  if (noseLengthRatio > 0.38) {
     noseLengthAnalysis = {
       label: "코가 매우 긴 편",
       description: "강한 책임감과 성실함을 바탕으로 일에 임합니다. 꼼꼼하며 자존심이 강해, 일단 결정한 바를 끝까지 밀고 나가는 완고한 면모를 가지고 있습니다."
@@ -282,7 +310,7 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 5;
     r3 += WEIGHTS.r3_social * 3;
     r4 += WEIGHTS.r4_responsibility * 5 + WEIGHTS.r4_sincere * 5;
-  } else if (noseLengthRatio > 2.0) {
+  } else if (noseLengthRatio > 0.34) {
     noseLengthAnalysis = {
       label: "코가 긴 편",
       description: "책임감이 강하고 맡은 일을 성실하게 완수합니다. 장기적인 계획을 세우는 데 능하며 신뢰받는 인물입니다."
@@ -291,7 +319,7 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 4;
     r3 += WEIGHTS.r3_social * 4;
     r4 += WEIGHTS.r4_responsibility * 4 + WEIGHTS.r4_sincere * 4;
-  } else if (noseLengthRatio > 1.5) {
+  } else if (noseLengthRatio > 0.30) {
     noseLengthAnalysis = {
       label: "코 길이가 이상적",
       description: "균형 잡힌 능력을 지니고 있어 다양한 사회적 상황에서 자신의 역할을 훌륭히 수행합니다. 평온하고 안정적인 성격입니다."
@@ -300,7 +328,7 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 3;
     r3 += WEIGHTS.r3_social * 4;
     r4 += WEIGHTS.r4_responsibility * 3 + WEIGHTS.r4_sincere * 3;
-  } else if (noseLengthRatio > 1.0) {
+  } else if (noseLengthRatio > 0.26) {
     noseLengthAnalysis = {
       label: "코가 짧은 편",
       description: "낙관적이고 긍정적인 성격입니다. 상대방의 기분을 잘 파악하며 사교성이 좋습니다."
@@ -322,15 +350,16 @@ export function analyzeFace(
   score += noseLevel * 8;
 
   // === 4. 인중 길이 분석 ===
-  // 코 아래에서 윗입술까지 거리 / 코 너비 비율
-  const philtrumLength = Math.abs(fp[12].y - fp[15].y);
-  const philtrumRatio = philtrumLength / noseWidth;
+  // 인중 = 코끝(fp[6])에서 윗입술 상단(fp[8])까지의 거리
+  // 코 길이 대비 비율로 측정 (더 정확한 비율)
+  const philtrumLength = Math.abs(fp[8].y - fp[6].y);
+  const philtrumRatio = philtrumLength / noseLength;
 
   let philtrumAnalysis: { label: string; description: string };
   let philtrumLevel: number;
 
-  // MediaPipe 기준 임계값 (조정됨)
-  if (philtrumRatio > 1.2) {
+  // 코 길이 대비 인중 비율 (일반적으로 0.30~0.60)
+  if (philtrumRatio > 0.55) {
     philtrumAnalysis = {
       label: "인중이 매우 긴 편",
       description: "인간성이 뛰어나고 장수하는 경향이 있습니다. 물질적인 풍요로움과는 별개로 인품 자체가 높은 평가를 받습니다."
@@ -339,7 +368,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.9) {
+  } else if (philtrumRatio > 0.47) {
     philtrumAnalysis = {
       label: "인중이 긴 편",
       description: "종종 자신의 노력으로 설명할 수 없는 힘을 발휘하며, 내면적 가치와 성격이 외부 세계에 긍정적인 영향을 끼칩니다."
@@ -348,7 +377,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 4;
     r2 += WEIGHTS.r2_love * 4;
     r4 += WEIGHTS.r4_sincere * 4;
-  } else if (philtrumRatio > 0.6) {
+  } else if (philtrumRatio > 0.40) {
     philtrumAnalysis = {
       label: "인중이 이상적",
       description: "자녀운에 긍정적인 영향을 끌어당기는 경향이 있어, 가정 내에서도 긍정적인 역할을 합니다."
@@ -357,7 +386,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 3;
     r2 += WEIGHTS.r2_love * 3;
     r4 += WEIGHTS.r4_sincere * 3;
-  } else if (philtrumRatio > 0.4) {
+  } else if (philtrumRatio > 0.33) {
     philtrumAnalysis = {
       label: "인중이 짧은 편",
       description: "다양한 관심사를 가지고 있으며 새로운 것에 대한 호기심이 강합니다. 많은 사람과 교류하면 좋은 기회가 찾아옵니다."
@@ -542,33 +571,46 @@ export function analyzeFace(
   score += eyeSizeLevel * 8;
 
   // === 종합 점수 정규화 (100점 만점) ===
-  // score는 각 레벨의 합 (최대 약 60) - 더 넓은 분포를 위해 조정
-  const baseScore = score; // 약 20~55 범위
-  // 기존 랜덤 요소 제거하고 결정적인 계산으로 변경
-  const normalizedScore = clamp(Math.round((baseScore / 55) * 50 + 30), 40, 85);
+  // score는 각 레벨 * 가중치의 합
+  // 최대: 5*(10+8+8+8+10+8+8) = 5*60 = 300
+  // 최소: 1*(10+8+8+8+10+8+8) = 1*60 = 60
+  // 평균 (레벨3 기준): 3*60 = 180
+  const maxScore = 300;
+  const minScore = 60;
+  const baseScore = score;
+
+  // 실제 분포 범위 (60~300)를 표시 범위 (30~85)로 매핑
+  // 선형 변환: (score - min) / (max - min) * (targetMax - targetMin) + targetMin
+  const targetMin = 30;
+  const targetMax = 82;
+  const normalizedScore = clamp(
+    Math.round((baseScore - minScore) / (maxScore - minScore) * (targetMax - targetMin) + targetMin),
+    targetMin,
+    targetMax
+  );
 
   // === 카테고리 점수 정규화 ===
-  // 실제 발생 가능한 최대값을 기준으로 정규화
-  // r1: 눈꼬리(1-5)*3 + 눈썹(1-5)*5 + 인중(2-5)*5 또는 (1-3)*3 + 입(1-5)*5 = 최대 약 75
-  // r2: 눈꼬리 + 눈썹 + 코 + 인중 + 하관 + 눈 = 최대 약 90
-  // r3: 눈썹 + 코 + 인중 + 입 + 하관 + 눈 = 최대 약 100
-  // r4: 눈꼬리 + 코 + 인중 + 눈 = 최대 약 70
-  const maxR1 = 75, maxR2 = 90, maxR3 = 100, maxR4 = 70;
-
-  // 점수를 더 넓은 분포로 변환 (선형이 아닌 중간값 중심 분포)
-  const normalize = (val: number, max: number): number => {
-    const ratio = val / max;
-    // 중간값 중심으로 분포시키기 (0.3~0.8 범위를 20~80 범위로)
-    if (ratio > 0.8) return Math.round(70 + ratio * 20);
-    if (ratio > 0.6) return Math.round(45 + ratio * 40);
-    if (ratio > 0.4) return Math.round(30 + ratio * 40);
-    return Math.round(15 + ratio * 30);
+  // 각 카테고리의 실제 min/max를 계산하여 더 정확한 분포 생성
+  // 가중치 합계를 기준으로 실제 범위 계산
+  const normalizeCategory = (val: number, minVal: number, maxVal: number): number => {
+    if (maxVal === minVal) return 50; // 분모가 0인 경우 방지
+    const ratio = (val - minVal) / (maxVal - minVal);
+    // 20~80 범위로 매핑 (극단적 값 방지)
+    return clamp(Math.round(ratio * 60 + 20), 20, 80);
   };
 
-  r1 = clamp(normalize(r1, maxR1), 15, 90);
-  r2 = clamp(normalize(r2, maxR2), 15, 90);
-  r3 = clamp(normalize(r3, maxR3), 15, 90);
-  r4 = clamp(normalize(r4, maxR4), 15, 90);
+  // 실제 가중치 기반 min/max 계산
+  // r1: 눈꼬리(1-5)*3 + 눈썹(1-5)*5 + 인중 r1_old(0-5)*5 또는 r1_power(0-5)*3 + 입(1-5)*5
+  // 최소~최대 추정
+  const r1_min = 15, r1_max = 70;
+  const r2_min = 20, r2_max = 110;
+  const r3_min = 15, r3_max = 95;
+  const r4_min = 15, r4_max = 75;
+
+  r1 = normalizeCategory(r1, r1_min, r1_max);
+  r2 = normalizeCategory(r2, r2_min, r2_max);
+  r3 = normalizeCategory(r3, r3_min, r3_max);
+  r4 = normalizeCategory(r4, r4_min, r4_max);
 
   // === 종합 해석 생성 ===
   const summaryParts: string[] = [];
@@ -644,6 +686,7 @@ export function convertVisionLandmarks(landmarks: Array<{ type: string; position
     'LEFT_OF_RIGHT_EYEBROW': 4,
     'RIGHT_OF_RIGHT_EYEBROW': 5,
     'NOSE_TIP': 6,
+    'NOSE_BRIDGE': 7,  // 코 브릿지 (눈 사이, 코 시작점)
     'UPPER_LIP': 8,
     'LOWER_LIP': 9,
     'MOUTH_LEFT': 10,
@@ -691,6 +734,7 @@ export function convertVisionLandmarks(landmarks: Array<{ type: string; position
     rightEyebrowLeft: all[4],
     rightEyebrowRight: all[5],
     noseTip: all[6],
+    noseBridge: all[7],
     upperLip: all[8],
     lowerLip: all[9],
     mouthLeft: all[10],

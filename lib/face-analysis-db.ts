@@ -12,7 +12,7 @@ export interface FaceAnalysisData {
     r3: number // 일/재물/사교
     r4: number // 성실/책임
   }
-  analysis: Record<string, number>
+  analysis: Record<string, unknown>
   landmarks?: number[][]
   imageWidth?: number
   imageHeight?: number
@@ -111,7 +111,7 @@ export async function saveFaceAnalysis(data: {
   score: number
   gender: string
   categories: { r1: number; r2: number; r3: number; r4: number }
-  analysis: Record<string, number>
+  analysis: Record<string, unknown>
   landmarks?: number[][]
   imageWidth?: number
   imageHeight?: number
