@@ -1,5 +1,18 @@
 // 얼굴 분석 알고리즘 - Python draw.py에서 TypeScript로 포팅
 // MediaPipe Face Mesh 랜드마크 기반 관상 분석
+// Excel "관상 해석.xlsx" 데이터 통합
+
+import {
+  PhysiognomyTraits,
+  createEmptyTraits,
+  applyTraitModifiers,
+  generateResultPhrase,
+  getTopTraits,
+  traitToPercent,
+  findInterpretation,
+  getRatioLevel,
+  TRAIT_MAX_SCORES,
+} from './physiognomy-types';
 
 export interface FacePoint {
   x: number;
@@ -77,6 +90,15 @@ export interface FaceAnalysisResult {
 
   // 성별 (분석에 사용)
   gender: 'male' | 'female';
+
+  // 관상 특성 점수 (Excel 기반)
+  traits?: PhysiognomyTraits;
+
+  // 결과 문구 (점수 + 특성 기반)
+  resultPhrase?: string;
+
+  // 상위 특성 (점수가 높은 순)
+  topTraits?: Array<{ trait: string; value: number; percent: number }>;
 
   // 디버그 정보 (ratio 값들)
   debug?: {
@@ -646,6 +668,73 @@ export function analyzeFace(
   r3 = normalizeCategory(r3, 30, 20);
   r4 = normalizeCategory(r4, 25, 15);
 
+  // === 관상 특성 점수 계산 (Excel 기반) ===
+  let traits = createEmptyTraits();
+
+  // 1. 눈꼬리 기반 특성
+  if (eyeAngleDegrees > 5) {
+    traits = applyTraitModifiers(traits, '눈꼬리', 'high');
+  } else if (eyeAngleDegrees > 2) {
+    traits = applyTraitModifiers(traits, '눈꼬리', 'high');
+  } else if (eyeAngleDegrees > -2) {
+    traits = applyTraitModifiers(traits, '눈꼬리', 'medium');
+  } else if (eyeAngleDegrees > -5) {
+    traits = applyTraitModifiers(traits, '눈꼬리', 'low');
+  } else {
+    traits = applyTraitModifiers(traits, '눈꼬리', 'verylow');
+  }
+
+  // 2. 눈두덩이 기반 특성
+  if (eyebrowRatio > 2.0) {
+    traits = applyTraitModifiers(traits, '눈두덩이', 'high');
+  } else if (eyebrowRatio < 1.5) {
+    traits = applyTraitModifiers(traits, '눈두덩이', 'low');
+  }
+
+  // 3. 코길이 기반 특성
+  if (noseLengthRatio > 1.55) {
+    traits = applyTraitModifiers(traits, '코길이', 'high');
+  } else if (noseLengthRatio < 1.28) {
+    traits = applyTraitModifiers(traits, '코길이', 'low');
+  }
+
+  // 4. 인중 기반 특성
+  if (philtrumRatio > 0.65) {
+    traits = applyTraitModifiers(traits, '인중', 'high');
+  } else if (philtrumRatio < 0.55) {
+    traits = applyTraitModifiers(traits, '인중', 'low');
+  }
+
+  // 5. 입크기 기반 특성
+  if (mouthRatio > 1.65) {
+    traits = applyTraitModifiers(traits, '입크기', 'high');
+  } else if (mouthRatio < 1.50) {
+    traits = applyTraitModifiers(traits, '입크기', 'low');
+  }
+
+  // 6. 하관 기반 특성
+  if (jawRatio > 0.77) {
+    traits = applyTraitModifiers(traits, '하관', 'high');
+  } else if (jawRatio < 0.60) {
+    traits = applyTraitModifiers(traits, '하관', 'low');
+  }
+
+  // 7. 눈크기 기반 특성
+  if (eyeFaceWidthRatio < 5.0) {
+    traits = applyTraitModifiers(traits, '눈크기', 'big');
+  } else if (eyeFaceWidthRatio > 6.0) {
+    traits = applyTraitModifiers(traits, '눈크기', 'small');
+  }
+
+  // 상위 특성 계산
+  const topTraitsArray = getTopTraits(traits, 3).map(t => ({
+    ...t,
+    percent: traitToPercent(t.trait as keyof PhysiognomyTraits, t.value)
+  }));
+
+  // 결과 문구 생성
+  const resultPhrase = generateResultPhrase(traits, normalizedScore);
+
   // === 종합 해석 생성 ===
   const summaryParts: string[] = [];
 
@@ -707,6 +796,9 @@ export function analyzeFace(
     summary,
     recommendations,
     gender,
+    traits,
+    resultPhrase,
+    topTraits: topTraitsArray,
     debug: {
       // 기존 값들
       noseWidth,
