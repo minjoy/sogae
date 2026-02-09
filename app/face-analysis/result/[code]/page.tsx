@@ -214,6 +214,12 @@ function DebugPanel({ analysis, memo, setMemo }: {
     leftJawAngle?: number;      // 왼쪽 턱각 각도
     rightJawAngle?: number;     // 오른쪽 턱각 각도
     avgJawAngle?: number;       // 평균 턱각 각도
+    lowerJawLengthLeft?: number;   // 왼쪽 하관 길이
+    lowerJawLengthRight?: number;  // 오른쪽 하관 길이
+    lowerJawLengthAvg?: number;    // 평균 하관 길이
+    jawContourAngleLeft?: number;  // 왼쪽 윤곽 2/3 각도
+    jawContourAngleRight?: number; // 오른쪽 윤곽 2/3 각도
+    jawContourAngleAvg?: number;   // 평균 윤곽 각도
   } | undefined;
 
   if (!debug) return null;
@@ -339,7 +345,21 @@ function DebugPanel({ analysis, memo, setMemo }: {
           <div className="text-orange-400 font-bold">{debug.lipRatio?.toFixed(2)}</div>
         </div>
 
-        {/* 턱각 */}
+        {/* 하관 길이 */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">좌하관길이</div>
+          <div className="text-white font-bold">{debug.lowerJawLengthLeft?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">우하관길이</div>
+          <div className="text-white font-bold">{debug.lowerJawLengthRight?.toFixed(1)}</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">평균하관</div>
+          <div className="text-white font-bold">{debug.lowerJawLengthAvg?.toFixed(1)}</div>
+        </div>
+
+        {/* 턱각 (볼→턱각→턱끝) */}
         <div className="bg-black/30 p-1.5 rounded">
           <div className="text-gray-500 text-[10px]">왼턱각</div>
           <div className="text-yellow-400 font-bold">{debug.leftJawAngle?.toFixed(1)}°</div>
@@ -351,6 +371,20 @@ function DebugPanel({ analysis, memo, setMemo }: {
         <div className="bg-black/30 p-1.5 rounded">
           <div className="text-gray-500 text-[10px]">평균턱각</div>
           <div className="text-orange-400 font-bold">{debug.avgJawAngle?.toFixed(1)}°</div>
+        </div>
+
+        {/* 윤곽 2/3 각도 (실제 턱각 - 작을수록 각진턱) */}
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">좌2/3각</div>
+          <div className="text-pink-400 font-bold">{debug.jawContourAngleLeft?.toFixed(1)}°</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">우2/3각</div>
+          <div className="text-pink-400 font-bold">{debug.jawContourAngleRight?.toFixed(1)}°</div>
+        </div>
+        <div className="bg-black/30 p-1.5 rounded">
+          <div className="text-gray-500 text-[10px]">평균2/3각</div>
+          <div className="text-red-400 font-bold">{debug.jawContourAngleAvg?.toFixed(1)}°</div>
         </div>
 
         {/* 기타 */}

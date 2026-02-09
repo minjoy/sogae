@@ -112,9 +112,16 @@ export interface FaceAnalysisResult {
     lowerLipHeight: number;     // 아랫입술 두께
     lipRatio: number;           // 입술 비율 (윗/아랫)
     // 턱각 관련
-    leftJawAngle: number;       // 왼쪽 턱각 각도 (각질수록 작음)
+    leftJawAngle: number;       // 왼쪽 턱각 각도 (볼→턱각→턱끝)
     rightJawAngle: number;      // 오른쪽 턱각 각도
     avgJawAngle: number;        // 평균 턱각 각도
+    // 하관 길이 및 윤곽 각도 (2/3 지점)
+    lowerJawLengthLeft: number;   // 왼쪽 하관 길이 (턱끝~왼턱각)
+    lowerJawLengthRight: number;  // 오른쪽 하관 길이 (턱끝~우턱각)
+    lowerJawLengthAvg: number;    // 평균 하관 길이
+    jawContourAngleLeft: number;  // 왼쪽 윤곽 2/3 지점 각도 (실제 턱각)
+    jawContourAngleRight: number; // 오른쪽 윤곽 2/3 지점 각도
+    jawContourAngleAvg: number;   // 평균 윤곽 각도
   };
 }
 
@@ -764,6 +771,68 @@ export function analyzeFace(
         const left = calcAngle(fp[26], fp[30], fp[29]);
         const right = calcAngle(fp[27], fp[31], fp[29]);
         return (left + right) / 2;
+      })(),
+      // 하관 길이 (턱끝 ~ 턱각)
+      lowerJawLengthLeft: Math.sqrt(
+        Math.pow(fp[29].x - fp[30].x, 2) + Math.pow(fp[29].y - fp[30].y, 2)
+      ),
+      lowerJawLengthRight: Math.sqrt(
+        Math.pow(fp[29].x - fp[31].x, 2) + Math.pow(fp[29].y - fp[31].y, 2)
+      ),
+      lowerJawLengthAvg: (
+        Math.sqrt(Math.pow(fp[29].x - fp[30].x, 2) + Math.pow(fp[29].y - fp[30].y, 2)) +
+        Math.sqrt(Math.pow(fp[29].x - fp[31].x, 2) + Math.pow(fp[29].y - fp[31].y, 2))
+      ) / 2,
+      // 윤곽 2/3 지점 각도 (두 직선 교차 각도)
+      // 직선1: 턱끝 → 2/3지점, 직선2: 관자놀이 → 턱각
+      // 작을수록 각진 턱
+      jawContourAngleLeft: (() => {
+        // 2/3 지점 (턱끝에서 왼턱각까지)
+        const p2_3 = {
+          x: fp[29].x + (fp[30].x - fp[29].x) * (2/3),
+          y: fp[29].y + (fp[30].y - fp[29].y) * (2/3)
+        };
+        // 직선1 방향: 턱끝 → 2/3지점
+        const v1x = p2_3.x - fp[29].x, v1y = p2_3.y - fp[29].y;
+        // 직선2 방향: 관자놀이(fp[30]=LEFT_EAR_TRAGION) → 턱각
+        // Vision API에서 fp[30]은 LEFT_EAR_TRAGION (관자놀이 근처)
+        // 볼(fp[26])을 관자놀이 대신 사용
+        const v2x = fp[30].x - fp[26].x, v2y = fp[30].y - fp[26].y;
+        const dot = v1x * v2x + v1y * v2y;
+        const mag1 = Math.sqrt(v1x * v1x + v1y * v1y) || 1;
+        const mag2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
+        return Math.acos(Math.min(1, Math.max(-1, dot / (mag1 * mag2)))) * (180 / Math.PI);
+      })(),
+      jawContourAngleRight: (() => {
+        // 2/3 지점 (턱끝에서 우턱각까지)
+        const p2_3 = {
+          x: fp[29].x + (fp[31].x - fp[29].x) * (2/3),
+          y: fp[29].y + (fp[31].y - fp[29].y) * (2/3)
+        };
+        // 직선1 방향: 턱끝 → 2/3지점
+        const v1x = p2_3.x - fp[29].x, v1y = p2_3.y - fp[29].y;
+        // 직선2 방향: 볼 → 턱각
+        const v2x = fp[31].x - fp[27].x, v2y = fp[31].y - fp[27].y;
+        const dot = v1x * v2x + v1y * v2y;
+        const mag1 = Math.sqrt(v1x * v1x + v1y * v1y) || 1;
+        const mag2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
+        return Math.acos(Math.min(1, Math.max(-1, dot / (mag1 * mag2)))) * (180 / Math.PI);
+      })(),
+      jawContourAngleAvg: (() => {
+        // 양쪽 평균
+        const calcAngle = (chin: FacePoint, jaw: FacePoint, cheek: FacePoint) => {
+          const p2_3 = {
+            x: chin.x + (jaw.x - chin.x) * (2/3),
+            y: chin.y + (jaw.y - chin.y) * (2/3)
+          };
+          const v1x = p2_3.x - chin.x, v1y = p2_3.y - chin.y;
+          const v2x = jaw.x - cheek.x, v2y = jaw.y - cheek.y;
+          const dot = v1x * v2x + v1y * v2y;
+          const mag1 = Math.sqrt(v1x * v1x + v1y * v1y) || 1;
+          const mag2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
+          return Math.acos(Math.min(1, Math.max(-1, dot / (mag1 * mag2)))) * (180 / Math.PI);
+        };
+        return (calcAngle(fp[29], fp[30], fp[26]) + calcAngle(fp[29], fp[31], fp[27])) / 2;
       })(),
     },
   };
