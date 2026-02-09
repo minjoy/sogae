@@ -7,38 +7,39 @@ import { analyzeFace, convertVisionLandmarks } from '@/lib/face-analysis';
 // MediaPipe 랜드마크를 Google Vision 형식으로 변환
 function convertMediaPipeLandmarks(landmarks: Array<{ x: number; y: number; z: number }>, imageWidth: number, imageHeight: number) {
   // MediaPipe 468 랜드마크를 Vision API 형식으로 매핑
+  // 참고: MediaPipe 랜드마크는 미러링되어 있으므로 실제 왼쪽/오른쪽이 반대임
   const mappings: { [key: string]: number } = {
-    'LEFT_EYE': 468, // 대략적인 중심점
-    'RIGHT_EYE': 473,
-    'LEFT_OF_LEFT_EYEBROW': 70,
-    'RIGHT_OF_LEFT_EYEBROW': 63,
-    'LEFT_OF_RIGHT_EYEBROW': 293,
-    'RIGHT_OF_RIGHT_EYEBROW': 300,
-    'NOSE_TIP': 1,
-    'UPPER_LIP': 13,
-    'LOWER_LIP': 14,
-    'MOUTH_LEFT': 61,
-    'MOUTH_RIGHT': 291,
-    'MOUTH_CENTER': 0,
-    'NOSE_BOTTOM_RIGHT': 129,
-    'NOSE_BOTTOM_LEFT': 358,
-    'NOSE_BOTTOM_CENTER': 2,
-    'LEFT_EYE_TOP_BOUNDARY': 159,
-    'LEFT_EYE_LEFT_CORNER': 33,
-    'LEFT_EYE_BOTTOM_BOUNDARY': 145,
-    'LEFT_EYE_RIGHT_CORNER': 133,
-    'RIGHT_EYE_TOP_BOUNDARY': 386,
-    'RIGHT_EYE_RIGHT_CORNER': 263,
-    'RIGHT_EYE_BOTTOM_BOUNDARY': 374,
-    'RIGHT_EYE_LEFT_CORNER': 362,
-    'LEFT_EYEBROW_UPPER_MIDPOINT': 66,
-    'RIGHT_EYEBROW_UPPER_MIDPOINT': 296,
-    'LEFT_CHEEK_CENTER': 234,
-    'RIGHT_CHEEK_CENTER': 454,
-    'CHIN_GNATHION': 152,
-    'LEFT_EAR_TRAGION': 234,
-    'RIGHT_EAR_TRAGION': 454,
-    'FOREHEAD_GLABELLA': 10,
+    'LEFT_EYE': 468, // 왼쪽 눈 중심점 (iris)
+    'RIGHT_EYE': 473, // 오른쪽 눈 중심점 (iris)
+    'LEFT_OF_LEFT_EYEBROW': 70, // 왼쪽 눈썹 왼쪽 끝
+    'RIGHT_OF_LEFT_EYEBROW': 63, // 왼쪽 눈썹 오른쪽 끝
+    'LEFT_OF_RIGHT_EYEBROW': 293, // 오른쪽 눈썹 왼쪽 끝
+    'RIGHT_OF_RIGHT_EYEBROW': 300, // 오른쪽 눈썹 오른쪽 끝
+    'NOSE_TIP': 1, // 코 끝
+    'UPPER_LIP': 13, // 윗입술 중앙
+    'LOWER_LIP': 14, // 아랫입술 중앙
+    'MOUTH_LEFT': 61, // 입 왼쪽 끝
+    'MOUTH_RIGHT': 291, // 입 오른쪽 끝
+    'MOUTH_CENTER': 13, // 입 중앙 (윗입술과 아랫입술 사이)
+    'NOSE_BOTTOM_RIGHT': 358, // 코 아래 오른쪽 (콧볼 오른쪽)
+    'NOSE_BOTTOM_LEFT': 129, // 코 아래 왼쪽 (콧볼 왼쪽)
+    'NOSE_BOTTOM_CENTER': 2, // 코 아래 중앙
+    'LEFT_EYE_TOP_BOUNDARY': 159, // 왼쪽 눈 위쪽 경계
+    'LEFT_EYE_LEFT_CORNER': 33, // 왼쪽 눈 안쪽 모서리
+    'LEFT_EYE_BOTTOM_BOUNDARY': 145, // 왼쪽 눈 아래쪽 경계
+    'LEFT_EYE_RIGHT_CORNER': 133, // 왼쪽 눈 바깥쪽 모서리
+    'RIGHT_EYE_TOP_BOUNDARY': 386, // 오른쪽 눈 위쪽 경계
+    'RIGHT_EYE_RIGHT_CORNER': 263, // 오른쪽 눈 바깥쪽 모서리
+    'RIGHT_EYE_BOTTOM_BOUNDARY': 374, // 오른쪽 눈 아래쪽 경계
+    'RIGHT_EYE_LEFT_CORNER': 362, // 오른쪽 눈 안쪽 모서리
+    'LEFT_EYEBROW_UPPER_MIDPOINT': 105, // 왼쪽 눈썹 위쪽 중간점 (66보다 더 정확한 위치)
+    'RIGHT_EYEBROW_UPPER_MIDPOINT': 334, // 오른쪽 눈썹 위쪽 중간점 (296보다 더 정확한 위치)
+    'LEFT_CHEEK_CENTER': 234, // 왼쪽 볼 중앙
+    'RIGHT_CHEEK_CENTER': 454, // 오른쪽 볼 중앙
+    'CHIN_GNATHION': 152, // 턱 끝
+    'LEFT_EAR_TRAGION': 127, // 왼쪽 귀 앞 돌출부 (턱 각도)
+    'RIGHT_EAR_TRAGION': 356, // 오른쪽 귀 앞 돌출부 (턱 각도)
+    'FOREHEAD_GLABELLA': 10, // 미간
   };
 
   const result: Array<{ type: string; position: { x: number; y: number; z?: number } }> = [];
