@@ -215,6 +215,11 @@ export default function FaceAnalysisPage() {
   const startCamera = useCallback(async () => {
     if (!videoRef.current || !faceMeshLoaded) return;
 
+    // 이전 상태 초기화
+    setError(null);
+    setCapturedImage(null);
+    setLandmarks(null);
+
     try {
       await initFaceMesh();
 
@@ -545,11 +550,20 @@ export default function FaceAnalysisPage() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // 좌우반전 적용 (거울 모드로 촬영된 것처럼 저장)
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // 변환 초기화
+
     const imageData = canvas.toDataURL('image/jpeg', 0.9);
 
-    // landmarks를 로컬 변수에 복사 (stopCamera에서 null로 설정되기 전에)
-    const currentLandmarks = [...landmarks];
+    // landmarks도 좌우반전 적용 (x 좌표 반전)
+    const mirroredLandmarks = landmarks.map(lm => ({
+      ...lm,
+      x: 1 - lm.x // x 좌표 반전 (0~1 범위)
+    }));
+
     const width = video.videoWidth;
     const height = video.videoHeight;
 
@@ -557,8 +571,8 @@ export default function FaceAnalysisPage() {
     stopCamera();
     setMode('select');
 
-    // 분석 실행 (복사된 landmarks 사용)
-    await analyzeWithLandmarks(currentLandmarks, width, height, imageData);
+    // 분석 실행 (반전된 landmarks 사용)
+    await analyzeWithLandmarks(mirroredLandmarks, width, height, imageData);
   }, [landmarks, stopCamera, analyzeWithLandmarks]);
 
   // 파일 업로드 처리
@@ -566,8 +580,14 @@ export default function FaceAnalysisPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // file input 초기화 (같은 파일 재선택 가능하도록)
+    e.target.value = '';
+
+    // 이전 상태 초기화
     setIsLoading(true);
     setError(null);
+    setCapturedImage(null);
+    setLandmarks(null);
 
     try {
       await initFaceMesh();
