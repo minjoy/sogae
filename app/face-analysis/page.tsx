@@ -777,7 +777,7 @@ export default function FaceAnalysisPage() {
         <div className="flex-1 relative overflow-hidden">
           <video
             ref={videoRef}
-            className="w-full h-full object-cover -scale-x-100"
+            className="w-full h-full object-cover"
             playsInline
             muted
           />
@@ -790,17 +790,17 @@ export default function FaceAnalysisPage() {
           </div>
 
           {/* 상태 표시 */}
-          <div className="absolute top-4 left-0 right-0 text-center safe-area-top">
-            <span className={`px-4 py-2 rounded-full text-sm font-medium ${
-              landmarks
-                ? 'bg-green-500 text-white'
-                : 'bg-white/80 text-gray-800'
-            }`}>
-              {landmarks ? '✓ 촬영 가능' : '얼굴을 가이드에 맞춰주세요'}
-            </span>
-            <p className="mt-2 text-white/80 text-xs">
-              카메라를 정면으로 바라봐 주세요
-            </p>
+          <div className="absolute top-12 left-0 right-0 text-center px-4">
+            <div className="bg-black/60 backdrop-blur-sm rounded-xl py-3 px-4 inline-block">
+              <span className={`text-base font-medium ${
+                landmarks ? 'text-green-400' : 'text-white'
+              }`}>
+                {landmarks ? '✓ 촬영 가능' : '얼굴을 가이드에 맞춰주세요'}
+              </span>
+              <p className="mt-1 text-white/90 text-sm">
+                📷 카메라를 정면으로 바라봐 주세요
+              </p>
+            </div>
           </div>
 
           {/* 컨트롤 영역 - 비디오 위에 오버레이 */}
