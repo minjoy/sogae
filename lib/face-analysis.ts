@@ -774,18 +774,17 @@ export function analyzeFace(
   // facescore 범위: 약 100 ~ 350 (가중치 합산)
   // face_color는 "상위 X%"를 의미 (낮을수록 좋음)
 
-  // 점수 분포 개선: facescore에 따라 15~95점 범위로 분포
+  // 점수 분포 개선: facescore에 따라 0~100점 범위로 분포
   // facescore가 높을수록 좋은 관상 → 높은 점수
-  // 범위를 넓게 잡아서 높은 점수 받기 어렵게
   const minFacescore = 80;
   const maxFacescore = 320;
   const scoreRange = maxFacescore - minFacescore;
 
-  // 선형 매핑: facescore를 15~95점으로 변환 (낮은 점수부터 시작)
+  // 선형 매핑: facescore를 0~100점으로 변환
   const facescoreNormalized = clamp(
-    Math.round(15 + ((facescore - minFacescore) / scoreRange) * 80),
-    15,
-    95
+    Math.round(((facescore - minFacescore) / scoreRange) * 100),
+    0,
+    100
   );
 
   // draw.py 호환: 상위 X% 계산 (face_color)
@@ -793,12 +792,12 @@ export function analyzeFace(
 
   // === 카테고리 점수 정규화 ===
   // 각 카테고리 raw 점수를 0~100 범위로 변환
-  // 기준점 40, 편차 크게 반영하여 변별력 확보
+  // 기준점 45, 편차 크게 반영하여 변별력 확보
   const normalizeCategory = (val: number, avgVal: number, spread: number): number => {
     const deviation = (val - avgVal) / spread;
-    // 기준점 40 (평균이 40점이 되도록), 편차 45배 반영
-    const normalized = 40 + deviation * 45;
-    return clamp(Math.round(normalized), 5, 95);
+    // 기준점 45, 편차 50배 반영 (0~100 전체 범위 활용)
+    const normalized = 45 + deviation * 50;
+    return clamp(Math.round(normalized), 0, 100);
   };
 
   // r1~r4 raw 값 저장 (디버그용)
@@ -813,11 +812,11 @@ export function analyzeFace(
   // 최종 점수: facescore 기반 점수와 카테고리 평균의 가중 조합
   // 카테고리 점수와 전체 점수가 일관성 있게 나오도록 함
   const categoryAvg = (r1 + r2 + r3 + r4) / 4;
-  // facescore 40%, 카테고리 평균 60% 조합 (카테고리 점수 더 반영)
+  // facescore 40%, 카테고리 평균 60% 조합 (0~100 범위)
   const normalizedScore = clamp(
     Math.round(facescoreNormalized * 0.4 + categoryAvg * 0.6),
-    15,
-    95
+    0,
+    100
   );
 
   // === 관상 특성 점수 계산 (Excel 기반) ===
