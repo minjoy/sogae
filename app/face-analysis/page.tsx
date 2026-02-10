@@ -434,10 +434,35 @@ export default function FaceAnalysisPage() {
         }
 
         // 3. 결과를 DB에 저장 (변환된 랜드마크 사용)
-        // analysis에 debug 정보도 포함
+        // 얼굴 크기 계산 (디버그용)
+        let facePixels = 0;
+        if (faceLandmarks && faceLandmarks.length > 0) {
+          let minX = 1, maxX = 0, minY = 1, maxY = 0;
+          faceLandmarks.forEach(lm => {
+            minX = Math.min(minX, lm.x);
+            maxX = Math.max(maxX, lm.x);
+            minY = Math.min(minY, lm.y);
+            maxY = Math.max(maxY, lm.y);
+          });
+          const faceWidthPixels = (maxX - minX) * imageWidth;
+          const faceHeightPixels = (maxY - minY) * imageHeight;
+          facePixels = Math.min(faceWidthPixels, faceHeightPixels);
+        }
+
+        // analysis에 debug 정보도 포함 (각도, 얼굴크기 추가)
         const analysisWithDebug = {
           ...data.result.analysis,
-          debug: data.result.debug,
+          debug: {
+            ...data.result.debug,
+            // 얼굴 각도 정보
+            panAngle: data.result.panAngle || 0,
+            tiltAngle: data.result.tiltAngle || 0,
+            rollAngle: data.result.rollAngle || 0,
+            // 얼굴 크기 정보
+            facePixels: Math.round(facePixels),
+            imageWidth,
+            imageHeight,
+          },
         };
 
         const saveResponse = await fetch('/api/face/save', {
