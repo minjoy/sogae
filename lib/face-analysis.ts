@@ -310,8 +310,8 @@ export function analyzeFace(
   let eyeAngleLevel: number;
 
   // draw.py와 동일한 방식: faceangle 기준 분류
-  // 임계값 조정: 살짝 올라갔는데 일자로 나오는 문제 수정
-  if (eyeAngleDegrees > 6) {
+  // 임계값 조정: 살짝 올라갔는데 일자로 나오는 문제 수정 (추가 하향)
+  if (eyeAngleDegrees > 5) {
     // 눈꼬리 많이 올라감
     eyeAngleAnalysis = {
       label: "눈꼬리가 많이 올라감",
@@ -324,7 +324,7 @@ export function analyzeFace(
     facescore += WEIGHTS.r4_wind * 5; r4_wind_sum += WEIGHTS.r4_wind * 5;
     r2 += WEIGHTS.r2_spirit * 5 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 1 + WEIGHTS.r4_wind * 5;
-  } else if (eyeAngleDegrees > 3) {
+  } else if (eyeAngleDegrees > 2) {
     // 눈꼬리 올라감
     eyeAngleAnalysis = {
       label: "눈꼬리가 올라감",
@@ -337,8 +337,8 @@ export function analyzeFace(
     facescore += WEIGHTS.r4_wind * 4; r4_wind_sum += WEIGHTS.r4_wind * 4;
     r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 4 + WEIGHTS.r4_wind * 4;
-  } else if (eyeAngleDegrees > -4) {
-    // 눈꼬리 일자 (-4° ~ +3°)
+  } else if (eyeAngleDegrees > -5) {
+    // 눈꼬리 일자 (-5° ~ +2°)
     eyeAngleAnalysis = {
       label: "눈꼬리가 일자",
       description: "내면에 강한 의지와 결단력을 지니고 있습니다. 감정의 기복이 크지 않아 일관된 태도를 유지하는 데 강점을 가지고 있으며, 안정적인 성격의 소유자입니다."
