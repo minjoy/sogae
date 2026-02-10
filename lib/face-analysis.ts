@@ -273,6 +273,22 @@ export function analyzeFace(
   let facescore = 0;
   let r1 = 0, r2 = 0, r3 = 0, r4 = 0;
 
+  // 세부 카테고리 합산값 추적 (draw.py와 동일)
+  let r1_power_sum = 0;
+  let r1_old_sum = 0;
+  let r2_spirit_sum = 0;
+  let r2_adult_sum = 0;
+  let r2_love_sum = 0;
+  let r2_jeal_sum = 0;
+  let r3_work_sum = 0;
+  let r3_social_sum = 0;
+  let r3_someone_sum = 0;
+  let r3_money_sum = 0;
+  let r4_kind_sum = 0;
+  let r4_wind_sum = 0;
+  let r4_respon_sum = 0;
+  let r4_since_sum = 0;
+
   // === 기준 비율 계산 === (draw.py와 동일)
   // widthratio = 코 너비 (콧볼 너비) - 수평 보정 적용
   const noseWidthRaw = Math.abs(fp[13].x - fp[14].x) || 1;
@@ -294,58 +310,58 @@ export function analyzeFace(
   let eyeAngleLevel: number;
 
   // draw.py와 동일한 방식: faceangle 기준 분류
-  // faceangle = (b2_y-b1_y)/faceratio*100
-  // 여기서는 eyeAngleDegrees를 사용 (유사한 의미)
-  if (eyeAngleDegrees > 5) {
-    // 눈꼬리 많이 올라감 (draw.py: faceangle <= -11)
+  // 원본: > -2 내려감, -2~-4 일자, -4~-11 올라감, <=-11 많이올라감
+  // 사용자 요청: 약간 올라감(2~4°)도 일자로 판정
+  if (eyeAngleDegrees > 8) {
+    // 눈꼬리 많이 올라감
     eyeAngleAnalysis = {
       label: "눈꼬리가 많이 올라감",
       description: "그 기상이 마치 하늘을 찌를 듯이 웅장하며, 모든 면에서 적극적이고 강인한 면모를 발휘합니다. 리더십과 독립적인 성향이 강하지만, 독불장군과 같은 고집스러움이 동반될 수 있습니다."
     };
     eyeAngleLevel = 5;
-    facescore += WEIGHTS.r2_spirit * 5;
-    facescore += WEIGHTS.r2_adult * 4;
-    facescore += WEIGHTS.r4_kind * 1;
-    facescore += WEIGHTS.r4_wind * 5;
+    facescore += WEIGHTS.r2_spirit * 5; r2_spirit_sum += WEIGHTS.r2_spirit * 5;
+    facescore += WEIGHTS.r2_adult * 4; r2_adult_sum += WEIGHTS.r2_adult * 4;
+    facescore += WEIGHTS.r4_kind * 1; r4_kind_sum += WEIGHTS.r4_kind * 1;
+    facescore += WEIGHTS.r4_wind * 5; r4_wind_sum += WEIGHTS.r4_wind * 5;
     r2 += WEIGHTS.r2_spirit * 5 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 1 + WEIGHTS.r4_wind * 5;
-  } else if (eyeAngleDegrees > 2) {
-    // 눈꼬리 올라감 (draw.py: -11 < faceangle <= -4)
+  } else if (eyeAngleDegrees > 4) {
+    // 눈꼬리 올라감
     eyeAngleAnalysis = {
       label: "눈꼬리가 올라감",
       description: "대담하고 용기 넘치며, 언제나 적극적이고 밝은 에너지를 발산합니다. 실패에 대한 두려움이 없어, 도전적인 상황에서도 적절하고 과감한 행동을 취하는 경향이 있습니다."
     };
     eyeAngleLevel = 4;
-    facescore += WEIGHTS.r2_spirit * 4;
-    facescore += WEIGHTS.r2_adult * 4;
-    facescore += WEIGHTS.r4_kind * 4;
-    facescore += WEIGHTS.r4_wind * 4;
+    facescore += WEIGHTS.r2_spirit * 4; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
+    facescore += WEIGHTS.r2_adult * 4; r2_adult_sum += WEIGHTS.r2_adult * 4;
+    facescore += WEIGHTS.r4_kind * 4; r4_kind_sum += WEIGHTS.r4_kind * 4;
+    facescore += WEIGHTS.r4_wind * 4; r4_wind_sum += WEIGHTS.r4_wind * 4;
     r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 4 + WEIGHTS.r4_wind * 4;
-  } else if (eyeAngleDegrees > -2) {
-    // 눈꼬리 일자 (draw.py: -4 < faceangle <= -2)
+  } else if (eyeAngleDegrees > -3) {
+    // 눈꼬리 일자 (범위 확장: -3° ~ +4°)
     eyeAngleAnalysis = {
       label: "눈꼬리가 일자",
       description: "내면에 강한 의지와 결단력을 지니고 있습니다. 감정의 기복이 크지 않아 일관된 태도를 유지하는 데 강점을 가지고 있으며, 안정적인 성격의 소유자입니다."
     };
     eyeAngleLevel = 3;
-    facescore += WEIGHTS.r2_spirit * 3;
-    facescore += WEIGHTS.r2_adult * 3;
-    facescore += WEIGHTS.r4_kind * 5;
-    facescore += WEIGHTS.r4_wind * 3;
+    facescore += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
+    facescore += WEIGHTS.r2_adult * 3; r2_adult_sum += WEIGHTS.r2_adult * 3;
+    facescore += WEIGHTS.r4_kind * 5; r4_kind_sum += WEIGHTS.r4_kind * 5;
+    facescore += WEIGHTS.r4_wind * 3; r4_wind_sum += WEIGHTS.r4_wind * 3;
     r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_adult * 3;
     r4 += WEIGHTS.r4_kind * 5 + WEIGHTS.r4_wind * 3;
   } else {
-    // 눈꼬리 내려감 (draw.py: faceangle > -2)
+    // 눈꼬리 내려감 (< -3°)
     eyeAngleAnalysis = {
       label: "눈꼬리가 내려감",
       description: "마음이 부드러우며 타인에 대한 배려가 깊습니다. 주변 환경에 능동적으로 적응하는 능력이 뛰어나며, 친화력이 좋아 사람들에게 호감을 받습니다."
     };
     eyeAngleLevel = 2;
-    facescore += WEIGHTS.r2_spirit * 1;
-    facescore += WEIGHTS.r2_adult * 1;
-    facescore += WEIGHTS.r4_kind * 2;
-    facescore += WEIGHTS.r4_wind * 1;
+    facescore += WEIGHTS.r2_spirit * 1; r2_spirit_sum += WEIGHTS.r2_spirit * 1;
+    facescore += WEIGHTS.r2_adult * 1; r2_adult_sum += WEIGHTS.r2_adult * 1;
+    facescore += WEIGHTS.r4_kind * 2; r4_kind_sum += WEIGHTS.r4_kind * 2;
+    facescore += WEIGHTS.r4_wind * 1; r4_wind_sum += WEIGHTS.r4_wind * 1;
     r2 += WEIGHTS.r2_spirit * 1 + WEIGHTS.r2_adult * 1;
     r4 += WEIGHTS.r4_kind * 2 + WEIGHTS.r4_wind * 1;
   }
@@ -375,49 +391,49 @@ export function analyzeFace(
       description: "타고난 복을 지니고 있어, 부모나 조상으로부터 유산을 물려받거나 조상의 덕을 보는 일이 자주 발생합니다. 낙천적이고 개방적인 성격입니다."
     };
     eyebrowLevel = 5;
-    r1 += WEIGHTS.r1_old * 5;
-    r2 += WEIGHTS.r2_spirit * 2;
-    r3 += WEIGHTS.r3_money * 5;
+    r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
+    r2 += WEIGHTS.r2_spirit * 2; r2_spirit_sum += WEIGHTS.r2_spirit * 2;
+    r3 += WEIGHTS.r3_money * 5; r3_money_sum += WEIGHTS.r3_money * 5;
   } else if (eyebrowRatio > 2.7) {
     eyebrowDistanceAnalysis = {
       label: "눈과 눈썹 사이가 넓은 편",
       description: "자연스럽게 복이 많은 삶을 살고 있으며, 낙천적인 성향을 가지고 있습니다. 온순하고 착한 면모로 주변 사람들에게 큰 호감을 줍니다."
     };
     eyebrowLevel = 4;
-    r1 += WEIGHTS.r1_old * 4;
-    r2 += WEIGHTS.r2_spirit * 2;
-    r3 += WEIGHTS.r3_money * 4;
+    r1 += WEIGHTS.r1_old * 4; r1_old_sum += WEIGHTS.r1_old * 4;
+    r2 += WEIGHTS.r2_spirit * 2; r2_spirit_sum += WEIGHTS.r2_spirit * 2;
+    r3 += WEIGHTS.r3_money * 4; r3_money_sum += WEIGHTS.r3_money * 4;
   } else if (eyebrowRatio > 2.5) {
     eyebrowDistanceAnalysis = {
       label: "눈과 눈썹 사이가 이상적",
       description: "눈두덩이의 비율이 이상적으로 조화롭습니다. 미적인 측면에서 많은 이점을 가져다주며, 자연스럽게 사람들의 호감을 얻습니다."
     };
     eyebrowLevel = 3;
-    r1 += WEIGHTS.r1_old * 3;
-    r2 += WEIGHTS.r2_spirit * 3;
-    r3 += WEIGHTS.r3_money * 3;
+    r1 += WEIGHTS.r1_old * 3; r1_old_sum += WEIGHTS.r1_old * 3;
+    r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
+    r3 += WEIGHTS.r3_money * 3; r3_money_sum += WEIGHTS.r3_money * 3;
   } else if (eyebrowRatio > 2.2) {
     eyebrowDistanceAnalysis = {
       label: "눈과 눈썹 사이가 좁은 편",
       description: "자신의 능력과 노력으로 성공을 이뤄내는 자수성가의 길이 열려 있습니다. 일 처리 방식이 섬세하고 꼼꼼합니다."
     };
     eyebrowLevel = 2;
-    r1 += WEIGHTS.r1_old * 2;
-    r2 += WEIGHTS.r2_spirit * 3;
-    r3 += WEIGHTS.r3_money * 2;
+    r1 += WEIGHTS.r1_old * 2; r1_old_sum += WEIGHTS.r1_old * 2;
+    r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
+    r3 += WEIGHTS.r3_money * 2; r3_money_sum += WEIGHTS.r3_money * 2;
   } else {
     eyebrowDistanceAnalysis = {
       label: "눈과 눈썹 사이가 매우 좁음",
       description: "뛰어난 집중력과 분석력을 가지고 있습니다. 공과 사가 확실하며 업무에서 높은 성과를 내는 타입입니다."
     };
     eyebrowLevel = 1;
-    r1 += WEIGHTS.r1_old * 1;
-    r2 += WEIGHTS.r2_spirit * 4;
-    r3 += WEIGHTS.r3_money * 2;
+    r1 += WEIGHTS.r1_old * 1; r1_old_sum += WEIGHTS.r1_old * 1;
+    r2 += WEIGHTS.r2_spirit * 4; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
+    r3 += WEIGHTS.r3_money * 2; r3_money_sum += WEIGHTS.r3_money * 2;
   }
   // facescore에 눈썹 분석 점수 추가 (draw.py 방식)
-  facescore += WEIGHTS.r2_spirit * eyebrowLevel;
-  facescore += WEIGHTS.r3_money * eyebrowLevel;
+  facescore += WEIGHTS.r2_spirit * eyebrowLevel; r2_spirit_sum += WEIGHTS.r2_spirit * eyebrowLevel;
+  facescore += WEIGHTS.r3_money * eyebrowLevel; r3_money_sum += WEIGHTS.r3_money * eyebrowLevel;
 
   // === 3. 코 길이 분석 === (draw.py ratio2 공식)
   // ratio2 = (facepoint[15].y - facepoint[0].y) / widthratio
@@ -435,32 +451,38 @@ export function analyzeFace(
       description: "강한 책임감과 성실함을 바탕으로 일에 임합니다. 꼼꼼하며 자존심이 강해, 일단 결정한 바를 끝까지 밀고 나가는 완고한 면모를 가지고 있습니다."
     };
     noseLevel = 5;
-    r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 5;
-    r3 += WEIGHTS.r3_social * 3;
-    r4 += WEIGHTS.r4_responsibility * 5 + WEIGHTS.r4_sincere * 5;
+    r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
+    r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
+    r3 += WEIGHTS.r3_social * 3; r3_social_sum += WEIGHTS.r3_social * 3;
+    r4 += WEIGHTS.r4_responsibility * 5; r4_respon_sum += WEIGHTS.r4_responsibility * 5;
+    r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
   } else if (noseLengthRatio > 1.28) {
     noseLengthAnalysis = {
       label: "코 길이가 이상적",
       description: "균형 잡힌 능력을 지니고 있어 다양한 사회적 상황에서 자신의 역할을 훌륭히 수행합니다. 평온하고 안정적인 성격입니다."
     };
     noseLevel = 3;
-    r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_love * 4;
-    r3 += WEIGHTS.r3_social * 4;
-    r4 += WEIGHTS.r4_responsibility * 4 + WEIGHTS.r4_sincere * 4;
+    r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
+    r2 += WEIGHTS.r2_love * 4; r2_love_sum += WEIGHTS.r2_love * 4;
+    r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
+    r4 += WEIGHTS.r4_responsibility * 4; r4_respon_sum += WEIGHTS.r4_responsibility * 4;
+    r4 += WEIGHTS.r4_sincere * 4; r4_since_sum += WEIGHTS.r4_sincere * 4;
   } else {
     noseLengthAnalysis = {
       label: "코가 짧은 편",
       description: "낙관적이고 긍정적인 성격입니다. 상대방의 기분을 잘 파악하며 사교성이 좋고 장사도 잘 어울립니다. 재물운이 좋지만 신중함이 필요합니다."
     };
     noseLevel = 1;
-    r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_love * 2;
-    r3 += WEIGHTS.r3_social * 4;
-    r4 += WEIGHTS.r4_responsibility * 2 + WEIGHTS.r4_sincere * 3;
+    r2 += WEIGHTS.r2_spirit * 4; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
+    r2 += WEIGHTS.r2_love * 2; r2_love_sum += WEIGHTS.r2_love * 2;
+    r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
+    r4 += WEIGHTS.r4_responsibility * 2; r4_respon_sum += WEIGHTS.r4_responsibility * 2;
+    r4 += WEIGHTS.r4_sincere * 3; r4_since_sum += WEIGHTS.r4_sincere * 3;
   }
   // facescore에 코 분석 점수 추가
-  facescore += WEIGHTS.r2_spirit * noseLevel;
-  facescore += WEIGHTS.r2_love * noseLevel;
-  facescore += WEIGHTS.r4_responsibility * noseLevel;
+  facescore += WEIGHTS.r2_spirit * noseLevel; r2_spirit_sum += WEIGHTS.r2_spirit * noseLevel;
+  facescore += WEIGHTS.r2_love * noseLevel; r2_love_sum += WEIGHTS.r2_love * noseLevel;
+  facescore += WEIGHTS.r4_responsibility * noseLevel; r4_respon_sum += WEIGHTS.r4_responsibility * noseLevel;
 
   // === 4. 인중 길이 분석 === (draw.py ratio3 공식)
   // ratio3 = (facepoint[12].y - facepoint[15].y) / widthratio
@@ -478,50 +500,50 @@ export function analyzeFace(
       description: "인간성이 뛰어나고 장수하는 경향이 있습니다. 물질적인 풍요로움과는 별개로 인품 자체가 높은 평가를 받습니다."
     };
     philtrumLevel = 5;
-    r1 += WEIGHTS.r1_old * 5;
-    r2 += WEIGHTS.r2_love * 5;
-    r4 += WEIGHTS.r4_sincere * 5;
+    r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
+    r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
+    r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
   } else if (philtrumRatio > 0.65) {
     philtrumAnalysis = {
       label: "인중이 긴 편",
       description: "종종 자신의 노력으로 설명할 수 없는 힘을 발휘하며, 내면적 가치와 성격이 외부 세계에 긍정적인 영향을 끼칩니다."
     };
     philtrumLevel = 4;
-    r1 += WEIGHTS.r1_old * 5;
-    r2 += WEIGHTS.r2_love * 5;
-    r4 += WEIGHTS.r4_sincere * 5;
+    r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
+    r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
+    r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
   } else if (philtrumRatio > 0.58) {
     philtrumAnalysis = {
       label: "인중이 이상적",
       description: "자녀운에 긍정적인 영향을 끌어당기는 경향이 있어, 가정 내에서도 긍정적인 역할을 합니다."
     };
     philtrumLevel = 3;
-    r1 += WEIGHTS.r1_old * 5;
-    r2 += WEIGHTS.r2_love * 5;
-    r4 += WEIGHTS.r4_sincere * 5;
+    r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
+    r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
+    r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
   } else if (philtrumRatio > 0.5) {
     philtrumAnalysis = {
       label: "인중이 짧은 편",
       description: "다양한 관심사를 가지고 있으며 새로운 것에 대한 호기심이 강합니다. 많은 사람과 교류하면 좋은 기회가 찾아옵니다."
     };
     philtrumLevel = 2;
-    r1 += WEIGHTS.r1_power * 2;
-    r3 += WEIGHTS.r3_social * 2;
-    r4 += WEIGHTS.r4_sincere * 1;
+    r1 += WEIGHTS.r1_power * 2; r1_power_sum += WEIGHTS.r1_power * 2;
+    r3 += WEIGHTS.r3_social * 2; r3_social_sum += WEIGHTS.r3_social * 2;
+    r4 += WEIGHTS.r4_sincere * 1; r4_since_sum += WEIGHTS.r4_sincere * 1;
   } else {
     philtrumAnalysis = {
       label: "인중이 매우 짧은 편",
       description: "빠른 판단력과 행동력을 가지고 있습니다. 적극적으로 교류하며 관계를 넓혀가면 상황을 전환시킬 수 있습니다."
     };
     philtrumLevel = 1;
-    r1 += WEIGHTS.r1_power * 2;
-    r3 += WEIGHTS.r3_social * 4;
-    r4 += WEIGHTS.r4_sincere * 1;
+    r1 += WEIGHTS.r1_power * 2; r1_power_sum += WEIGHTS.r1_power * 2;
+    r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
+    r4 += WEIGHTS.r4_sincere * 1; r4_since_sum += WEIGHTS.r4_sincere * 1;
   }
   // facescore에 인중 분석 점수 추가
-  facescore += WEIGHTS.r1_old * philtrumLevel;
-  facescore += WEIGHTS.r2_love * philtrumLevel;
-  facescore += WEIGHTS.r4_sincere * philtrumLevel;
+  facescore += WEIGHTS.r1_old * philtrumLevel; r1_old_sum += WEIGHTS.r1_old * philtrumLevel;
+  facescore += WEIGHTS.r2_love * philtrumLevel; r2_love_sum += WEIGHTS.r2_love * philtrumLevel;
+  facescore += WEIGHTS.r4_sincere * philtrumLevel; r4_since_sum += WEIGHTS.r4_sincere * philtrumLevel;
 
   // === 5. 입 너비 분석 === (draw.py ratio7 공식)
   // ratio7 = (facepoint[11].x - facepoint[10].x) / widthratio - 수평 보정 적용
@@ -540,44 +562,44 @@ export function analyzeFace(
       description: "타고난 리더십과 인상적인 카리스마로 모두를 이끌어가는 성격입니다. 사회적으로도 큰 성공을 거두는 모습을 보여줍니다."
     };
     mouthLevel = 5;
-    r1 += WEIGHTS.r1_power * 5;
-    r3 += WEIGHTS.r3_work * 5;
+    r1 += WEIGHTS.r1_power * 5; r1_power_sum += WEIGHTS.r1_power * 5;
+    r3 += WEIGHTS.r3_work * 5; r3_work_sum += WEIGHTS.r3_work * 5;
   } else if (mouthRatio > 1.15) {
     mouthAnalysis = {
       label: "입이 큰 편",
       description: "주변에 운기와 생명력이 넘치는 에너지를 발산합니다. 업무 환경에서 동료들 사이에서 인기가 있습니다."
     };
     mouthLevel = 4;
-    r1 += WEIGHTS.r1_power * 5;
-    r3 += WEIGHTS.r3_work * 5;
+    r1 += WEIGHTS.r1_power * 5; r1_power_sum += WEIGHTS.r1_power * 5;
+    r3 += WEIGHTS.r3_work * 5; r3_work_sum += WEIGHTS.r3_work * 5;
   } else if (mouthRatio > 1.05) {
     mouthAnalysis = {
       label: "입 크기가 이상적",
       description: "진정성과 노력으로 어떤 분야에서든 성공의 정점을 찍을 수 있으며, 균형 잡힌 대인관계를 유지합니다."
     };
     mouthLevel = 3;
-    r1 += WEIGHTS.r1_power * 5;
-    r3 += WEIGHTS.r3_work * 5;
+    r1 += WEIGHTS.r1_power * 5; r1_power_sum += WEIGHTS.r1_power * 5;
+    r3 += WEIGHTS.r3_work * 5; r3_work_sum += WEIGHTS.r3_work * 5;
   } else if (mouthRatio > 0.95) {
     mouthAnalysis = {
       label: "입이 작은 편",
       description: "뛰어난 직관력과 빠른 판단력을 지니고 있습니다. 전략적인 조언자나 중요한 보조 역할에 적합합니다."
     };
     mouthLevel = 2;
-    r1 += WEIGHTS.r1_power * 3;
-    r3 += WEIGHTS.r3_work * 3;
+    r1 += WEIGHTS.r1_power * 3; r1_power_sum += WEIGHTS.r1_power * 3;
+    r3 += WEIGHTS.r3_work * 3; r3_work_sum += WEIGHTS.r3_work * 3;
   } else {
     mouthAnalysis = {
       label: "입이 매우 작은 편",
       description: "성격이 매우 상냥하며, 세심한 배려로 주변 사람들을 서포트하는 데에 특별한 재능을 보입니다."
     };
     mouthLevel = 1;
-    r1 += WEIGHTS.r1_power * 3;
-    r3 += WEIGHTS.r3_work * 3;
+    r1 += WEIGHTS.r1_power * 3; r1_power_sum += WEIGHTS.r1_power * 3;
+    r3 += WEIGHTS.r3_work * 3; r3_work_sum += WEIGHTS.r3_work * 3;
   }
   // facescore에 입 분석 점수 추가
-  facescore += WEIGHTS.r1_power * mouthLevel;
-  facescore += WEIGHTS.r3_work * mouthLevel;
+  facescore += WEIGHTS.r1_power * mouthLevel; r1_power_sum += WEIGHTS.r1_power * mouthLevel;
+  facescore += WEIGHTS.r3_work * mouthLevel; r3_work_sum += WEIGHTS.r3_work * mouthLevel;
 
   // === 6. 하관(턱) 분석 ===
   // 실제 데이터 분석 결과: avgJawAngle이 높을수록 튼튼한 턱
@@ -623,44 +645,44 @@ export function analyzeFace(
       description: "넓고 튼튼한 턱으로, 말년에 재물과 자녀의 복으로 큰 풍요를 누릴 예정입니다. 강한 의지력과 추진력을 가지고 있습니다."
     };
     jawLevel = 5;
-    r2 += WEIGHTS.r2_adult * 5;
-    r3 += WEIGHTS.r3_social * 5;
+    r2 += WEIGHTS.r2_adult * 5; r2_adult_sum += WEIGHTS.r2_adult * 5;
+    r3 += WEIGHTS.r3_social * 5; r3_social_sum += WEIGHTS.r3_social * 5;
   } else if (avgJawAngle > 29) {
     jawAnalysis = {
       label: "하관이 튼튼함",
       description: "안정적인 턱 구조로, 말년에 재물과 자녀의 복으로 풍요를 누릴 예정입니다. 삶의 후반기에 편안한 삶을 즐길 수 있습니다."
     };
     jawLevel = 4;
-    r2 += WEIGHTS.r2_adult * 4;
-    r3 += WEIGHTS.r3_social * 4;
+    r2 += WEIGHTS.r2_adult * 4; r2_adult_sum += WEIGHTS.r2_adult * 4;
+    r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
   } else if (avgJawAngle > 27) {
     jawAnalysis = {
       label: "하관이 이상적",
       description: "균형 잡힌 얼굴형으로 안정적인 인상을 줍니다. 말년에도 편안하고 충족된 삶을 즐길 수 있습니다."
     };
     jawLevel = 3;
-    r2 += WEIGHTS.r2_adult * 3;
-    r3 += WEIGHTS.r3_social * 3;
+    r2 += WEIGHTS.r2_adult * 3; r2_adult_sum += WEIGHTS.r2_adult * 3;
+    r3 += WEIGHTS.r3_social * 3; r3_social_sum += WEIGHTS.r3_social * 3;
   } else if (avgJawAngle > 25) {
     jawAnalysis = {
       label: "턱이 갸름한 편",
       description: "섬세하고 예민한 성격의 소유자입니다. 끊임없는 노력으로 자수성가의 길을 걷게 됩니다."
     };
     jawLevel = 2;
-    r2 += WEIGHTS.r2_adult * 2;
-    r3 += WEIGHTS.r3_social * 2;
+    r2 += WEIGHTS.r2_adult * 2; r2_adult_sum += WEIGHTS.r2_adult * 2;
+    r3 += WEIGHTS.r3_social * 2; r3_social_sum += WEIGHTS.r3_social * 2;
   } else {
     jawAnalysis = {
       label: "턱이 가늘고 뾰족한 편",
       description: "세련되고 날카로운 인상을 줍니다. 자신만의 스타일과 개성이 뚜렷하며, 창의적인 분야에서 재능을 발휘합니다."
     };
     jawLevel = 1;
-    r2 += WEIGHTS.r2_adult * 1;
-    r3 += WEIGHTS.r3_social * 2;
+    r2 += WEIGHTS.r2_adult * 1; r2_adult_sum += WEIGHTS.r2_adult * 1;
+    r3 += WEIGHTS.r3_social * 2; r3_social_sum += WEIGHTS.r3_social * 2;
   }
   // facescore에 턱 분석 점수 추가
-  facescore += WEIGHTS.r2_adult * jawLevel;
-  facescore += WEIGHTS.r3_social * jawLevel;
+  facescore += WEIGHTS.r2_adult * jawLevel; r2_adult_sum += WEIGHTS.r2_adult * jawLevel;
+  facescore += WEIGHTS.r3_social * jawLevel; r3_social_sum += WEIGHTS.r3_social * jawLevel;
 
   // === 7. 눈 크기 분석 ===
   // 눈 너비 - 수평 보정 적용, 눈 높이 - 수직 보정 적용
@@ -690,9 +712,10 @@ export function analyzeFace(
       };
       eyeSizeLevel = 4;
     }
-    r2 += WEIGHTS.r2_spirit * 1 + WEIGHTS.r2_jealousy * 5;
-    r3 += WEIGHTS.r3_someone * 1;
-    r4 += WEIGHTS.r4_kind * 1;
+    r2 += WEIGHTS.r2_spirit * 1; r2_spirit_sum += WEIGHTS.r2_spirit * 1;
+    r2 += WEIGHTS.r2_jealousy * 5; r2_jeal_sum += WEIGHTS.r2_jealousy * 5;
+    r3 += WEIGHTS.r3_someone * 1; r3_someone_sum += WEIGHTS.r3_someone * 1;
+    r4 += WEIGHTS.r4_kind * 1; r4_kind_sum += WEIGHTS.r4_kind * 1;
   } else if (eyeFaceWidthRatio < 5.5) {
     // 눈이 보통
     eyeSizeAnalysis = {
@@ -700,9 +723,11 @@ export function analyzeFace(
       description: "호기심이 왕성하고 표현력이 풍부한 성격으로, 빠른 판단력과 대담한 행동력을 가지고 있습니다."
     };
     eyeSizeLevel = 3;
-    r2 += WEIGHTS.r2_spirit * 2 + WEIGHTS.r2_jealousy * 2;
-    r3 += WEIGHTS.r3_work * 3 + WEIGHTS.r3_someone * 2;
-    r4 += WEIGHTS.r4_kind * 3;
+    r2 += WEIGHTS.r2_spirit * 2; r2_spirit_sum += WEIGHTS.r2_spirit * 2;
+    r2 += WEIGHTS.r2_jealousy * 2; r2_jeal_sum += WEIGHTS.r2_jealousy * 2;
+    r3 += WEIGHTS.r3_work * 3; r3_work_sum += WEIGHTS.r3_work * 3;
+    r3 += WEIGHTS.r3_someone * 2; r3_someone_sum += WEIGHTS.r3_someone * 2;
+    r4 += WEIGHTS.r4_kind * 3; r4_kind_sum += WEIGHTS.r4_kind * 3;
   } else {
     // 눈이 작은 편
     if (eyeRatio > 3.0) {
@@ -718,28 +743,36 @@ export function analyzeFace(
       };
       eyeSizeLevel = 1;
     }
-    r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_jealousy * 3;
-    r3 += WEIGHTS.r3_someone * 3;
-    r4 += WEIGHTS.r4_kind * 4;
+    r2 += WEIGHTS.r2_spirit * 4; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
+    r2 += WEIGHTS.r2_jealousy * 3; r2_jeal_sum += WEIGHTS.r2_jealousy * 3;
+    r3 += WEIGHTS.r3_someone * 3; r3_someone_sum += WEIGHTS.r3_someone * 3;
+    r4 += WEIGHTS.r4_kind * 4; r4_kind_sum += WEIGHTS.r4_kind * 4;
   }
   // facescore에 눈 크기 분석 점수 추가
-  facescore += WEIGHTS.r2_spirit * eyeSizeLevel;
-  facescore += WEIGHTS.r3_someone * eyeSizeLevel;
+  facescore += WEIGHTS.r2_spirit * eyeSizeLevel; r2_spirit_sum += WEIGHTS.r2_spirit * eyeSizeLevel;
+  facescore += WEIGHTS.r3_someone * eyeSizeLevel; r3_someone_sum += WEIGHTS.r3_someone * eyeSizeLevel;
 
-  // === 종합 점수 정규화 === (draw.py 공식 적용)
+  // === 종합 점수 정규화 === (draw.py 공식 기반, 다양한 분포를 위해 조정)
   // draw.py: face_color = (150 - (facescore - 172)) / 149 * 100
-  // facescore 범위: 약 50 ~ 300 (가중치 합산)
+  // facescore 범위: 약 100 ~ 350 (가중치 합산)
   // face_color는 "상위 X%"를 의미 (낮을수록 좋음)
 
-  // 우리는 점수를 높을수록 좋게 표시하므로, 100 - face_color 사용
-  const faceColor = (150 - (facescore - 172)) / 149 * 100;
-  // face_color가 10% = 상위 10% = 좋은 점수 = 90점
-  // face_color가 80% = 상위 80% = 보통 점수 = 50점
+  // 점수 분포 개선: facescore에 따라 25~95점 범위로 분포
+  // facescore가 높을수록 좋은 관상 → 높은 점수
+  // 실제 facescore 범위가 약 150~300이므로, 이를 25~95점으로 매핑
+  const minFacescore = 140;
+  const maxFacescore = 320;
+  const scoreRange = maxFacescore - minFacescore;
+
+  // 선형 매핑: facescore를 25~95점으로 변환
   const normalizedScore = clamp(
-    Math.round(100 - faceColor),
+    Math.round(25 + ((facescore - minFacescore) / scoreRange) * 70),
     25,
     95
   );
+
+  // draw.py 호환: 상위 X% 계산 (face_color)
+  const faceColor = (150 - (facescore - 172)) / 149 * 100;
 
   // === 카테고리 점수 정규화 ===
   // 각 카테고리 raw 점수를 0~100 범위로 변환
@@ -850,24 +883,28 @@ export function analyzeFace(
     normalizedScore
   );
 
-  // === 종합 해석 생성 ===
-  const summaryParts: string[] = [];
+  // === 종합 해석 생성 (draw.py whytext 방식) ===
+  // draw.py와 동일하게 각 세부 카테고리에 오프셋 적용 후 가장 높은 값 찾기
+  const categoryScores: Array<{ name: string; score: number; whytext: string }> = [
+    { name: 'r1_power_sum', score: r1_power_sum + 60, whytext: '힘의 기운이 가득찬 관상이오, 짝을 만날때는 내 넘치는 체력을 받아줄 강철체력이면 좋겠습니다.' },
+    { name: 'r1_old_sum', score: r1_old_sum + 53, whytext: '장수의 기운이 깃든 관상이오. 오랫동안 홀로 남아있으면 외로우니 같이 장수의 기운이 있는 상대면 좋겠습니다.' },
+    { name: 'r2_spirit_sum', score: r2_spirit_sum + 3, whytext: '총명함과 정신이 깃든 관상이오. 귀한 자식을 두기 위해 애교살이 많거나 성기에 점이 있는 상대면 좋겠습니다.' },
+    { name: 'r2_adult_sum', score: r2_adult_sum + 53, whytext: '중년에 행복이 깃든 관상이오. 입술이 붉고 윤곽이 뚜렷하면 외조가 확실한 사람이 많습니다. 그런 상대면 좋겠습니다.' },
+    { name: 'r2_love_sum', score: r2_love_sum + 41, whytext: '애정운이 충만한 관상이오. 나에 대한 애정과 관심을 늘 공유할 수 있는 다정하고 소통이 잘 되는 상대를 만나면 좋겠습니다.' },
+    { name: 'r2_jeal_sum', score: r2_jeal_sum + 75, whytext: '질투심이 충만한 관상이오. 나만 바라보고 깊은 신뢰를 줄 수 있는 그런 상대를 만나면 좋겠습니다.' },
+    { name: 'r3_work_sum', score: r3_work_sum + 35, whytext: '업무능력이 뛰어난 관상이오. 관직에 오르거나 일적으로 인정받을 수 있으니 이 또한 질투하지 않고 인정해주는 상대를 만나면 좋겠습니다.' },
+    { name: 'r3_social_sum', score: r3_social_sum + 38, whytext: '사회성이 풍만한 관상이오. 바깥활동이 많으나 그 활동을 편하게 해주는 짝을 만나야 일이 잘 풀리고 높은 공을 세울것 입니다.' },
+    { name: 'r3_someone_sum', score: r3_someone_sum + 93, whytext: '남의 시선을 다소 의식하는 관상이오. 나의 기운을 보완하거나 개선될 수 있도록 자신감이 넘치며 리드할 수 있는 상대가 좋습니다.' },
+    { name: 'r3_money_sum', score: r3_money_sum + 45, whytext: '재물이 끊임없이 들어오는 관상이오. 밑빠진 독에 물붓지 않도록 소비가 현명하며 금전적인 문제가 없는 사람을 만나면 좋겠습니다.' },
+    { name: 'r4_kind_sum', score: r4_kind_sum + 48, whytext: '순수한 영혼을 가진 착한 관상이오. 나의 순수함을 보완하여 우유부단함을 해결하고 옳고 그름을 잘 따지며 결단력있는 상대면 좋겠습니다.' },
+    { name: 'r4_wind_sum', score: r4_wind_sum + 90, whytext: '호기심이 많아서 새로운사람을 궁금해하는 관상이오. 내가 쓸대없는 생각을 하지 못하도록 나를 휘어잡는 사람이 좋겠습니다.' },
+    { name: 'r4_respon_sum', score: r4_respon_sum + 38, whytext: '책임감이 뛰어난 관상이오. 책임감도 남녀가 한쪽에 치우치면 기울어지는 법. 삶에 대한 책임감이 있으며 문제를 이성적으로 해결하는 사람이 좋겠습니다.' },
+    { name: 'r4_since_sum', score: r4_since_sum + 51, whytext: '뼈속까지 성실한 관상이오. 성실함이 남녀 한쪽에 치우치면 넘어지는 법. 같이 성실하며 서로의 신뢰를 잘 지키는 사람이 좋겠습니다.' },
+  ];
 
-  if (r1 > 60) summaryParts.push("리더십과 권력 운이 강합니다");
-  else if (r1 > 40) summaryParts.push("안정적인 운명의 흐름을 가지고 있습니다");
-
-  if (r2 > 60) summaryParts.push("정신적 성숙도와 사랑운이 좋습니다");
-  else if (r2 > 40) summaryParts.push("정서적으로 균형 잡힌 성격입니다");
-
-  if (r3 > 60) summaryParts.push("사회적 성공과 재물운이 있습니다");
-  else if (r3 > 40) summaryParts.push("꾸준한 노력으로 성과를 이룹니다");
-
-  if (r4 > 60) summaryParts.push("성실하고 책임감 있는 성격입니다");
-  else if (r4 > 40) summaryParts.push("신뢰받는 인품을 가지고 있습니다");
-
-  const summary = summaryParts.length > 0
-    ? summaryParts.join('. ') + '.'
-    : '균형 잡힌 관상을 가지고 있습니다.';
+  // 가장 높은 점수의 카테고리 찾기
+  const topCategory = categoryScores.reduce((max, curr) => curr.score > max.score ? curr : max, categoryScores[0]);
+  const summary = topCategory.whytext;
 
   // === 추천사항 생성 ===
   const recommendations: string[] = [];
