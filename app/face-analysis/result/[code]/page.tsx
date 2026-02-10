@@ -899,25 +899,40 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
       // === 세련된 얼굴 분석 시각화 ===
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { jawLine, jawContourLeft, jawContourRight, lowerJawInner, upperSilhouette, upperSilhouetteLeft, ...faceFeatures } = FACE_CONNECTIONS;
+      const { jawLine, jawContourLeft, jawContourRight, lowerJawInner, upperSilhouette, upperSilhouetteLeft, leftEye, rightEye, leftEyebrow, rightEyebrow, nose, lipsOuter } = FACE_CONNECTIONS;
 
-      // 기본 얼굴 윤곽선 (눈, 눈썹, 코, 입) - 청금색 그라데이션 효과
-      ctx.shadowColor = 'rgba(100, 200, 255, 0.5)';
-      ctx.shadowBlur = 8;
-      Object.values(faceFeatures).forEach(connection => {
-        drawConnections(connection, 'rgba(150, 220, 255, 0.7)', 1.8);
-      });
-      ctx.shadowBlur = 0;
+      // 점 그리기 함수 (투명한 점들로 윤곽 표현)
+      const drawDots = (indices: number[], color: string, size: number = 2, alpha: number = 0.5) => {
+        ctx.globalAlpha = alpha;
+        indices.forEach(idx => {
+          if (idx >= landmarks.length) return;
+          const point = transformPoint(idx);
+          if (!point) return;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      };
 
-      // 상단 윤곽선 (이마~관자놀이) - 은은한 청색
-      drawConnections(upperSilhouette, 'rgba(180, 220, 255, 0.5)', 1.5);
-      drawConnections(upperSilhouetteLeft, 'rgba(180, 220, 255, 0.5)', 1.5);
+      // 눈, 눈썹, 코, 입 - 투명한 점으로 표현
+      drawDots(leftEye, 'rgba(150, 220, 255, 0.9)', 1.5, 0.4);
+      drawDots(rightEye, 'rgba(150, 220, 255, 0.9)', 1.5, 0.4);
+      drawDots(leftEyebrow, 'rgba(180, 200, 255, 0.9)', 1.5, 0.35);
+      drawDots(rightEyebrow, 'rgba(180, 200, 255, 0.9)', 1.5, 0.35);
+      drawDots(nose, 'rgba(255, 200, 180, 0.9)', 1.5, 0.4);
+      drawDots(lipsOuter, 'rgba(255, 180, 200, 0.9)', 1.5, 0.4);
 
-      // 턱 윤곽선 - 골드 그라데이션 (직선 제거, 자연스러운 곡선만)
+      // 상단 윤곽선 (이마~관자놀이) - 은은한 점
+      drawDots(upperSilhouette, 'rgba(180, 220, 255, 0.9)', 1.5, 0.3);
+      drawDots(upperSilhouetteLeft, 'rgba(180, 220, 255, 0.9)', 1.5, 0.3);
+
+      // 턱 윤곽선 - 하나로 연결 (jawContourLeft + jawContourRight를 연속으로)
+      const fullJawContour = [...jawContourLeft, ...jawContourRight.slice(1)]; // 152 중복 제거
       ctx.shadowColor = 'rgba(255, 200, 100, 0.6)';
       ctx.shadowBlur = 10;
-      drawConnections(jawContourLeft, 'rgba(255, 215, 130, 0.85)', 2.5);
-      drawConnections(jawContourRight, 'rgba(255, 215, 130, 0.85)', 2.5);
+      drawConnections(fullJawContour, 'rgba(255, 215, 130, 0.85)', 2.5);
       ctx.shadowBlur = 0;
 
       // 주요 포인트 그리기 함수 (라벨 없이 깔끔하게)
@@ -1064,7 +1079,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     ctx.fillStyle = tierBg.accent;
     ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('AI 관상 분석', 540, 110);
+    ctx.fillText('경험 기반 관상 분석', 540, 110);
 
     // 하단 장식 라인
     ctx.globalAlpha = 0.5;
@@ -1277,7 +1292,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     ctx.fillStyle = tierBg.accent;
     ctx.globalAlpha = 0.6;
     ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('unyeoni.com', 540, 1320);
+    ctx.fillText('mytype.co.kr', 540, 1320);
     ctx.globalAlpha = 1;
 
     const dataUrl = canvas.toDataURL('image/png');
@@ -1372,7 +1387,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   const scoreGrade = getScoreGrade(data.score);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${scoreGrade.bgGradient}`}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
       <div className="container mx-auto px-4 py-6 max-w-lg">
 
         {/* 얼굴 + 랜드마크 시각화 */}
