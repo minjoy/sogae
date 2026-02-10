@@ -82,11 +82,12 @@ function validateAnalysisResult(
     const faceHeightRatio = maxY - minY;
     const faceArea = faceWidthRatio * faceHeightRatio;
 
-    // 얼굴이 이미지의 10% 미만이면 너무 작음
-    if (faceArea < 0.10) {
+    // 얼굴이 이미지의 5% 미만이면 분석 불가 (차단)
+    if (faceArea < 0.05) {
       errors.push(`얼굴이 너무 작게 찍혔습니다 (${(faceArea * 100).toFixed(1)}%). 카메라에 가까이 다가가서 다시 촬영해주세요.`);
     } else if (faceArea < 0.15) {
-      warnings.push(`얼굴이 조금 작게 찍혔습니다. 가까이 촬영하면 더 정확한 분석이 가능합니다.`);
+      // 5~15%는 경고만 (무시하고 진행 가능)
+      warnings.push(`얼굴이 작게 찍혔습니다 (${(faceArea * 100).toFixed(1)}%). 가까이 촬영하면 더 정확한 분석이 가능합니다.`);
     }
 
     // 얼굴이 화면 끝에 걸쳐있는지 확인
