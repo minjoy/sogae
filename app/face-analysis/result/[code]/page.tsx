@@ -916,17 +916,17 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         ctx.globalAlpha = 1;
       };
 
-      // 눈, 눈썹, 코, 입 - 투명한 점으로 표현
-      drawDots(leftEye, 'rgba(150, 220, 255, 0.9)', 1.5, 0.4);
-      drawDots(rightEye, 'rgba(150, 220, 255, 0.9)', 1.5, 0.4);
-      drawDots(leftEyebrow, 'rgba(180, 200, 255, 0.9)', 1.5, 0.35);
-      drawDots(rightEyebrow, 'rgba(180, 200, 255, 0.9)', 1.5, 0.35);
-      drawDots(nose, 'rgba(255, 200, 180, 0.9)', 1.5, 0.4);
-      drawDots(lipsOuter, 'rgba(255, 180, 200, 0.9)', 1.5, 0.4);
+      // 눈, 눈썹, 코, 입 - 투명한 점으로 표현 (더 진하게)
+      drawDots(leftEye, 'rgba(150, 220, 255, 1)', 1.8, 0.6);
+      drawDots(rightEye, 'rgba(150, 220, 255, 1)', 1.8, 0.6);
+      drawDots(leftEyebrow, 'rgba(180, 200, 255, 1)', 1.8, 0.55);
+      drawDots(rightEyebrow, 'rgba(180, 200, 255, 1)', 1.8, 0.55);
+      drawDots(nose, 'rgba(255, 200, 180, 1)', 1.8, 0.6);
+      drawDots(lipsOuter, 'rgba(255, 180, 200, 1)', 1.8, 0.6);
 
       // 상단 윤곽선 (이마~관자놀이) - 은은한 점
-      drawDots(upperSilhouette, 'rgba(180, 220, 255, 0.9)', 1.5, 0.3);
-      drawDots(upperSilhouetteLeft, 'rgba(180, 220, 255, 0.9)', 1.5, 0.3);
+      drawDots(upperSilhouette, 'rgba(180, 220, 255, 1)', 1.5, 0.45);
+      drawDots(upperSilhouetteLeft, 'rgba(180, 220, 255, 1)', 1.5, 0.45);
 
       // 턱 윤곽선 - 하나로 연결 (jawContourLeft + jawContourRight를 연속으로)
       const fullJawContour = [...jawContourLeft, ...jawContourRight.slice(1)]; // 152 중복 제거
@@ -962,11 +962,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         ctx.shadowBlur = 0;
       };
 
-      // 핵심 분석 포인트만 표시 (더 세련된 디자인)
-      // 눈 중심 (에메랄드)
-      drawKeyPoint(DEBUG_POINTS.eyes.leftCenter, 'rgba(80, 255, 180, 0.9)', 5, 'rgba(80, 255, 180, 0.5)');
-      drawKeyPoint(DEBUG_POINTS.eyes.rightCenter, 'rgba(80, 255, 180, 0.9)', 5, 'rgba(80, 255, 180, 0.5)');
-
+      // 핵심 분석 포인트만 표시 (눈동자 제외)
       // 눈꼬리/눈머리 (사파이어)
       drawKeyPoint(DEBUG_POINTS.eyes.leftOuter, 'rgba(100, 180, 255, 0.85)', 3.5);
       drawKeyPoint(DEBUG_POINTS.eyes.leftInner, 'rgba(100, 180, 255, 0.85)', 3.5);
@@ -1407,20 +1403,21 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
               </div>
             )}
 
-            {/* 오버레이 정보 - 얼굴력 : n점 형식 */}
-            <div className="absolute bottom-8 left-0 right-0 text-center">
-              <div
-                className="inline-flex items-center gap-2 backdrop-blur px-5 py-3 rounded-full border"
-                style={{
-                  backgroundColor: 'rgba(0,0,0,0.7)',
-                  borderColor: scoreGrade.color,
-                  boxShadow: `0 0 20px ${scoreGrade.color}40`
-                }}
-              >
-                <span className="text-white/70 text-lg">얼굴력</span>
-                <span className="text-2xl font-black" style={{ color: scoreGrade.color }}>{data.score}</span>
-                <span className="text-white/70 text-lg">점</span>
-              </div>
+          </div>
+
+          {/* 얼굴력 점수 - 캔버스 아래로 이동 */}
+          <div className="text-center mt-4">
+            <div
+              className="inline-flex items-center gap-2 backdrop-blur px-5 py-3 rounded-full border"
+              style={{
+                backgroundColor: 'rgba(0,0,0,0.7)',
+                borderColor: scoreGrade.color,
+                boxShadow: `0 0 20px ${scoreGrade.color}40`
+              }}
+            >
+              <span className="text-white/70 text-lg">얼굴력</span>
+              <span className="text-2xl font-black" style={{ color: scoreGrade.color }}>{data.score}</span>
+              <span className="text-white/70 text-lg">점</span>
             </div>
           </div>
 

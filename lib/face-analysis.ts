@@ -757,17 +757,17 @@ export function analyzeFace(
   // facescore 범위: 약 100 ~ 350 (가중치 합산)
   // face_color는 "상위 X%"를 의미 (낮을수록 좋음)
 
-  // 점수 분포 개선: facescore에 따라 25~95점 범위로 분포
+  // 점수 분포 개선: facescore에 따라 15~95점 범위로 분포
   // facescore가 높을수록 좋은 관상 → 높은 점수
-  // 실제 facescore 범위가 약 150~300이므로, 이를 25~95점으로 매핑
-  const minFacescore = 140;
-  const maxFacescore = 320;
+  // 범위 조정으로 더 넓은 점수 분포 확보
+  const minFacescore = 165;  // 상향 조정 (낮은 점수도 나오도록)
+  const maxFacescore = 295;  // 하향 조정 (분포 확대)
   const scoreRange = maxFacescore - minFacescore;
 
-  // 선형 매핑: facescore를 25~95점으로 변환
+  // 선형 매핑: facescore를 15~95점으로 변환 (더 넓은 범위)
   const normalizedScore = clamp(
-    Math.round(25 + ((facescore - minFacescore) / scoreRange) * 70),
-    25,
+    Math.round(15 + ((facescore - minFacescore) / scoreRange) * 80),
+    15,
     95
   );
 
@@ -775,11 +775,13 @@ export function analyzeFace(
   const faceColor = (150 - (facescore - 172)) / 149 * 100;
 
   // === 카테고리 점수 정규화 ===
-  // 각 카테고리 raw 점수를 0~100 범위로 변환
+  // 각 카테고리 raw 점수를 0~100 범위로 변환 (더 넓은 분포)
   const normalizeCategory = (val: number, avgVal: number, spread: number): number => {
     const deviation = (val - avgVal) / spread;
-    const normalized = 50 + deviation * 25;
-    return clamp(Math.round(normalized), 15, 85);
+    // 편차를 더 크게 반영 (35 → 더 넓은 분포)
+    const normalized = 50 + deviation * 35;
+    // 범위 확대: 5~95 (이전: 15~85)
+    return clamp(Math.round(normalized), 5, 95);
   };
 
   // r1~r4 raw 값 저장 (디버그용)
