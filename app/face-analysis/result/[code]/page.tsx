@@ -212,12 +212,93 @@ function getScoreGrade(score: number): { grade: string; color: string; emoji: st
   return { grade: '평', color: '#A8A8A8', emoji: '🌱' };
 }
 
+// 누적 저장용 타입
+interface SavedFaceData {
+  id: string;
+  savedAt: string;
+  memo: string;
+  debug: Record<string, number | undefined>;
+  labels: Record<string, string>;
+}
+
 // 디버그 패널 컴포넌트
-function DebugPanel({ analysis, memo, setMemo }: {
+function DebugPanel({ analysis, memo, setMemo, shareCode }: {
   analysis: Record<string, unknown>;
   memo: string;
   setMemo: (v: string) => void;
+  shareCode: string;
 }) {
+  const [savedCount, setSavedCount] = useState(0);
+  const [showSavedList, setShowSavedList] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  // 저장된 개수 로드
+  useEffect(() => {
+    const saved = localStorage.getItem('faceAnalysisList');
+    if (saved) {
+      const list = JSON.parse(saved) as SavedFaceData[];
+      setSavedCount(list.length);
+    }
+  }, []);
+
+  // 현재 분석 저장
+  const saveToList = () => {
+    const saved = localStorage.getItem('faceAnalysisList');
+    const list: SavedFaceData[] = saved ? JSON.parse(saved) : [];
+
+    // 이미 저장된 경우 업데이트
+    const existingIndex = list.findIndex(item => item.id === shareCode);
+
+    const debug = analysis?.debug as Record<string, number | undefined>;
+    const labels: Record<string, string> = {};
+
+    // 각 분석 항목의 label 추출
+    ['eyeAngle', 'eyebrowDistance', 'noseLength', 'philtrumLength', 'mouthWidth', 'jawWidth', 'eyeSize'].forEach(key => {
+      const val = analysis[key];
+      if (typeof val === 'object' && val !== null && 'label' in val) {
+        labels[key] = (val as { label: string }).label;
+      }
+    });
+
+    const newItem: SavedFaceData = {
+      id: shareCode,
+      savedAt: new Date().toISOString(),
+      memo: memo,
+      debug: debug || {},
+      labels: labels,
+    };
+
+    if (existingIndex >= 0) {
+      list[existingIndex] = newItem;
+    } else {
+      list.push(newItem);
+    }
+
+    localStorage.setItem('faceAnalysisList', JSON.stringify(list));
+    setSavedCount(list.length);
+    alert(`저장 완료! (총 ${list.length}개)`);
+  };
+
+  // 전체 복사
+  const copyAll = () => {
+    const saved = localStorage.getItem('faceAnalysisList');
+    if (!saved) {
+      alert('저장된 데이터가 없습니다.');
+      return;
+    }
+    navigator.clipboard.writeText(saved);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
+  };
+
+  // 전체 삭제
+  const clearAll = () => {
+    if (confirm('모든 저장된 데이터를 삭제하시겠습니까?')) {
+      localStorage.removeItem('faceAnalysisList');
+      setSavedCount(0);
+    }
+  };
+
   const debug = analysis?.debug as {
     noseWidth?: number;
     noseLengthRatio?: number;
@@ -439,9 +520,63 @@ function DebugPanel({ analysis, memo, setMemo }: {
       </div>
 
       {/* 임계값 참고 */}
-      <div className="text-[10px] text-gray-500 space-y-0.5">
+      <div className="text-[10px] text-gray-500 space-y-0.5 mb-3">
         <p>코길이: &gt;1.55(긴) | 인중: &gt;0.7(긴) | 입너비: &gt;1.75(큼)</p>
         <p>들창코비: 값이 클수록 들창코 (코끝~코밑 / 코밑~윗입술)</p>
+      </div>
+
+      {/* 누적 저장 버튼들 */}
+      <div className="border-t border-red-500/30 pt-3 mt-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-red-400 text-sm font-medium">📦 누적 저장 ({savedCount}개)</span>
+          <button
+            onClick={() => setShowSavedList(!showSavedList)}
+            className="text-xs text-gray-400 hover:text-white"
+          >
+            {showSavedList ? '닫기' : '목록 보기'}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={saveToList}
+            className="py-2 bg-green-500/20 text-green-400 rounded-lg text-sm font-medium hover:bg-green-500/30"
+          >
+            ➕ 저장
+          </button>
+          <button
+            onClick={copyAll}
+            className="py-2 bg-blue-500/20 text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-500/30"
+          >
+            {copySuccess ? '✅ 복사됨!' : '📋 전체복사'}
+          </button>
+          <button
+            onClick={clearAll}
+            className="py-2 bg-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30"
+          >
+            🗑️ 초기화
+          </button>
+        </div>
+
+        {/* 저장된 목록 표시 */}
+        {showSavedList && savedCount > 0 && (
+          <div className="mt-3 max-h-40 overflow-y-auto">
+            {(() => {
+              const saved = localStorage.getItem('faceAnalysisList');
+              if (!saved) return null;
+              const list = JSON.parse(saved) as SavedFaceData[];
+              return list.map((item, i) => (
+                <div key={item.id} className="bg-black/30 rounded p-2 mb-1 text-xs">
+                  <div className="flex justify-between text-gray-400">
+                    <span>#{i + 1} {item.id.slice(0, 8)}</span>
+                    <span>{new Date(item.savedAt).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                  {item.memo && <div className="text-yellow-400 mt-1">{item.memo}</div>}
+                </div>
+              ));
+            })()}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1191,7 +1326,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         </div>
 
         {/* 디버그 정보 섹션 - 한줄평 위에 표시 */}
-        <DebugPanel analysis={data.analysis} memo={memo} setMemo={setMemo} />
+        <DebugPanel analysis={data.analysis} memo={memo} setMemo={setMemo} shareCode={data.shareCode} />
 
         {/* 한줄평 카드 */}
         <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">
