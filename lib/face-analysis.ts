@@ -774,18 +774,18 @@ export function analyzeFace(
   // facescore 범위: 약 100 ~ 350 (가중치 합산)
   // face_color는 "상위 X%"를 의미 (낮을수록 좋음)
 
-  // 점수 분포 개선: facescore에 따라 15~95점 범위로 분포
+  // 점수 분포 개선: facescore에 따라 20~95점 범위로 분포
   // facescore가 높을수록 좋은 관상 → 높은 점수
-  // 실제 facescore 범위(100-350)에 맞게 조정
-  const minFacescore = 120;
-  const maxFacescore = 320;
+  // 실제 facescore 범위에 맞게 조정 (범위 축소로 점수 분포 확대)
+  const minFacescore = 100;
+  const maxFacescore = 280;
   const scoreRange = maxFacescore - minFacescore;
 
-  // 선형 매핑: facescore를 20~90점으로 변환
+  // 선형 매핑: facescore를 20~95점으로 변환
   const facescoreNormalized = clamp(
-    Math.round(20 + ((facescore - minFacescore) / scoreRange) * 70),
+    Math.round(20 + ((facescore - minFacescore) / scoreRange) * 75),
     20,
-    90
+    95
   );
 
   // draw.py 호환: 상위 X% 계산 (face_color)
@@ -813,9 +813,9 @@ export function analyzeFace(
   // 최종 점수: facescore 기반 점수와 카테고리 평균의 가중 조합
   // 카테고리 점수와 전체 점수가 일관성 있게 나오도록 함
   const categoryAvg = (r1 + r2 + r3 + r4) / 4;
-  // facescore 50%, 카테고리 평균 50% 조합
+  // facescore 40%, 카테고리 평균 60% 조합 (카테고리 점수 더 반영)
   const normalizedScore = clamp(
-    Math.round(facescoreNormalized * 0.5 + categoryAvg * 0.5),
+    Math.round(facescoreNormalized * 0.4 + categoryAvg * 0.6),
     15,
     95
   );
