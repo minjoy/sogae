@@ -149,6 +149,9 @@ export interface FaceAnalysisResult {
     jawContourAngleLeft: number;  // 왼쪽 윤곽 2/3 지점 각도 (실제 턱각)
     jawContourAngleRight: number; // 오른쪽 윤곽 2/3 지점 각도
     jawContourAngleAvg: number;   // 평균 윤곽 각도
+    // 회전 보정 팩터
+    rotationCompHorizontal: number; // 수평 보정 팩터 (좌우 회전)
+    rotationCompVertical: number;   // 수직 보정 팩터 (상하 회전)
   };
 }
 
@@ -218,6 +221,41 @@ function normalizeRotation(points: FacePoint[], rollAngle: number): FacePoint[] 
   });
 }
 
+// 얼굴 회전 보정 팩터 계산
+// panAngle: 좌우 회전 (양수 = 왼쪽으로 돌림, 음수 = 오른쪽으로 돌림)
+// tiltAngle: 상하 회전 (양수 = 위로 올림, 음수 = 아래로 내림)
+interface RotationCompensation {
+  horizontal: number;  // 수평 측정값 보정 팩터 (입, 눈, 턱 너비 등)
+  vertical: number;    // 수직 측정값 보정 팩터 (코, 인중 길이 등)
+}
+
+function getRotationCompensation(panAngle: number, tiltAngle: number): RotationCompensation {
+  // 각도를 라디안으로 변환
+  const panRad = Math.abs(panAngle) * Math.PI / 180;
+  const tiltRad = Math.abs(tiltAngle) * Math.PI / 180;
+
+  // 최대 보정 각도 제한 (40도 이상은 측정 신뢰도가 낮음)
+  const maxAngleRad = 40 * Math.PI / 180;
+  const clampedPanRad = Math.min(panRad, maxAngleRad);
+  const clampedTiltRad = Math.min(tiltRad, maxAngleRad);
+
+  // cos 값이 너무 작아지면 보정값이 과도해지므로 최소값 제한
+  const minCos = 0.75; // cos(40°) ≈ 0.766
+
+  // 수평 보정: 좌우로 돌리면 수평 거리가 줄어들어 보임 → 1/cos(pan)으로 복원
+  const horizontalCos = Math.max(Math.cos(clampedPanRad), minCos);
+  const horizontalFactor = 1 / horizontalCos;
+
+  // 수직 보정: 위아래로 돌리면 수직 거리가 줄어들어 보임 → 1/cos(tilt)로 복원
+  const verticalCos = Math.max(Math.cos(clampedTiltRad), minCos);
+  const verticalFactor = 1 / verticalCos;
+
+  return {
+    horizontal: horizontalFactor,
+    vertical: verticalFactor
+  };
+}
+
 export function analyzeFace(
   landmarks: FaceLandmarks,
   gender: 'male' | 'female',
@@ -228,15 +266,20 @@ export function analyzeFace(
   // 얼굴 기울기 보정 적용
   const fp = normalizeRotation(landmarks.all, rollAngle);
 
+  // 얼굴 회전 보정 팩터 계산
+  const rotationComp = getRotationCompensation(panAngle, tiltAngle);
+
   // draw.py와 동일하게 facescore 직접 누적
   let facescore = 0;
   let r1 = 0, r2 = 0, r3 = 0, r4 = 0;
 
   // === 기준 비율 계산 === (draw.py와 동일)
-  // widthratio = 코 너비 (콧볼 너비)
-  const noseWidth = Math.abs(fp[13].x - fp[14].x) || 1;
-  // widthratio2 = 얼굴 너비 (볼 중앙 간 거리)
-  const faceWidth = Math.abs(fp[27].x - fp[26].x) || 1;
+  // widthratio = 코 너비 (콧볼 너비) - 수평 보정 적용
+  const noseWidthRaw = Math.abs(fp[13].x - fp[14].x) || 1;
+  const noseWidth = noseWidthRaw * rotationComp.horizontal;
+  // widthratio2 = 얼굴 너비 (볼 중앙 간 거리) - 수평 보정 적용
+  const faceWidthRaw = Math.abs(fp[27].x - fp[26].x) || 1;
+  const faceWidth = faceWidthRaw * rotationComp.horizontal;
 
   // === 1. 눈꼬리 각도 분석 ===
   // 왼쪽 눈의 안쪽-바깥쪽 기울기 계산
@@ -308,12 +351,15 @@ export function analyzeFace(
   }
 
   // === 2. 눈썹-눈 거리 분석 ===
-  // 눈썹 위쪽 중간점과 눈 중심 사이 거리
-  const eyebrowEyeDistLeft = Math.abs(fp[0].y - fp[24].y);
-  const eyebrowEyeDistRight = Math.abs(fp[1].y - fp[25].y);
+  // 눈썹 위쪽 중간점과 눈 중심 사이 거리 - 수직 보정 적용
+  const eyebrowEyeDistLeftRaw = Math.abs(fp[0].y - fp[24].y);
+  const eyebrowEyeDistRightRaw = Math.abs(fp[1].y - fp[25].y);
+  const eyebrowEyeDistLeft = eyebrowEyeDistLeftRaw * rotationComp.vertical;
+  const eyebrowEyeDistRight = eyebrowEyeDistRightRaw * rotationComp.vertical;
   const avgEyebrowDist = (eyebrowEyeDistLeft + eyebrowEyeDistRight) / 2;
-  // 눈 세로 크기 대비 비율로 계산
-  const eyeHeight = Math.abs(fp[18].y - fp[16].y) || 1;
+  // 눈 세로 크기 대비 비율로 계산 - 수직 보정 적용
+  const eyeHeightRaw = Math.abs(fp[18].y - fp[16].y) || 1;
+  const eyeHeight = eyeHeightRaw * rotationComp.vertical;
   const eyebrowRatio = avgEyebrowDist / eyeHeight;
 
   let eyebrowDistanceAnalysis: { label: string; description: string };
@@ -372,8 +418,9 @@ export function analyzeFace(
 
   // === 3. 코 길이 분석 === (draw.py ratio2 공식)
   // ratio2 = (facepoint[15].y - facepoint[0].y) / widthratio
-  // 코밑 중앙(fp[15])에서 눈 중심(fp[0])까지 / 코 너비
-  const noseLengthRatio = (fp[15].y - fp[0].y) / noseWidth;
+  // 코밑 중앙(fp[15])에서 눈 중심(fp[0])까지 / 코 너비 - 수직 보정 적용
+  const noseLengthRaw = (fp[15].y - fp[0].y) * rotationComp.vertical;
+  const noseLengthRatio = noseLengthRaw / noseWidth;
 
   let noseLengthAnalysis: { label: string; description: string };
   let noseLevel: number;
@@ -414,8 +461,9 @@ export function analyzeFace(
 
   // === 4. 인중 길이 분석 === (draw.py ratio3 공식)
   // ratio3 = (facepoint[12].y - facepoint[15].y) / widthratio
-  // 입 중앙(fp[12])에서 코밑 중앙(fp[15])까지 / 코 너비
-  const philtrumRatio = (fp[12].y - fp[15].y) / noseWidth;
+  // 입 중앙(fp[12])에서 코밑 중앙(fp[15])까지 / 코 너비 - 수직 보정 적용
+  const philtrumLengthRaw = (fp[12].y - fp[15].y) * rotationComp.vertical;
+  const philtrumRatio = philtrumLengthRaw / noseWidth;
 
   let philtrumAnalysis: { label: string; description: string };
   let philtrumLevel: number;
@@ -473,8 +521,9 @@ export function analyzeFace(
   facescore += WEIGHTS.r4_sincere * philtrumLevel;
 
   // === 5. 입 너비 분석 === (draw.py ratio7 공식)
-  // ratio7 = (facepoint[11].x - facepoint[10].x) / widthratio
-  const mouthWidthVal = Math.abs(fp[11].x - fp[10].x);
+  // ratio7 = (facepoint[11].x - facepoint[10].x) / widthratio - 수평 보정 적용
+  const mouthWidthRaw = Math.abs(fp[11].x - fp[10].x);
+  const mouthWidthVal = mouthWidthRaw * rotationComp.horizontal;
   const mouthRatio = mouthWidthVal / noseWidth;
 
   let mouthAnalysis: { label: string; description: string };
@@ -532,7 +581,9 @@ export function analyzeFace(
   // - "하관 발달" → avgJawAngle: 30~32°
   // - "턱 가늘다/얇음" → avgJawAngle: 24~27°
 
-  const jawWidth = Math.abs(fp[31].x - fp[30].x);
+  // 턱 너비 - 수평 보정 적용
+  const jawWidthRaw = Math.abs(fp[31].x - fp[30].x);
+  const jawWidth = jawWidthRaw * rotationComp.horizontal;
   const jawRatio = jawWidth / faceWidth;
 
   // 턱각 계산 (볼-턱각-턱끝 사이의 각도)
@@ -609,17 +660,19 @@ export function analyzeFace(
   facescore += WEIGHTS.r3_social * jawLevel;
 
   // === 7. 눈 크기 분석 ===
-  const eyeSizeLeftX = Math.abs(fp[17].x - fp[19].x);
-  const eyeSizeLeftY = Math.abs(fp[18].y - fp[16].y) || 1;
+  // 눈 너비 - 수평 보정 적용, 눈 높이 - 수직 보정 적용
+  const eyeSizeLeftXRaw = Math.abs(fp[17].x - fp[19].x);
+  const eyeSizeLeftYRaw = Math.abs(fp[18].y - fp[16].y) || 1;
+  const eyeSizeLeftX = eyeSizeLeftXRaw * rotationComp.horizontal;
+  const eyeSizeLeftY = eyeSizeLeftYRaw * rotationComp.vertical;
   const eyeRatio = eyeSizeLeftX / eyeSizeLeftY;
   const eyeFaceWidthRatio = faceWidth / eyeSizeLeftX;
 
   let eyeSizeAnalysis: { label: string; description: string };
   let eyeSizeLevel: number;
 
-  // 눈 크기와 형태에 따른 분석 (임계값 조정: 얼굴 회전 시 눈이 좁아 보이는 문제 완화)
-  // 기존: <4.5 (큼), <5.5 (보통) → 조정: <5.5 (큼), <6.5 (보통)
-  if (eyeFaceWidthRatio < 5.5) {
+  // 눈 크기와 형태에 따른 분석 (회전 보정 적용으로 원래 임계값 사용)
+  if (eyeFaceWidthRatio < 4.5) {
     // 눈이 큰 편
     if (eyeRatio > 3.0) {
       eyeSizeAnalysis = {
@@ -637,7 +690,7 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_spirit * 1 + WEIGHTS.r2_jealousy * 5;
     r3 += WEIGHTS.r3_someone * 1;
     r4 += WEIGHTS.r4_kind * 1;
-  } else if (eyeFaceWidthRatio < 6.5) {
+  } else if (eyeFaceWidthRatio < 5.5) {
     // 눈이 보통
     eyeSizeAnalysis = {
       label: "눈이 보통 크기",
@@ -753,10 +806,10 @@ export function analyzeFace(
     traits = applyTraitModifiers(traits, '하관', 'low');
   }
 
-  // 7. 눈크기 기반 특성 (임계값 조정됨)
-  if (eyeFaceWidthRatio < 5.5) {
+  // 7. 눈크기 기반 특성 (회전 보정 적용으로 원래 임계값 사용)
+  if (eyeFaceWidthRatio < 4.5) {
     traits = applyTraitModifiers(traits, '눈크기', 'big');
-  } else if (eyeFaceWidthRatio > 6.5) {
+  } else if (eyeFaceWidthRatio > 5.5) {
     traits = applyTraitModifiers(traits, '눈크기', 'small');
   }
 
@@ -986,6 +1039,9 @@ export function analyzeFace(
         };
         return (calcAngle(fp[29], fp[30], fp[26]) + calcAngle(fp[29], fp[31], fp[27])) / 2;
       })(),
+      // 회전 보정 팩터
+      rotationCompHorizontal: rotationComp.horizontal,
+      rotationCompVertical: rotationComp.vertical,
     },
   };
 }
