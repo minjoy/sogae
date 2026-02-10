@@ -175,6 +175,23 @@ const WEIGHTS = {
   r4_sincere: 3,
 };
 
+// 부위별 중요도 가중치 (관상학적 중요도 기반)
+// 눈: 가장 중요 (정신, 영혼의 창)
+// 코: 재물운, 사회적 성공
+// 입: 권력운, 일복
+// 턱: 말년운
+// 눈썹: 복과 감정
+// 인중: 자녀운, 장수
+const FEATURE_IMPORTANCE = {
+  eyeAngle: 1.4,        // 눈꼬리 - 정신력, 성격
+  eyebrowDistance: 1.0, // 눈두덩이 - 복과 조상덕
+  noseLength: 1.3,      // 코길이 - 재물운, 사회성
+  philtrumLength: 0.9,  // 인중 - 자녀운, 장수
+  mouthWidth: 1.1,      // 입크기 - 권력운, 일복
+  jawWidth: 1.2,        // 턱 - 말년운, 사회성
+  eyeSize: 1.5,         // 눈크기 - 가장 중요 (영혼의 창)
+};
+
 // UUID 생성
 function generateUUID(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -307,6 +324,7 @@ export function analyzeFace(
   // 평균 기울기를 각도로 변환 (라디안 -> 도)
   const avgSlope = (leftEyeSlope + rightEyeSlope) / 2;
   const eyeAngleDegrees = Math.atan(avgSlope) * (180 / Math.PI);
+  const eyeAngleImportance = FEATURE_IMPORTANCE.eyeAngle;
 
   let eyeAngleAnalysis: { label: string; description: string };
   let eyeAngleLevel: number;
@@ -320,10 +338,10 @@ export function analyzeFace(
       description: "그 기상이 마치 하늘을 찌를 듯이 웅장하며, 모든 면에서 적극적이고 강인한 면모를 발휘합니다. 리더십과 독립적인 성향이 강하지만, 독불장군과 같은 고집스러움이 동반될 수 있습니다."
     };
     eyeAngleLevel = 5;
-    facescore += WEIGHTS.r2_spirit * 5; r2_spirit_sum += WEIGHTS.r2_spirit * 5;
-    facescore += WEIGHTS.r2_adult * 4; r2_adult_sum += WEIGHTS.r2_adult * 4;
-    facescore += WEIGHTS.r4_kind * 1; r4_kind_sum += WEIGHTS.r4_kind * 1;
-    facescore += WEIGHTS.r4_wind * 5; r4_wind_sum += WEIGHTS.r4_wind * 5;
+    facescore += WEIGHTS.r2_spirit * 5 * eyeAngleImportance; r2_spirit_sum += WEIGHTS.r2_spirit * 5;
+    facescore += WEIGHTS.r2_adult * 4 * eyeAngleImportance; r2_adult_sum += WEIGHTS.r2_adult * 4;
+    facescore += WEIGHTS.r4_kind * 1 * eyeAngleImportance; r4_kind_sum += WEIGHTS.r4_kind * 1;
+    facescore += WEIGHTS.r4_wind * 5 * eyeAngleImportance; r4_wind_sum += WEIGHTS.r4_wind * 5;
     r2 += WEIGHTS.r2_spirit * 5 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 1 + WEIGHTS.r4_wind * 5;
   } else if (eyeAngleDegrees > 2) {
@@ -333,10 +351,10 @@ export function analyzeFace(
       description: "대담하고 용기 넘치며, 언제나 적극적이고 밝은 에너지를 발산합니다. 실패에 대한 두려움이 없어, 도전적인 상황에서도 적절하고 과감한 행동을 취하는 경향이 있습니다."
     };
     eyeAngleLevel = 4;
-    facescore += WEIGHTS.r2_spirit * 4; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
-    facescore += WEIGHTS.r2_adult * 4; r2_adult_sum += WEIGHTS.r2_adult * 4;
-    facescore += WEIGHTS.r4_kind * 4; r4_kind_sum += WEIGHTS.r4_kind * 4;
-    facescore += WEIGHTS.r4_wind * 4; r4_wind_sum += WEIGHTS.r4_wind * 4;
+    facescore += WEIGHTS.r2_spirit * 4 * eyeAngleImportance; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
+    facescore += WEIGHTS.r2_adult * 4 * eyeAngleImportance; r2_adult_sum += WEIGHTS.r2_adult * 4;
+    facescore += WEIGHTS.r4_kind * 4 * eyeAngleImportance; r4_kind_sum += WEIGHTS.r4_kind * 4;
+    facescore += WEIGHTS.r4_wind * 4 * eyeAngleImportance; r4_wind_sum += WEIGHTS.r4_wind * 4;
     r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 4 + WEIGHTS.r4_wind * 4;
   } else if (eyeAngleDegrees > -5) {
@@ -346,10 +364,10 @@ export function analyzeFace(
       description: "내면에 강한 의지와 결단력을 지니고 있습니다. 감정의 기복이 크지 않아 일관된 태도를 유지하는 데 강점을 가지고 있으며, 안정적인 성격의 소유자입니다."
     };
     eyeAngleLevel = 3;
-    facescore += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
-    facescore += WEIGHTS.r2_adult * 3; r2_adult_sum += WEIGHTS.r2_adult * 3;
-    facescore += WEIGHTS.r4_kind * 5; r4_kind_sum += WEIGHTS.r4_kind * 5;
-    facescore += WEIGHTS.r4_wind * 3; r4_wind_sum += WEIGHTS.r4_wind * 3;
+    facescore += WEIGHTS.r2_spirit * 3 * eyeAngleImportance; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
+    facescore += WEIGHTS.r2_adult * 3 * eyeAngleImportance; r2_adult_sum += WEIGHTS.r2_adult * 3;
+    facescore += WEIGHTS.r4_kind * 5 * eyeAngleImportance; r4_kind_sum += WEIGHTS.r4_kind * 5;
+    facescore += WEIGHTS.r4_wind * 3 * eyeAngleImportance; r4_wind_sum += WEIGHTS.r4_wind * 3;
     r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_adult * 3;
     r4 += WEIGHTS.r4_kind * 5 + WEIGHTS.r4_wind * 3;
   } else {
@@ -359,10 +377,10 @@ export function analyzeFace(
       description: "마음이 부드러우며 타인에 대한 배려가 깊습니다. 주변 환경에 능동적으로 적응하는 능력이 뛰어나며, 친화력이 좋아 사람들에게 호감을 받습니다."
     };
     eyeAngleLevel = 2;
-    facescore += WEIGHTS.r2_spirit * 1; r2_spirit_sum += WEIGHTS.r2_spirit * 1;
-    facescore += WEIGHTS.r2_adult * 1; r2_adult_sum += WEIGHTS.r2_adult * 1;
-    facescore += WEIGHTS.r4_kind * 2; r4_kind_sum += WEIGHTS.r4_kind * 2;
-    facescore += WEIGHTS.r4_wind * 1; r4_wind_sum += WEIGHTS.r4_wind * 1;
+    facescore += WEIGHTS.r2_spirit * 1 * eyeAngleImportance; r2_spirit_sum += WEIGHTS.r2_spirit * 1;
+    facescore += WEIGHTS.r2_adult * 1 * eyeAngleImportance; r2_adult_sum += WEIGHTS.r2_adult * 1;
+    facescore += WEIGHTS.r4_kind * 2 * eyeAngleImportance; r4_kind_sum += WEIGHTS.r4_kind * 2;
+    facescore += WEIGHTS.r4_wind * 1 * eyeAngleImportance; r4_wind_sum += WEIGHTS.r4_wind * 1;
     r2 += WEIGHTS.r2_spirit * 1 + WEIGHTS.r2_adult * 1;
     r4 += WEIGHTS.r4_kind * 2 + WEIGHTS.r4_wind * 1;
   }
@@ -378,6 +396,7 @@ export function analyzeFace(
   const eyeHeightRaw = Math.abs(fp[18].y - fp[16].y) || 1;
   const eyeHeight = eyeHeightRaw * rotationComp.vertical;
   const eyebrowRatio = avgEyebrowDist / eyeHeight;
+  const eyebrowImportance = FEATURE_IMPORTANCE.eyebrowDistance;
 
   let eyebrowDistanceAnalysis: { label: string; description: string };
   let eyebrowLevel: number;
@@ -432,15 +451,16 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_spirit * 4; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
     r3 += WEIGHTS.r3_money * 2; r3_money_sum += WEIGHTS.r3_money * 2;
   }
-  // facescore에 눈썹 분석 점수 추가 (draw.py 방식)
-  facescore += WEIGHTS.r2_spirit * eyebrowLevel; r2_spirit_sum += WEIGHTS.r2_spirit * eyebrowLevel;
-  facescore += WEIGHTS.r3_money * eyebrowLevel; r3_money_sum += WEIGHTS.r3_money * eyebrowLevel;
+  // facescore에 눈썹 분석 점수 추가 (draw.py 방식) - 부위별 가중치 적용
+  facescore += WEIGHTS.r2_spirit * eyebrowLevel * eyebrowImportance; r2_spirit_sum += WEIGHTS.r2_spirit * eyebrowLevel;
+  facescore += WEIGHTS.r3_money * eyebrowLevel * eyebrowImportance; r3_money_sum += WEIGHTS.r3_money * eyebrowLevel;
 
   // === 3. 코 길이 분석 === (draw.py ratio2 공식)
   // ratio2 = (facepoint[15].y - facepoint[0].y) / widthratio
   // 코밑 중앙(fp[15])에서 눈 중심(fp[0])까지 / 코 너비 - 수직 보정 적용
   const noseLengthRaw = (fp[15].y - fp[0].y) * rotationComp.vertical;
   const noseLengthRatio = noseLengthRaw / noseWidth;
+  const noseImportance = FEATURE_IMPORTANCE.noseLength;
 
   let noseLengthAnalysis: { label: string; description: string };
   let noseLevel: number;
@@ -480,10 +500,10 @@ export function analyzeFace(
     r4 += WEIGHTS.r4_responsibility * 2; r4_respon_sum += WEIGHTS.r4_responsibility * 2;
     r4 += WEIGHTS.r4_sincere * 3; r4_since_sum += WEIGHTS.r4_sincere * 3;
   }
-  // facescore에 코 분석 점수 추가
-  facescore += WEIGHTS.r2_spirit * noseLevel; r2_spirit_sum += WEIGHTS.r2_spirit * noseLevel;
-  facescore += WEIGHTS.r2_love * noseLevel; r2_love_sum += WEIGHTS.r2_love * noseLevel;
-  facescore += WEIGHTS.r4_responsibility * noseLevel; r4_respon_sum += WEIGHTS.r4_responsibility * noseLevel;
+  // facescore에 코 분석 점수 추가 - 부위별 가중치 적용
+  facescore += WEIGHTS.r2_spirit * noseLevel * noseImportance; r2_spirit_sum += WEIGHTS.r2_spirit * noseLevel;
+  facescore += WEIGHTS.r2_love * noseLevel * noseImportance; r2_love_sum += WEIGHTS.r2_love * noseLevel;
+  facescore += WEIGHTS.r4_responsibility * noseLevel * noseImportance; r4_respon_sum += WEIGHTS.r4_responsibility * noseLevel;
 
   // === 4. 인중 길이 분석 === (개선된 버전)
   // 인중 = 코 아래점(fp[15])에서 윗입술 상단(fp[8])까지
@@ -491,6 +511,7 @@ export function analyzeFace(
   // fp[8] = upperLip (MediaPipe #0, 윗입술 가장 위)
   const philtrumLengthRaw = (fp[8].y - fp[15].y) * rotationComp.vertical;
   const philtrumRatio = philtrumLengthRaw / noseWidth;
+  const philtrumImportance = FEATURE_IMPORTANCE.philtrumLength;
 
   // 코 타입 분석 (들창코/눌린코)
   // 코끝(fp[6])이 코 아래점(fp[15])보다 얼마나 높은지 체크
@@ -556,16 +577,17 @@ export function analyzeFace(
     r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
     r4 += WEIGHTS.r4_sincere * 1; r4_since_sum += WEIGHTS.r4_sincere * 1;
   }
-  // facescore에 인중 분석 점수 추가
-  facescore += WEIGHTS.r1_old * philtrumLevel; r1_old_sum += WEIGHTS.r1_old * philtrumLevel;
-  facescore += WEIGHTS.r2_love * philtrumLevel; r2_love_sum += WEIGHTS.r2_love * philtrumLevel;
-  facescore += WEIGHTS.r4_sincere * philtrumLevel; r4_since_sum += WEIGHTS.r4_sincere * philtrumLevel;
+  // facescore에 인중 분석 점수 추가 - 부위별 가중치 적용
+  facescore += WEIGHTS.r1_old * philtrumLevel * philtrumImportance; r1_old_sum += WEIGHTS.r1_old * philtrumLevel;
+  facescore += WEIGHTS.r2_love * philtrumLevel * philtrumImportance; r2_love_sum += WEIGHTS.r2_love * philtrumLevel;
+  facescore += WEIGHTS.r4_sincere * philtrumLevel * philtrumImportance; r4_since_sum += WEIGHTS.r4_sincere * philtrumLevel;
 
   // === 5. 입 너비 분석 === (draw.py ratio7 공식)
   // ratio7 = (facepoint[11].x - facepoint[10].x) / widthratio - 수평 보정 적용
   const mouthWidthRaw = Math.abs(fp[11].x - fp[10].x);
   const mouthWidthVal = mouthWidthRaw * rotationComp.horizontal;
   const mouthRatio = mouthWidthVal / noseWidth;
+  const mouthImportance = FEATURE_IMPORTANCE.mouthWidth;
 
   let mouthAnalysis: { label: string; description: string };
   let mouthLevel: number;
@@ -613,9 +635,9 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_power * 3; r1_power_sum += WEIGHTS.r1_power * 3;
     r3 += WEIGHTS.r3_work * 3; r3_work_sum += WEIGHTS.r3_work * 3;
   }
-  // facescore에 입 분석 점수 추가
-  facescore += WEIGHTS.r1_power * mouthLevel; r1_power_sum += WEIGHTS.r1_power * mouthLevel;
-  facescore += WEIGHTS.r3_work * mouthLevel; r3_work_sum += WEIGHTS.r3_work * mouthLevel;
+  // facescore에 입 분석 점수 추가 - 부위별 가중치 적용
+  facescore += WEIGHTS.r1_power * mouthLevel * mouthImportance; r1_power_sum += WEIGHTS.r1_power * mouthLevel;
+  facescore += WEIGHTS.r3_work * mouthLevel * mouthImportance; r3_work_sum += WEIGHTS.r3_work * mouthLevel;
 
   // === 6. 하관(턱) 분석 ===
   // 실제 데이터 분석 결과: avgJawAngle이 높을수록 튼튼한 턱
@@ -626,6 +648,7 @@ export function analyzeFace(
   const jawWidthRaw = Math.abs(fp[31].x - fp[30].x);
   const jawWidth = jawWidthRaw * rotationComp.horizontal;
   const jawRatio = jawWidth / faceWidth;
+  const jawImportance = FEATURE_IMPORTANCE.jawWidth;
 
   // 턱각 계산 (볼-턱각-턱끝 사이의 각도)
   const calcJawAngle = (cheek: FacePoint, jaw: FacePoint, chin: FacePoint) => {
@@ -697,9 +720,9 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_adult * 1; r2_adult_sum += WEIGHTS.r2_adult * 1;
     r3 += WEIGHTS.r3_social * 2; r3_social_sum += WEIGHTS.r3_social * 2;
   }
-  // facescore에 턱 분석 점수 추가
-  facescore += WEIGHTS.r2_adult * jawLevel; r2_adult_sum += WEIGHTS.r2_adult * jawLevel;
-  facescore += WEIGHTS.r3_social * jawLevel; r3_social_sum += WEIGHTS.r3_social * jawLevel;
+  // facescore에 턱 분석 점수 추가 - 부위별 가중치 적용
+  facescore += WEIGHTS.r2_adult * jawLevel * jawImportance; r2_adult_sum += WEIGHTS.r2_adult * jawLevel;
+  facescore += WEIGHTS.r3_social * jawLevel * jawImportance; r3_social_sum += WEIGHTS.r3_social * jawLevel;
 
   // === 7. 눈 크기 분석 ===
   // 눈 너비 - 수평 보정 적용, 눈 높이 - 수직 보정 적용
@@ -709,6 +732,7 @@ export function analyzeFace(
   const eyeSizeLeftY = eyeSizeLeftYRaw * rotationComp.vertical;
   const eyeRatio = eyeSizeLeftX / eyeSizeLeftY;
   const eyeFaceWidthRatio = faceWidth / eyeSizeLeftX;
+  const eyeSizeImportance = FEATURE_IMPORTANCE.eyeSize;
 
   let eyeSizeAnalysis: { label: string; description: string };
   let eyeSizeLevel: number;
@@ -765,9 +789,9 @@ export function analyzeFace(
     r3 += WEIGHTS.r3_someone * 3; r3_someone_sum += WEIGHTS.r3_someone * 3;
     r4 += WEIGHTS.r4_kind * 4; r4_kind_sum += WEIGHTS.r4_kind * 4;
   }
-  // facescore에 눈 크기 분석 점수 추가
-  facescore += WEIGHTS.r2_spirit * eyeSizeLevel; r2_spirit_sum += WEIGHTS.r2_spirit * eyeSizeLevel;
-  facescore += WEIGHTS.r3_someone * eyeSizeLevel; r3_someone_sum += WEIGHTS.r3_someone * eyeSizeLevel;
+  // facescore에 눈 크기 분석 점수 추가 - 부위별 가중치 적용 (눈은 가장 중요)
+  facescore += WEIGHTS.r2_spirit * eyeSizeLevel * eyeSizeImportance; r2_spirit_sum += WEIGHTS.r2_spirit * eyeSizeLevel;
+  facescore += WEIGHTS.r3_someone * eyeSizeLevel * eyeSizeImportance; r3_someone_sum += WEIGHTS.r3_someone * eyeSizeLevel;
 
   // === 종합 점수 정규화 === (draw.py 공식 기반, 다양한 분포를 위해 조정)
   // draw.py: face_color = (150 - (facescore - 172)) / 149 * 100
@@ -776,8 +800,9 @@ export function analyzeFace(
 
   // 점수 분포 개선: facescore에 따라 0~100점 범위로 분포
   // facescore가 높을수록 좋은 관상 → 높은 점수
-  const minFacescore = 80;
-  const maxFacescore = 320;
+  // 부위별 가중치 적용으로 범위 조정 (평균 중요도 ~1.2)
+  const minFacescore = 100;
+  const maxFacescore = 400;
   const scoreRange = maxFacescore - minFacescore;
 
   // 선형 매핑: facescore를 0~100점으로 변환
