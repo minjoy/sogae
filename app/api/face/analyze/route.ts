@@ -63,29 +63,41 @@ function convertMediaPipeLandmarks(landmarks: Array<{ x: number; y: number; z: n
 
 // 얼굴 각도 계산 (MediaPipe 랜드마크 기반)
 function calculateFaceAngles(landmarks: Array<{ x: number; y: number; z: number }>) {
-  // 코 끝과 눈 사이 중간점을 이용해 각도 계산
   const noseTip = landmarks[1];
   const leftEye = landmarks[33];
   const rightEye = landmarks[263];
   const forehead = landmarks[10];
   const chin = landmarks[152];
 
-  // 좌우 회전 각도 (pan)
-  const eyeCenter = {
-    x: (leftEye.x + rightEye.x) / 2,
-    z: (leftEye.z + rightEye.z) / 2,
-  };
-  const panAngle = Math.atan2(noseTip.z - eyeCenter.z, noseTip.x - eyeCenter.x) * 180 / Math.PI;
+  // 두 눈의 중심
+  const eyeCenterX = (leftEye.x + rightEye.x) / 2;
+  const eyeCenterY = (leftEye.y + rightEye.y) / 2;
 
-  // 상하 기울기 (tilt)
-  const faceCenter = {
-    y: (forehead.y + chin.y) / 2,
-    z: (forehead.z + chin.z) / 2,
-  };
-  const tiltAngle = Math.atan2(noseTip.z - faceCenter.z, noseTip.y - faceCenter.y) * 180 / Math.PI;
+  // 얼굴 너비 (두 눈 사이 거리)
+  const eyeDistance = Math.sqrt(
+    Math.pow(rightEye.x - leftEye.x, 2) +
+    Math.pow(rightEye.y - leftEye.y, 2)
+  ) || 0.1;
 
-  // 회전 (roll)
+  // 1. Roll angle (얼굴 기울기): 두 눈을 연결한 선의 각도
   const rollAngle = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x) * 180 / Math.PI;
+
+  // 2. Pan angle (좌우 회전): 코끝이 두 눈 중심에서 수평으로 얼마나 벗어났는지
+  // 정면일 때 코끝 x ≈ 눈 중심 x
+  // 왼쪽을 보면 코가 왼쪽으로 이동 (음수), 오른쪽을 보면 오른쪽으로 이동 (양수)
+  const noseOffsetX = noseTip.x - eyeCenterX;
+  // 눈 거리 대비 비율로 각도 추정 (최대 ±45도 범위로 매핑)
+  const panRatio = Math.max(-1, Math.min(1, noseOffsetX / (eyeDistance * 0.5)));
+  const panAngle = Math.asin(panRatio) * 180 / Math.PI;
+
+  // 3. Tilt angle (상하 회전): 코끝의 y 위치가 예상 위치에서 벗어난 정도
+  // 정면일 때 코끝은 눈과 턱 사이의 약 35% 지점에 위치
+  const faceHeight = Math.abs(chin.y - eyeCenterY) || 0.1;
+  const expectedNoseY = eyeCenterY + faceHeight * 0.35;
+  const noseOffsetY = noseTip.y - expectedNoseY;
+  // 위를 보면 코가 예상보다 위로 이동 (음수 offset), 아래를 보면 아래로 (양수 offset)
+  const tiltRatio = Math.max(-1, Math.min(1, noseOffsetY / (faceHeight * 0.25)));
+  const tiltAngle = Math.asin(tiltRatio) * 180 / Math.PI;
 
   return { panAngle, tiltAngle, rollAngle };
 }
