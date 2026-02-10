@@ -929,6 +929,8 @@ export function analyzeFace(
     recommendations.push("현재의 좋은 관상을 유지하며 긍정적인 마음가짐을 가지세요");
   }
 
+  // r1, r2, r3, r4는 이미 normalizeCategory로 정규화됨 (lines 789-792)
+
   return {
     facecode: generateUUID(),
     score: normalizedScore,

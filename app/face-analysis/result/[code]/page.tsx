@@ -100,7 +100,7 @@ const CATEGORY_INFO = {
   },
 };
 
-// 결정적 한줄평 생성 (동일 분석 = 동일 결과) - draw.py 스타일
+// 결정적 한줄평 생성 (동일 분석 = 동일 결과) - draw.py text1 스타일
 function generateDeterministicOneLiner(
   score: number,
   categories: { r1: number; r2: number; r3: number; r4: number },
@@ -115,101 +115,103 @@ function generateDeterministicOneLiner(
     return '';
   };
 
-  // 돋보이는 특징 찾기 (draw.py 스타일)
-  let featureText = "";
+  // 돋보이는 특징 찾기 (draw.py text1 스타일 - 얼굴 부위 강조)
+  const features: string[] = [];
+
+  // 눈꼬리 (가장 눈에 띄는 특징)
+  const eyeLabel = getLabel('eyeAngle');
+  if (eyeLabel.includes('많이 올라감')) {
+    features.push("눈의 기상이 하늘을 찌르는");
+  } else if (eyeLabel.includes('올라감')) {
+    features.push("날카로운 눈매의");
+  } else if (eyeLabel.includes('일자')) {
+    features.push("의지가 담긴 눈빛의");
+  } else if (eyeLabel.includes('내려감')) {
+    features.push("부드러운 눈매의");
+  }
 
   // 눈썹-눈 거리
   const eyebrowLabel = getLabel('eyebrowDistance');
   if (eyebrowLabel.includes('매우 넓음')) {
-    featureText = "재물이 넘치는 눈두덩이, ";
+    features.push("재물이 넘치는 눈두덩이");
   } else if (eyebrowLabel.includes('넓은 편')) {
-    featureText = "돈을 부르는 눈두덩이, ";
+    features.push("복 많은 눈두덩이");
   }
 
-  // 눈꼬리
-  const eyeLabel = getLabel('eyeAngle');
-  if (eyeLabel.includes('많이 올라감')) {
-    featureText = "눈의 기상이 하늘을 찌르는, ";
-  } else if (eyeLabel.includes('올라감')) {
-    featureText = "날카로운 눈매가 인상적인, ";
-  }
-
-  // 코 길이
+  // 코
   const noseLabel = getLabel('noseLength');
   if (noseLabel.includes('긴')) {
-    featureText = "여럿 애간장 녹이는 매력 코, ";
+    features.push("여럿 애간장 녹이는 코");
   } else if (noseLabel.includes('이상적')) {
-    featureText = "완벽한 비율의 코, ";
+    features.push("황금비율 코");
   }
 
-  // 입 너비
+  // 입
   const mouthLabel = getLabel('mouthWidth');
   if (mouthLabel.includes('매우 큰')) {
-    featureText = "모두를 현혹시키는 매력 입술, ";
+    features.push("모두를 현혹시키는 입");
   } else if (mouthLabel.includes('큰')) {
-    featureText = "에너지 넘치는 입매, ";
+    features.push("복 부르는 입");
   } else if (mouthLabel.includes('이상적')) {
-    featureText = "이상적인 입매, ";
+    features.push("예쁜 입매");
   }
 
   // 인중
   const philtrumLabel = getLabel('philtrumLength');
-  if (philtrumLabel.includes('매우 긴')) {
-    featureText = "강이 흐를법한 매력 인중, ";
-  } else if (philtrumLabel.includes('긴 편')) {
-    featureText = "인중이 참 예쁜, ";
+  if (philtrumLabel.includes('매우 긴') || philtrumLabel.includes('긴 편')) {
+    features.push("강이 흐르는 인중");
+  } else if (philtrumLabel.includes('이상적')) {
+    features.push("반듯한 인중");
   }
 
   // 하관
   const jawLabel = getLabel('jawWidth');
   if (jawLabel.includes('매우 튼튼')) {
-    featureText = "최고의 복덩이 하관, ";
+    features.push("최고의 복덩이 하관");
   } else if (jawLabel.includes('튼튼')) {
-    featureText = "하관 최고인, ";
+    features.push("든든한 하관");
+  } else if (jawLabel.includes('이상적')) {
+    features.push("균형 잡힌 하관");
   }
 
-  // 점수 구간별 운세 풀이
-  const fortunes: Record<string, string[]> = {
-    high: [
-      "연애운과 재물운 모두 대박 예정!",
-      "하는 일마다 대성공 예약!",
-      "사람을 끌어당기는 타고난 복상!",
-      "부자가 될 운명을 타고났어요!",
-    ],
-    medium: [
-      "꾸준히 노력하면 큰 성공이 기다려요!",
-      "좋은 인연이 곧 찾아올 거예요!",
-      "때를 기다리면 빛나는 순간이 와요!",
-      "숨겨진 재능이 곧 발휘될 거예요!",
-    ],
-    low: [
-      "역경을 딛고 성공하는 드라마틱한 인생!",
-      "늦깎이 성공형, 포기하지 마세요!",
-      "노력이 빛나는 자수성가형!",
-      "시간이 편, 결국 인정받아요!",
-    ],
-  };
+  // 가장 돋보이는 2개 특징 선택
+  const mainFeature = features.length > 0 ? features[0] : "매력적인 얼굴";
+  const subFeature = features.length > 1 ? features[1] : "";
 
-  // 점수 구간 결정
-  let tier: 'high' | 'medium' | 'low';
-  if (score >= 70) tier = 'high';
-  else if (score >= 50) tier = 'medium';
-  else tier = 'low';
-
-  // 시드 기반 결정적 선택
-  const seed = score * 7 + categories.r1 + categories.r2 * 2 + categories.r3 * 3 + categories.r4 * 4;
-  const fortuneIndex = Math.floor(seed) % fortunes[tier].length;
-
-  return featureText + fortunes[tier][fortuneIndex];
+  // 특징 조합 한줄평
+  if (subFeature) {
+    return `${mainFeature}과 ${subFeature}의 소유자`;
+  }
+  return `${mainFeature}의 소유자`;
 }
 
-// 점수에 따른 등급
-function getScoreGrade(score: number): { grade: string; color: string; emoji: string } {
-  if (score >= 85) return { grade: '대길', color: '#FFD700', emoji: '👑' };
-  if (score >= 70) return { grade: '길', color: '#FF6B6B', emoji: '✨' };
-  if (score >= 55) return { grade: '중길', color: '#4ECDC4', emoji: '💫' };
-  if (score >= 40) return { grade: '소길', color: '#95E1D3', emoji: '🍀' };
-  return { grade: '평', color: '#A8A8A8', emoji: '🌱' };
+// 점수에 따른 등급 색상 (얼굴력 : n점 형식으로 표시)
+function getScoreGrade(score: number): { color: string; bgGradient: string; tier: string } {
+  if (score >= 85) return {
+    color: '#FFD700',
+    bgGradient: 'from-amber-900 via-yellow-800 to-amber-900',
+    tier: 'legendary'
+  };
+  if (score >= 70) return {
+    color: '#FF6B6B',
+    bgGradient: 'from-rose-900 via-pink-800 to-rose-900',
+    tier: 'epic'
+  };
+  if (score >= 55) return {
+    color: '#4ECDC4',
+    bgGradient: 'from-teal-900 via-cyan-800 to-teal-900',
+    tier: 'rare'
+  };
+  if (score >= 40) return {
+    color: '#95E1D3',
+    bgGradient: 'from-emerald-900 via-green-800 to-emerald-900',
+    tier: 'uncommon'
+  };
+  return {
+    color: '#A8A8A8',
+    bgGradient: 'from-gray-800 via-slate-700 to-gray-800',
+    tier: 'common'
+  };
 }
 
 // 누적 저장용 타입
@@ -602,7 +604,8 @@ const FACE_CONNECTIONS = {
   lipsOuter: [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185, 61],
 };
 
-// 기존 주요 포인트
+// 기존 주요 포인트 (참조용, 실제 그리기에서는 DEBUG_POINTS 사용)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const KEY_POINTS = [33, 133, 362, 263, 159, 386, 70, 300, 107, 336, 1, 4, 5, 195, 61, 291, 0, 17, 152, 234, 454, 10];
 
 // 디버그용 추가 포인트 (코끝, 콧볼, 입, 턱 등)
@@ -894,123 +897,93 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         ctx.stroke();
       };
 
-      // 기본 연결선 그리기 (눈, 눈썹, 코, 입)
+      // === 세련된 얼굴 분석 시각화 ===
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { jawLine, jawContourLeft, jawContourRight, lowerJawInner, upperSilhouette, upperSilhouetteLeft, ...faceFeatures } = FACE_CONNECTIONS;
+
+      // 기본 얼굴 윤곽선 (눈, 눈썹, 코, 입) - 청금색 그라데이션 효과
+      ctx.shadowColor = 'rgba(100, 200, 255, 0.5)';
+      ctx.shadowBlur = 8;
       Object.values(faceFeatures).forEach(connection => {
-        drawConnections(connection, 'rgba(0, 255, 255, 0.6)', 1.5);
+        drawConnections(connection, 'rgba(150, 220, 255, 0.7)', 1.8);
       });
+      ctx.shadowBlur = 0;
 
-      // 상단 윤곽선 (이마~관자놀이)
-      drawConnections(upperSilhouette, 'rgba(0, 255, 255, 0.5)', 1.5);
-      drawConnections(upperSilhouetteLeft, 'rgba(0, 255, 255, 0.5)', 1.5);
+      // 상단 윤곽선 (이마~관자놀이) - 은은한 청색
+      drawConnections(upperSilhouette, 'rgba(180, 220, 255, 0.5)', 1.5);
+      drawConnections(upperSilhouetteLeft, 'rgba(180, 220, 255, 0.5)', 1.5);
 
-      // 실제 턱 외곽선 (주황색, 두껍게 - 각진 턱도 잘 표현)
-      drawConnections(jawContourLeft, 'rgba(255, 165, 0, 0.8)', 2.5);
-      drawConnections(jawContourRight, 'rgba(255, 165, 0, 0.8)', 2.5);
+      // 턱 윤곽선 - 골드 그라데이션 (직선 제거, 자연스러운 곡선만)
+      ctx.shadowColor = 'rgba(255, 200, 100, 0.6)';
+      ctx.shadowBlur = 10;
+      drawConnections(jawContourLeft, 'rgba(255, 215, 130, 0.85)', 2.5);
+      drawConnections(jawContourRight, 'rgba(255, 215, 130, 0.85)', 2.5);
+      ctx.shadowBlur = 0;
 
-      // 턱각 강조 직선 (노란색, 가장 두껍게)
-      drawConnections(jawLine, 'rgba(255, 255, 0, 0.9)', 3);
-
-      // 하관 내측 윤곽 (연한 주황)
-      drawConnections(lowerJawInner, 'rgba(255, 200, 100, 0.5)', 1.5);
-
-      // 라벨이 있는 점 그리기 함수
-      const drawLabeledPoint = (idx: number, color: string, label: string) => {
+      // 주요 포인트 그리기 함수 (라벨 없이 깔끔하게)
+      const drawKeyPoint = (idx: number, color: string, size: number = 4, glowColor?: string) => {
         const point = transformPoint(idx);
         if (!point) return;
 
-        // 점 그리기
+        // 글로우 효과
+        if (glowColor) {
+          ctx.shadowColor = glowColor;
+          ctx.shadowBlur = 12;
+        }
+
+        // 외곽 링
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
+        ctx.arc(point.x, point.y, size + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // 라벨 그리기
-        ctx.font = 'bold 10px Arial';
-        ctx.fillStyle = '#fff';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 2;
-        ctx.strokeText(label, point.x + 7, point.y + 3);
-        ctx.fillText(label, point.x + 7, point.y + 3);
+        // 내부 점
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
       };
 
-      // 코 관련 점 (빨강)
-      drawLabeledPoint(DEBUG_POINTS.nose.tip, '#ff0000', '코끝');
-      drawLabeledPoint(DEBUG_POINTS.nose.bridge, '#ff0000', '미간');
-      drawLabeledPoint(DEBUG_POINTS.nose.bottomCenter, '#ff0000', '코밑');
-      drawLabeledPoint(DEBUG_POINTS.nose.leftAla, '#ff6600', '왼콧볼');
-      drawLabeledPoint(DEBUG_POINTS.nose.rightAla, '#ff6600', '우콧볼');
+      // 핵심 분석 포인트만 표시 (더 세련된 디자인)
+      // 눈 중심 (에메랄드)
+      drawKeyPoint(DEBUG_POINTS.eyes.leftCenter, 'rgba(80, 255, 180, 0.9)', 5, 'rgba(80, 255, 180, 0.5)');
+      drawKeyPoint(DEBUG_POINTS.eyes.rightCenter, 'rgba(80, 255, 180, 0.9)', 5, 'rgba(80, 255, 180, 0.5)');
 
-      // 눈 관련 점 (파랑/녹색)
-      drawLabeledPoint(DEBUG_POINTS.eyes.leftCenter, '#00ff00', '왼눈');
-      drawLabeledPoint(DEBUG_POINTS.eyes.rightCenter, '#00ff00', '우눈');
-      drawLabeledPoint(DEBUG_POINTS.eyes.leftOuter, '#0088ff', '');
-      drawLabeledPoint(DEBUG_POINTS.eyes.leftInner, '#0088ff', '');
-      drawLabeledPoint(DEBUG_POINTS.eyes.rightOuter, '#0088ff', '');
-      drawLabeledPoint(DEBUG_POINTS.eyes.rightInner, '#0088ff', '');
-      // 눈 위/아래 (눈 크기 측정용)
-      drawLabeledPoint(DEBUG_POINTS.eyes.leftTop, '#00ff88', '눈위');
-      drawLabeledPoint(DEBUG_POINTS.eyes.leftBottom, '#00ff88', '눈아래');
-      drawLabeledPoint(DEBUG_POINTS.eyes.rightTop, '#00ff88', '');
-      drawLabeledPoint(DEBUG_POINTS.eyes.rightBottom, '#00ff88', '');
+      // 눈꼬리/눈머리 (사파이어)
+      drawKeyPoint(DEBUG_POINTS.eyes.leftOuter, 'rgba(100, 180, 255, 0.85)', 3.5);
+      drawKeyPoint(DEBUG_POINTS.eyes.leftInner, 'rgba(100, 180, 255, 0.85)', 3.5);
+      drawKeyPoint(DEBUG_POINTS.eyes.rightOuter, 'rgba(100, 180, 255, 0.85)', 3.5);
+      drawKeyPoint(DEBUG_POINTS.eyes.rightInner, 'rgba(100, 180, 255, 0.85)', 3.5);
 
-      // 입 관련 점 (분홍)
-      drawLabeledPoint(DEBUG_POINTS.mouth.left, '#ff00ff', '입좌');
-      drawLabeledPoint(DEBUG_POINTS.mouth.right, '#ff00ff', '입우');
-      drawLabeledPoint(DEBUG_POINTS.mouth.top, '#ff00ff', '윗입');
-      drawLabeledPoint(DEBUG_POINTS.mouth.bottom, '#ff00ff', '아랫입');
-      drawLabeledPoint(DEBUG_POINTS.mouth.center, '#ff88ff', '윗입안');
-      drawLabeledPoint(DEBUG_POINTS.mouth.innerLower, '#ff88ff', '아랫입안');
+      // 코 (로즈골드)
+      drawKeyPoint(DEBUG_POINTS.nose.tip, 'rgba(255, 180, 150, 0.9)', 4.5, 'rgba(255, 180, 150, 0.5)');
+      drawKeyPoint(DEBUG_POINTS.nose.bridge, 'rgba(255, 200, 180, 0.8)', 3.5);
 
-      // 턱 관련 점 (노랑) - 수정됨
-      drawLabeledPoint(DEBUG_POINTS.jaw.chin, '#ffff00', '턱끝');
-      drawLabeledPoint(DEBUG_POINTS.jaw.leftAngle, '#ffff00', '왼턱각');
-      drawLabeledPoint(DEBUG_POINTS.jaw.rightAngle, '#ffff00', '우턱각');
-      drawLabeledPoint(DEBUG_POINTS.jaw.leftTemple, '#ff9900', '왼관자놀이');
-      drawLabeledPoint(DEBUG_POINTS.jaw.rightTemple, '#ff9900', '우관자놀이');
+      // 입 (소프트 핑크)
+      drawKeyPoint(DEBUG_POINTS.mouth.left, 'rgba(255, 150, 180, 0.85)', 4);
+      drawKeyPoint(DEBUG_POINTS.mouth.right, 'rgba(255, 150, 180, 0.85)', 4);
+      drawKeyPoint(DEBUG_POINTS.mouth.top, 'rgba(255, 170, 190, 0.8)', 3);
 
-      // 눈썹 관련 점 (청록)
-      drawLabeledPoint(DEBUG_POINTS.eyebrow.leftOuter, '#00ffff', '');
-      drawLabeledPoint(DEBUG_POINTS.eyebrow.leftInner, '#00ffff', '');
-      drawLabeledPoint(DEBUG_POINTS.eyebrow.rightOuter, '#00ffff', '');
-      drawLabeledPoint(DEBUG_POINTS.eyebrow.rightInner, '#00ffff', '');
+      // 턱 라인 (골드)
+      drawKeyPoint(DEBUG_POINTS.jaw.chin, 'rgba(255, 220, 100, 0.9)', 5, 'rgba(255, 220, 100, 0.5)');
+      drawKeyPoint(DEBUG_POINTS.jaw.leftAngle, 'rgba(255, 200, 80, 0.85)', 4);
+      drawKeyPoint(DEBUG_POINTS.jaw.rightAngle, 'rgba(255, 200, 80, 0.85)', 4);
 
-      // 이마/헤어라인 관련 점 (보라)
-      drawLabeledPoint(DEBUG_POINTS.forehead.hairlineCenter, '#aa00ff', '헤어라인');
-      drawLabeledPoint(DEBUG_POINTS.forehead.hairlineLeft, '#aa00ff', '');
-      drawLabeledPoint(DEBUG_POINTS.forehead.hairlineRight, '#aa00ff', '');
-      drawLabeledPoint(DEBUG_POINTS.forehead.center, '#cc66ff', '이마');
+      // 눈썹 (라벤더)
+      drawKeyPoint(DEBUG_POINTS.eyebrow.leftOuter, 'rgba(180, 150, 255, 0.8)', 3);
+      drawKeyPoint(DEBUG_POINTS.eyebrow.rightOuter, 'rgba(180, 150, 255, 0.8)', 3);
 
-      // 볼 관련 점 (연녹색)
-      drawLabeledPoint(DEBUG_POINTS.cheek.leftCenter, '#66ff66', '왼볼');
-      drawLabeledPoint(DEBUG_POINTS.cheek.rightCenter, '#66ff66', '우볼');
-
-      // 얼굴 윤곽선 점들 (흰색 작은 점)
-      ctx.globalAlpha = 0.7;
+      // 미세한 윤곽 포인트 (은은하게)
+      ctx.globalAlpha = 0.4;
       Object.values(DEBUG_POINTS.contour).forEach(idx => {
         const point = transformPoint(idx);
         if (!point) return;
         ctx.beginPath();
-        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      });
-      ctx.globalAlpha = 1;
-
-      // 기존 KEY_POINTS 표시 (작은 점)
-      ctx.globalAlpha = 0.3;
-      KEY_POINTS.forEach(idx => {
-        const point = transformPoint(idx);
-        if (!point) return;
-        ctx.beginPath();
         ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
-        ctx.fillStyle = '#ff00ff';
+        ctx.fillStyle = 'rgba(200, 220, 255, 0.7)';
         ctx.fill();
       });
       ctx.globalAlpha = 1;
@@ -1035,39 +1008,75 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     if (!ctx) return;
 
     canvas.width = 1080;
-    canvas.height = 1080;
+    canvas.height = 1350; // 세로 확장
 
-    const { emoji, grade } = getScoreGrade(data.score);
+    const { color: tierColor, tier } = getScoreGrade(data.score);
+
+    // 티어별 프리미엄 배경 디자인
+    const getTierBackground = () => {
+      switch (tier) {
+        case 'legendary':
+          return { primary: '#2d1810', secondary: '#4a2c17', accent: '#FFD700', glow: 'rgba(255, 215, 0, 0.3)' };
+        case 'epic':
+          return { primary: '#2a1525', secondary: '#4a1f3d', accent: '#FF6B6B', glow: 'rgba(255, 107, 107, 0.3)' };
+        case 'rare':
+          return { primary: '#0a2025', secondary: '#153540', accent: '#4ECDC4', glow: 'rgba(78, 205, 196, 0.3)' };
+        case 'uncommon':
+          return { primary: '#0a2515', secondary: '#154028', accent: '#95E1D3', glow: 'rgba(149, 225, 211, 0.3)' };
+        default:
+          return { primary: '#1a1a2e', secondary: '#2d2d44', accent: '#A8A8A8', glow: 'rgba(168, 168, 168, 0.2)' };
+      }
+    };
+
+    const tierBg = getTierBackground();
 
     // 배경 그라데이션
-    const gradient = ctx.createLinearGradient(0, 0, 1080, 1080);
-    gradient.addColorStop(0, '#1a1a2e');
-    gradient.addColorStop(0.5, '#16213e');
-    gradient.addColorStop(1, '#0f3460');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 1350);
+    gradient.addColorStop(0, tierBg.primary);
+    gradient.addColorStop(0.5, tierBg.secondary);
+    gradient.addColorStop(1, tierBg.primary);
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1080, 1080);
+    ctx.fillRect(0, 0, 1080, 1350);
 
-    // 장식 원들
-    ctx.globalAlpha = 0.1;
+    // 장식 원형 글로우 (티어 색상)
+    ctx.globalAlpha = 0.15;
     ctx.beginPath();
-    ctx.arc(100, 100, 200, 0, Math.PI * 2);
-    ctx.fillStyle = '#ff6b6b';
+    ctx.arc(100, 100, 300, 0, Math.PI * 2);
+    ctx.fillStyle = tierBg.accent;
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(980, 980, 250, 0, Math.PI * 2);
-    ctx.fillStyle = '#4ecdc4';
+    ctx.arc(980, 1250, 350, 0, Math.PI * 2);
+    ctx.fillStyle = tierBg.accent;
     ctx.fill();
     ctx.globalAlpha = 1;
 
-    // 상단: 로고/타이틀
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('AI 관상 분석', 540, 60);
+    // 상단 장식 라인
+    ctx.strokeStyle = tierBg.accent;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(200, 60);
+    ctx.lineTo(880, 60);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
 
-    // 얼굴 이미지 (있는 경우)
-    const faceY = 320;
-    const faceSize = 380;
+    // 상단: 로고/타이틀
+    ctx.fillStyle = tierBg.accent;
+    ctx.font = 'bold 44px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('AI 관상 분석', 540, 110);
+
+    // 하단 장식 라인
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(200, 140);
+    ctx.lineTo(880, 140);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // 얼굴 이미지 (1.5배 확대)
+    const faceY = 450;
+    const faceSize = 520; // 380 * 1.37 → 더 크게
 
     if (data.imageData && data.landmarks) {
       const img = new Image();
@@ -1096,10 +1105,17 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           return { x, y };
         };
 
-        ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
-        ctx.lineWidth = 2;
+        // 세련된 윤곽선 (티어 색상 적용)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { jawLine, jawContourLeft, jawContourRight, ...faceFeatures } = FACE_CONNECTIONS;
 
-        Object.values(FACE_CONNECTIONS).forEach(connection => {
+        ctx.strokeStyle = `${tierBg.accent}88`;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = tierBg.glow;
+        ctx.shadowBlur = 10;
+
+        // 기본 연결선
+        Object.values(faceFeatures).forEach(connection => {
           ctx.beginPath();
           connection.forEach((idx, i) => {
             if (idx >= landmarks.length) return;
@@ -1110,14 +1126,39 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           ctx.stroke();
         });
 
-        ctx.globalAlpha = 0.5;
-        KEY_POINTS.forEach(idx => {
+        // 턱 윤곽선 (곡선만, 직선 제외)
+        ctx.strokeStyle = `${tierBg.accent}cc`;
+        ctx.lineWidth = 3;
+        [jawContourLeft, jawContourRight].forEach(connection => {
+          ctx.beginPath();
+          connection.forEach((idx, i) => {
+            if (idx >= landmarks.length) return;
+            const point = transformPoint(idx);
+            if (i === 0) ctx.moveTo(point.x, point.y);
+            else ctx.lineTo(point.x, point.y);
+          });
+          ctx.stroke();
+        });
+
+        ctx.shadowBlur = 0;
+
+        // 주요 포인트 (세련된 스타일)
+        ctx.globalAlpha = 0.7;
+        const keyPoints = [
+          DEBUG_POINTS.eyes.leftCenter, DEBUG_POINTS.eyes.rightCenter,
+          DEBUG_POINTS.nose.tip, DEBUG_POINTS.jaw.chin,
+          DEBUG_POINTS.mouth.left, DEBUG_POINTS.mouth.right
+        ];
+        keyPoints.forEach(idx => {
           if (idx >= landmarks.length) return;
           const point = transformPoint(idx);
           ctx.beginPath();
-          ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
-          ctx.fillStyle = '#ff00ff';
+          ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+          ctx.fillStyle = tierBg.accent;
           ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
         });
         ctx.globalAlpha = 1;
 
@@ -1127,47 +1168,80 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       // 기본 이미지 (만료된 경우)
       ctx.beginPath();
       ctx.arc(540, faceY, faceSize / 2, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
       ctx.fill();
-      ctx.font = '80px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.fillText('👤', 540, faceY + 25);
+      ctx.strokeStyle = `${tierBg.accent}66`;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.font = '120px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillStyle = `${tierBg.accent}66`;
+      ctx.fillText('👤', 540, faceY + 40);
     }
 
-    // 원형 테두리
+    // 원형 테두리 (티어 색상 글로우)
+    ctx.shadowColor = tierBg.glow;
+    ctx.shadowBlur = 20;
     ctx.beginPath();
-    ctx.arc(540, faceY, faceSize / 2 + 3, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 6;
+    ctx.arc(540, faceY, faceSize / 2 + 4, 0, Math.PI * 2);
+    ctx.strokeStyle = tierBg.accent;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 외곽 장식 링
+    ctx.beginPath();
+    ctx.arc(540, faceY, faceSize / 2 + 15, 0, Math.PI * 2);
+    ctx.strokeStyle = `${tierBg.accent}44`;
+    ctx.lineWidth = 2;
     ctx.stroke();
 
-    // 점수 배지
-    const badgeY = faceY + faceSize/2 + 50;
+    // 점수 영역
+    const scoreY = faceY + faceSize/2 + 80;
 
-    const scoreGradient = ctx.createRadialGradient(540, badgeY + 40, 0, 540, badgeY + 40, 80);
-    scoreGradient.addColorStop(0, data.score >= 70 ? '#ff6b6b' : data.score >= 50 ? '#4ecdc4' : '#95a5a6');
-    scoreGradient.addColorStop(1, data.score >= 70 ? '#ee5a24' : data.score >= 50 ? '#1abc9c' : '#7f8c8d');
+    // 얼굴력 텍스트
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '36px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('얼굴력', 540, scoreY);
 
+    // 큰 점수 (티어 색상)
+    ctx.shadowColor = tierBg.glow;
+    ctx.shadowBlur = 15;
+    ctx.fillStyle = tierColor;
+    ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(data.score.toString(), 540, scoreY + 110);
+    ctx.shadowBlur = 0;
+
+    // 점 단위
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '32px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('점', 540, scoreY + 150);
+
+    // 티어 배지
+    const tierLabels: { [key: string]: string } = {
+      'legendary': '✨ LEGENDARY',
+      'epic': '🔥 EPIC',
+      'rare': '💎 RARE',
+      'uncommon': '🌿 UNCOMMON',
+      'common': '⚪ COMMON'
+    };
+    ctx.fillStyle = tierColor;
+    ctx.font = 'bold 40px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(tierLabels[tier] || '', 540, scoreY + 200);
+
+    // 구분선
+    ctx.strokeStyle = `${tierBg.accent}66`;
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(540, badgeY + 40, 60, 0, Math.PI * 2);
-    ctx.fillStyle = scoreGradient;
-    ctx.fill();
+    ctx.moveTo(250, scoreY + 230);
+    ctx.lineTo(830, scoreY + 230);
+    ctx.stroke();
 
+    // 한줄평 (더 큰 폰트)
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(data.score.toString(), 540, badgeY + 55);
-    ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('점', 540, badgeY + 80);
-
-    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(`${emoji} ${grade}`, 540, badgeY + 130);
-
-    // 한줄평
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 34px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.font = '42px -apple-system, BlinkMacSystemFont, sans-serif';
 
     const maxWidth = 900;
-    const lineHeight = 45;
+    const lineHeight = 55;
     const words = oneLiner.split(' ');
     let line = '';
     const lines: string[] = [];
@@ -1184,15 +1258,27 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     }
     lines.push(line.trim());
 
-    const startY = badgeY + 200;
+    const startY = scoreY + 290;
     lines.forEach((l, i) => {
       ctx.fillText(l, 540, startY + i * lineHeight);
     });
 
+    // 하단 장식
+    ctx.strokeStyle = tierBg.accent;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(300, 1280);
+    ctx.lineTo(780, 1280);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
     // 워터마크
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.font = '24px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('unyeoni.com', 540, 1040);
+    ctx.fillStyle = tierBg.accent;
+    ctx.globalAlpha = 0.6;
+    ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('unyeoni.com', 540, 1320);
+    ctx.globalAlpha = 1;
 
     const dataUrl = canvas.toDataURL('image/png');
     setShareCardUrl(dataUrl);
@@ -1283,10 +1369,10 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     );
   }
 
-  const { grade, emoji } = getScoreGrade(data.score);
+  const scoreGrade = getScoreGrade(data.score);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className={`min-h-screen bg-gradient-to-br ${scoreGrade.bgGradient}`}>
       <div className="container mx-auto px-4 py-6 max-w-lg">
 
         {/* 얼굴 + 랜드마크 시각화 */}
@@ -1306,13 +1392,19 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
               </div>
             )}
 
-            {/* 오버레이 정보 */}
+            {/* 오버레이 정보 - 얼굴력 : n점 형식 */}
             <div className="absolute bottom-8 left-0 right-0 text-center">
-              <div className="inline-flex items-center gap-2 bg-black/60 backdrop-blur px-4 py-2 rounded-full">
-                <span className="text-2xl">{emoji}</span>
-                <span className="text-white font-bold text-xl">{data.score}점</span>
-                <span className="text-white/70">|</span>
-                <span className="text-white font-medium">{grade}</span>
+              <div
+                className="inline-flex items-center gap-2 backdrop-blur px-5 py-3 rounded-full border"
+                style={{
+                  backgroundColor: 'rgba(0,0,0,0.7)',
+                  borderColor: scoreGrade.color,
+                  boxShadow: `0 0 20px ${scoreGrade.color}40`
+                }}
+              >
+                <span className="text-white/70 text-lg">얼굴력</span>
+                <span className="text-2xl font-black" style={{ color: scoreGrade.color }}>{data.score}</span>
+                <span className="text-white/70 text-lg">점</span>
               </div>
             </div>
           </div>
