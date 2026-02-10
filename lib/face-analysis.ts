@@ -480,8 +480,9 @@ export function analyzeFace(
   let mouthAnalysis: { label: string; description: string };
   let mouthLevel: number;
 
-  // draw.py 임계값: >1.75 (엄청큼), 1.65~1.75 (큼), 1.57~1.65 (이상적), 1.45~1.57 (작음), <1.45 (엄청작음)
-  if (mouthRatio > 1.75) {
+  // 임계값 조정 (실제 데이터 기반: mouthRatio 범위 0.96~1.37)
+  // 기존 draw.py 임계값이 너무 높아서 거의 다 "작음"으로 분류됨
+  if (mouthRatio > 1.25) {
     mouthAnalysis = {
       label: "입이 매우 큰 편",
       description: "타고난 리더십과 인상적인 카리스마로 모두를 이끌어가는 성격입니다. 사회적으로도 큰 성공을 거두는 모습을 보여줍니다."
@@ -489,7 +490,7 @@ export function analyzeFace(
     mouthLevel = 5;
     r1 += WEIGHTS.r1_power * 5;
     r3 += WEIGHTS.r3_work * 5;
-  } else if (mouthRatio > 1.65) {
+  } else if (mouthRatio > 1.15) {
     mouthAnalysis = {
       label: "입이 큰 편",
       description: "주변에 운기와 생명력이 넘치는 에너지를 발산합니다. 업무 환경에서 동료들 사이에서 인기가 있습니다."
@@ -497,7 +498,7 @@ export function analyzeFace(
     mouthLevel = 4;
     r1 += WEIGHTS.r1_power * 5;
     r3 += WEIGHTS.r3_work * 5;
-  } else if (mouthRatio > 1.57) {
+  } else if (mouthRatio > 1.05) {
     mouthAnalysis = {
       label: "입 크기가 이상적",
       description: "진정성과 노력으로 어떤 분야에서든 성공의 정점을 찍을 수 있으며, 균형 잡힌 대인관계를 유지합니다."
@@ -505,7 +506,7 @@ export function analyzeFace(
     mouthLevel = 3;
     r1 += WEIGHTS.r1_power * 5;
     r3 += WEIGHTS.r3_work * 5;
-  } else if (mouthRatio > 1.45) {
+  } else if (mouthRatio > 0.95) {
     mouthAnalysis = {
       label: "입이 작은 편",
       description: "뛰어난 직관력과 빠른 판단력을 지니고 있습니다. 전략적인 조언자나 중요한 보조 역할에 적합합니다."
@@ -527,14 +528,14 @@ export function analyzeFace(
   facescore += WEIGHTS.r3_work * mouthLevel;
 
   // === 6. 하관(턱) 분석 ===
-  // 턱의 튼튼함 = 넓이 + 각도 (길이가 아님)
-  // 긴 턱은 오히려 약한 경우가 많음 - 넓고 각진 턱이 튼튼한 턱
+  // 실제 데이터 분석 결과: avgJawAngle이 높을수록 튼튼한 턱
+  // - "하관 발달" → avgJawAngle: 30~32°
+  // - "턱 가늘다/얇음" → avgJawAngle: 24~27°
 
   const jawWidth = Math.abs(fp[31].x - fp[30].x);
   const jawRatio = jawWidth / faceWidth;
 
   // 턱각 계산 (볼-턱각-턱끝 사이의 각도)
-  // 작을수록 각진 턱 (강함), 클수록 둥근 턱 (부드러움)
   const calcJawAngle = (cheek: FacePoint, jaw: FacePoint, chin: FacePoint) => {
     const v1x = cheek.x - jaw.x, v1y = cheek.y - jaw.y;
     const v2x = chin.x - jaw.x, v2y = chin.y - jaw.y;
@@ -547,7 +548,7 @@ export function analyzeFace(
   const rightJawAngle = calcJawAngle(fp[27], fp[31], fp[29]);
   const avgJawAngle = (leftJawAngle + rightJawAngle) / 2;
 
-  // 하관 길이 (턱끝 ~ 턱각 거리)
+  // 하관 길이 (턱끝 ~ 턱각 거리) - 디버그용으로 유지
   const jawLengthLeft = Math.sqrt(
     Math.pow(fp[29].x - fp[30].x, 2) + Math.pow(fp[29].y - fp[30].y, 2)
   );
@@ -555,39 +556,22 @@ export function analyzeFace(
     Math.pow(fp[29].x - fp[31].x, 2) + Math.pow(fp[29].y - fp[31].y, 2)
   );
   const avgJawLength = (jawLengthLeft + jawLengthRight) / 2;
-
-  // 턱 넓이 대비 길이 비율 (낮을수록 넓고 짧은 턱 = 튼튼)
   const jawWidthToLengthRatio = avgJawLength / (jawWidth || 1);
-
-  // 종합 턱 강도 점수 계산
-  // 1. 넓이 점수: jawRatio가 높을수록 좋음 (0~1 범위)
-  const widthScore = Math.min(1, jawRatio / 0.9);
-
-  // 2. 각도 점수: 각도가 낮을수록 좋음 (90도 기준)
-  // 일반적인 턱각 범위: 80~130도
-  // 80도 이하: 매우 각진 턱 (1점), 130도 이상: 매우 둥근 턱 (0점)
-  const angleScore = Math.max(0, Math.min(1, (130 - avgJawAngle) / 50));
-
-  // 3. 넓이/길이 비율 점수: 낮을수록 좋음 (넓고 짧은 턱)
-  // 비율이 0.7 이하: 넓고 짧은 턱 (1점), 1.3 이상: 좁고 긴 턱 (0점)
-  const proportionScore = Math.max(0, Math.min(1, (1.3 - jawWidthToLengthRatio) / 0.6));
-
-  // 종합 점수 (넓이 40%, 각도 40%, 비율 20%)
-  const jawStrengthScore = widthScore * 0.4 + angleScore * 0.4 + proportionScore * 0.2;
 
   let jawAnalysis: { label: string; description: string };
   let jawLevel: number;
 
-  // 종합 점수 기반 분석 (0~1 범위)
-  if (jawStrengthScore > 0.8) {
+  // 실제 데이터 기반 임계값 (avgJawAngle 범위: 22~35°)
+  // 높은 각도 = 튼튼한 턱, 낮은 각도 = 가는 턱
+  if (avgJawAngle > 31) {
     jawAnalysis = {
       label: "하관이 매우 튼튼함",
-      description: "넓고 각진 턱으로, 말년에 재물과 자녀의 복으로 큰 풍요를 누릴 예정입니다. 강한 의지력과 추진력을 가지고 있습니다."
+      description: "넓고 튼튼한 턱으로, 말년에 재물과 자녀의 복으로 큰 풍요를 누릴 예정입니다. 강한 의지력과 추진력을 가지고 있습니다."
     };
     jawLevel = 5;
     r2 += WEIGHTS.r2_adult * 5;
     r3 += WEIGHTS.r3_social * 5;
-  } else if (jawStrengthScore > 0.65) {
+  } else if (avgJawAngle > 29) {
     jawAnalysis = {
       label: "하관이 튼튼함",
       description: "안정적인 턱 구조로, 말년에 재물과 자녀의 복으로 풍요를 누릴 예정입니다. 삶의 후반기에 편안한 삶을 즐길 수 있습니다."
@@ -595,7 +579,7 @@ export function analyzeFace(
     jawLevel = 4;
     r2 += WEIGHTS.r2_adult * 4;
     r3 += WEIGHTS.r3_social * 4;
-  } else if (jawStrengthScore > 0.5) {
+  } else if (avgJawAngle > 27) {
     jawAnalysis = {
       label: "하관이 이상적",
       description: "균형 잡힌 얼굴형으로 안정적인 인상을 줍니다. 말년에도 편안하고 충족된 삶을 즐길 수 있습니다."
@@ -603,9 +587,9 @@ export function analyzeFace(
     jawLevel = 3;
     r2 += WEIGHTS.r2_adult * 3;
     r3 += WEIGHTS.r3_social * 3;
-  } else if (jawStrengthScore > 0.35) {
+  } else if (avgJawAngle > 25) {
     jawAnalysis = {
-      label: "턱이 가는 편",
+      label: "턱이 갸름한 편",
       description: "섬세하고 예민한 성격의 소유자입니다. 끊임없는 노력으로 자수성가의 길을 걷게 됩니다."
     };
     jawLevel = 2;
@@ -613,7 +597,7 @@ export function analyzeFace(
     r3 += WEIGHTS.r3_social * 2;
   } else {
     jawAnalysis = {
-      label: "턱이 가늘고 긴 편",
+      label: "턱이 가늘고 뾰족한 편",
       description: "세련되고 날카로운 인상을 줍니다. 자신만의 스타일과 개성이 뚜렷하며, 창의적인 분야에서 재능을 발휘합니다."
     };
     jawLevel = 1;
@@ -633,8 +617,9 @@ export function analyzeFace(
   let eyeSizeAnalysis: { label: string; description: string };
   let eyeSizeLevel: number;
 
-  // 눈 크기와 형태에 따른 분석
-  if (eyeFaceWidthRatio < 4.5) {
+  // 눈 크기와 형태에 따른 분석 (임계값 조정: 얼굴 회전 시 눈이 좁아 보이는 문제 완화)
+  // 기존: <4.5 (큼), <5.5 (보통) → 조정: <5.5 (큼), <6.5 (보통)
+  if (eyeFaceWidthRatio < 5.5) {
     // 눈이 큰 편
     if (eyeRatio > 3.0) {
       eyeSizeAnalysis = {
@@ -652,7 +637,7 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_spirit * 1 + WEIGHTS.r2_jealousy * 5;
     r3 += WEIGHTS.r3_someone * 1;
     r4 += WEIGHTS.r4_kind * 1;
-  } else if (eyeFaceWidthRatio < 5.5) {
+  } else if (eyeFaceWidthRatio < 6.5) {
     // 눈이 보통
     eyeSizeAnalysis = {
       label: "눈이 보통 크기",
@@ -754,10 +739,10 @@ export function analyzeFace(
     traits = applyTraitModifiers(traits, '인중', 'low');
   }
 
-  // 5. 입크기 기반 특성
-  if (mouthRatio > 1.65) {
+  // 5. 입크기 기반 특성 (임계값 조정됨)
+  if (mouthRatio > 1.15) {
     traits = applyTraitModifiers(traits, '입크기', 'high');
-  } else if (mouthRatio < 1.50) {
+  } else if (mouthRatio < 1.00) {
     traits = applyTraitModifiers(traits, '입크기', 'low');
   }
 
@@ -768,10 +753,10 @@ export function analyzeFace(
     traits = applyTraitModifiers(traits, '하관', 'low');
   }
 
-  // 7. 눈크기 기반 특성
-  if (eyeFaceWidthRatio < 5.0) {
+  // 7. 눈크기 기반 특성 (임계값 조정됨)
+  if (eyeFaceWidthRatio < 5.5) {
     traits = applyTraitModifiers(traits, '눈크기', 'big');
-  } else if (eyeFaceWidthRatio > 6.0) {
+  } else if (eyeFaceWidthRatio > 6.5) {
     traits = applyTraitModifiers(traits, '눈크기', 'small');
   }
 
