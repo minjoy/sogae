@@ -4,6 +4,40 @@ import { useState, useEffect, useRef, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 
 
+// 전체 관상 해석 타입
+interface OverallFaceReading {
+  threeSections: {
+    upper: number;
+    middle: number;
+    lower: number;
+    balance: string;
+    interpretation: string;
+  };
+  faceShape: {
+    type: string;
+    name: string;
+    description: string;
+  };
+  lifePeriodFortune: {
+    early: { score: number; description: string };
+    middle: { score: number; description: string };
+    late: { score: number; description: string };
+  };
+  personality: {
+    traits: string[];
+    description: string;
+  };
+  fortuneAreas: {
+    wealth: { score: number; description: string };
+    career: { score: number; description: string };
+    love: { score: number; description: string };
+    health: { score: number; description: string };
+    social: { score: number; description: string };
+  };
+  advice: string[];
+  oneLiner: string;
+}
+
 interface FaceAnalysisData {
   shareCode: string;
   score: number;
@@ -23,6 +57,8 @@ interface FaceAnalysisData {
   viewCount: number;
   createdAt: string;
   isImageExpired: boolean;
+  // 전체 관상 해석
+  overallReading?: OverallFaceReading;
   // 디버그 정보
   debug?: {
     noseWidth: number;
@@ -1192,6 +1228,145 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             ))}
           </div>
         </div>
+
+        {/* 전체 관상 해석 */}
+        {data.overallReading && (
+          <div className="bg-white/5 backdrop-blur rounded-2xl overflow-hidden mb-6 border border-white/10">
+            <button
+              onClick={() => setExpandedItem(expandedItem === 'overall' ? null : 'overall')}
+              className="w-full px-6 py-4 flex items-center justify-between text-white"
+            >
+              <span className="font-bold flex items-center gap-2">
+                <span>🔮</span> 전체 관상 해석
+              </span>
+              <span className={`transform transition-transform ${expandedItem === 'overall' ? 'rotate-180' : ''}`}>
+                ▼
+              </span>
+            </button>
+
+            {expandedItem === 'overall' && (
+              <div className="px-6 pb-6 space-y-4">
+                {/* 한마디 */}
+                <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-4 border border-yellow-500/30">
+                  <p className="text-yellow-300 text-lg font-bold text-center">
+                    &ldquo;{data.overallReading.oneLiner}&rdquo;
+                  </p>
+                </div>
+
+                {/* 얼굴형 */}
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-white/70 text-sm mb-1">😊 얼굴형</div>
+                  <div className="text-white font-medium text-lg">{data.overallReading.faceShape.name}</div>
+                  <div className="text-white/60 text-sm mt-1">{data.overallReading.faceShape.description}</div>
+                </div>
+
+                {/* 삼정 비율 */}
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-white/70 text-sm mb-2">📐 삼정(三停) 비율</div>
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    <div className="text-center">
+                      <div className="text-cyan-400 font-bold text-lg">{data.overallReading.threeSections.upper}%</div>
+                      <div className="text-white/50 text-xs">상정(이마)</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-green-400 font-bold text-lg">{data.overallReading.threeSections.middle}%</div>
+                      <div className="text-white/50 text-xs">중정(코)</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-orange-400 font-bold text-lg">{data.overallReading.threeSections.lower}%</div>
+                      <div className="text-white/50 text-xs">하정(턱)</div>
+                    </div>
+                  </div>
+                  <div className="text-white/60 text-sm">{data.overallReading.threeSections.interpretation}</div>
+                </div>
+
+                {/* 시기별 운세 */}
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-white/70 text-sm mb-3">⏰ 시기별 운세</div>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-cyan-500/20 rounded-lg px-3 py-1 text-cyan-400 text-sm font-medium min-w-[60px] text-center">초년운</div>
+                      <div>
+                        <div className="text-white font-medium">{data.overallReading.lifePeriodFortune.early.score}점</div>
+                        <div className="text-white/60 text-sm">{data.overallReading.lifePeriodFortune.early.description}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-green-500/20 rounded-lg px-3 py-1 text-green-400 text-sm font-medium min-w-[60px] text-center">중년운</div>
+                      <div>
+                        <div className="text-white font-medium">{data.overallReading.lifePeriodFortune.middle.score}점</div>
+                        <div className="text-white/60 text-sm">{data.overallReading.lifePeriodFortune.middle.description}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="bg-orange-500/20 rounded-lg px-3 py-1 text-orange-400 text-sm font-medium min-w-[60px] text-center">말년운</div>
+                      <div>
+                        <div className="text-white font-medium">{data.overallReading.lifePeriodFortune.late.score}점</div>
+                        <div className="text-white/60 text-sm">{data.overallReading.lifePeriodFortune.late.description}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 성격 특성 */}
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-white/70 text-sm mb-2">💎 성격 특성</div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {data.overallReading.personality.traits.map((trait, i) => (
+                      <span key={i} className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm">
+                        {trait}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-white/60 text-sm">{data.overallReading.personality.description}</div>
+                </div>
+
+                {/* 운세 영역 */}
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-white/70 text-sm mb-3">🌟 운세 영역</div>
+                  <div className="space-y-2">
+                    {Object.entries(data.overallReading.fortuneAreas).map(([key, value]) => {
+                      const labels: Record<string, { icon: string; name: string }> = {
+                        wealth: { icon: '💰', name: '재물운' },
+                        career: { icon: '💼', name: '직업운' },
+                        love: { icon: '💕', name: '연애운' },
+                        health: { icon: '💪', name: '건강운' },
+                        social: { icon: '🤝', name: '사회운' },
+                      };
+                      const label = labels[key] || { icon: '⭐', name: key };
+                      return (
+                        <div key={key} className="flex items-center gap-3">
+                          <span className="text-lg">{label.icon}</span>
+                          <span className="text-white/70 text-sm w-16">{label.name}</span>
+                          <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"
+                              style={{ width: `${value.score}%` }}
+                            />
+                          </div>
+                          <span className="text-white font-medium text-sm w-10 text-right">{value.score}점</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 조언 */}
+                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-4 border border-blue-500/20">
+                  <div className="text-blue-400 text-sm font-medium mb-2">💡 조언</div>
+                  <ul className="space-y-1">
+                    {data.overallReading.advice.map((item, i) => (
+                      <li key={i} className="text-white/80 text-sm flex items-start gap-2">
+                        <span className="text-blue-400">•</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 공유 카드 생성 */}
         <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">
