@@ -123,6 +123,8 @@ export interface FaceAnalysisResult {
     noseTipToBottom: number;    // 코끝~코밑 거리 (들창코 판별)
     noseBottomToLip: number;    // 코밑~윗입술 거리
     noseTipRatio: number;       // 코끝/코밑 비율 (들창코: 값이 크면 들창코)
+    noseTypeRatio: number;      // 코끝-코밑 높이차 / 코너비 (들창코/눌린코 판단용)
+    noseTypeLabel: string;      // 코 타입 라벨
     eyebrowLength: number;      // 눈썹 길이
     eyebrowAngle: number;       // 눈썹 각도
     eyeWidth: number;           // 눈 너비
@@ -483,17 +485,32 @@ export function analyzeFace(
   facescore += WEIGHTS.r2_love * noseLevel; r2_love_sum += WEIGHTS.r2_love * noseLevel;
   facescore += WEIGHTS.r4_responsibility * noseLevel; r4_respon_sum += WEIGHTS.r4_responsibility * noseLevel;
 
-  // === 4. 인중 길이 분석 === (draw.py ratio3 공식)
-  // ratio3 = (facepoint[12].y - facepoint[15].y) / widthratio
-  // 입 중앙(fp[12])에서 코밑 중앙(fp[15])까지 / 코 너비 - 수직 보정 적용
-  const philtrumLengthRaw = (fp[12].y - fp[15].y) * rotationComp.vertical;
+  // === 4. 인중 길이 분석 === (개선된 버전)
+  // 인중 = 코 아래점(fp[15])에서 윗입술 상단(fp[8])까지
+  // fp[15] = noseBottomCenter (MediaPipe #2, 코 끝나는 지점)
+  // fp[8] = upperLip (MediaPipe #0, 윗입술 가장 위)
+  const philtrumLengthRaw = (fp[8].y - fp[15].y) * rotationComp.vertical;
   const philtrumRatio = philtrumLengthRaw / noseWidth;
+
+  // 코 타입 분석 (들창코/눌린코)
+  // 코끝(fp[6])이 코 아래점(fp[15])보다 얼마나 높은지 체크
+  const noseTipHeight = (fp[15].y - fp[6].y) * rotationComp.vertical; // 코끝이 코밑보다 얼마나 위에 있는지
+  const noseTypeRatio = noseTipHeight / noseWidth;
+
+  let noseTypeLabel = "";
+  if (noseTypeRatio > 0.25) {
+    noseTypeLabel = "들창코 (코끝이 올라간 형태)";
+  } else if (noseTypeRatio < 0.08) {
+    noseTypeLabel = "눌린코 (코끝이 낮은 형태)";
+  } else {
+    noseTypeLabel = "보통 코 형태";
+  }
 
   let philtrumAnalysis: { label: string; description: string };
   let philtrumLevel: number;
 
-  // 인중 임계값 조정: 적당한데 짧다고 나오는 문제 수정 (추가 하향)
-  if (philtrumRatio > 0.65) {
+  // 인중 임계값 조정: upperLip 사용으로 더 짧게 측정되므로 임계값 하향
+  if (philtrumRatio > 0.50) {
     philtrumAnalysis = {
       label: "인중이 매우 긴 편",
       description: "인간성이 뛰어나고 장수하는 경향이 있습니다. 물질적인 풍요로움과는 별개로 인품 자체가 높은 평가를 받습니다."
@@ -502,7 +519,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.58) {
+  } else if (philtrumRatio > 0.42) {
     philtrumAnalysis = {
       label: "인중이 긴 편",
       description: "종종 자신의 노력으로 설명할 수 없는 힘을 발휘하며, 내면적 가치와 성격이 외부 세계에 긍정적인 영향을 끼칩니다."
@@ -511,7 +528,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.52) {
+  } else if (philtrumRatio > 0.35) {
     philtrumAnalysis = {
       label: "인중이 이상적",
       description: "자녀운에 긍정적인 영향을 끌어당기는 경향이 있어, 가정 내에서도 긍정적인 역할을 합니다."
@@ -520,7 +537,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.45) {
+  } else if (philtrumRatio > 0.28) {
     philtrumAnalysis = {
       label: "인중이 짧은 편",
       description: "다양한 관심사를 가지고 있으며 새로운 것에 대한 호기심이 강합니다. 많은 사람과 교류하면 좋은 기회가 찾아옵니다."
@@ -983,6 +1000,8 @@ export function analyzeFace(
       noseTipToBottom: Math.abs((fp[6]?.y || fp[7]?.y || 0) - fp[15].y), // 코끝~코밑
       noseBottomToLip: Math.abs(fp[15].y - fp[8].y), // 코밑~윗입술
       noseTipRatio: Math.abs((fp[6]?.y || fp[7]?.y || 0) - fp[15].y) / (Math.abs(fp[15].y - fp[8].y) || 1), // 들창코 비율
+      noseTypeRatio, // 코끝-코밑 높이차 / 코너비 (들창코/눌린코 판단용)
+      noseTypeLabel, // 코 타입 라벨
       eyebrowLength: Math.abs(fp[3].x - fp[2].x), // 왼쪽 눈썹 길이
       eyebrowAngle: Math.atan2(fp[3].y - fp[2].y, fp[3].x - fp[2].x) * (180 / Math.PI), // 눈썹 각도
       eyeWidth: Math.abs(fp[17].x - fp[19].x), // 눈 너비
