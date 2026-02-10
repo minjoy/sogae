@@ -774,17 +774,17 @@ export function analyzeFace(
   // facescore 범위: 약 100 ~ 350 (가중치 합산)
   // face_color는 "상위 X%"를 의미 (낮을수록 좋음)
 
-  // 점수 분포 개선: facescore에 따라 20~95점 범위로 분포
+  // 점수 분포 개선: facescore에 따라 15~95점 범위로 분포
   // facescore가 높을수록 좋은 관상 → 높은 점수
-  // 실제 facescore 범위에 맞게 조정 (범위 축소로 점수 분포 확대)
-  const minFacescore = 100;
-  const maxFacescore = 280;
+  // 범위를 넓게 잡아서 높은 점수 받기 어렵게
+  const minFacescore = 80;
+  const maxFacescore = 320;
   const scoreRange = maxFacescore - minFacescore;
 
-  // 선형 매핑: facescore를 20~95점으로 변환
+  // 선형 매핑: facescore를 15~95점으로 변환 (낮은 점수부터 시작)
   const facescoreNormalized = clamp(
-    Math.round(20 + ((facescore - minFacescore) / scoreRange) * 75),
-    20,
+    Math.round(15 + ((facescore - minFacescore) / scoreRange) * 80),
+    15,
     95
   );
 
@@ -792,23 +792,23 @@ export function analyzeFace(
   const faceColor = (150 - (facescore - 172)) / 149 * 100;
 
   // === 카테고리 점수 정규화 ===
-  // 각 카테고리 raw 점수를 0~100 범위로 변환 (더 넓은 분포)
+  // 각 카테고리 raw 점수를 0~100 범위로 변환
+  // 기준점 40, 편차 크게 반영하여 변별력 확보
   const normalizeCategory = (val: number, avgVal: number, spread: number): number => {
     const deviation = (val - avgVal) / spread;
-    // 편차를 더 크게 반영 (35 → 더 넓은 분포)
-    const normalized = 50 + deviation * 35;
-    // 범위 확대: 5~95 (이전: 15~85)
+    // 기준점 40 (평균이 40점이 되도록), 편차 45배 반영
+    const normalized = 40 + deviation * 45;
     return clamp(Math.round(normalized), 5, 95);
   };
 
   // r1~r4 raw 값 저장 (디버그용)
   const rawR1 = r1, rawR2 = r2, rawR3 = r3, rawR4 = r4;
 
-  // 각 카테고리 정규화 (표시용)
-  r1 = normalizeCategory(r1, 20, 15);
-  r2 = normalizeCategory(r2, 40, 20);
-  r3 = normalizeCategory(r3, 30, 20);
-  r4 = normalizeCategory(r4, 25, 15);
+  // 각 카테고리 정규화 - avgVal 상향으로 점수 기준 엄격하게
+  r1 = normalizeCategory(r1, 25, 12);  // 기준 상향, spread 축소
+  r2 = normalizeCategory(r2, 50, 18);
+  r3 = normalizeCategory(r3, 40, 16);
+  r4 = normalizeCategory(r4, 32, 12);
 
   // 최종 점수: facescore 기반 점수와 카테고리 평균의 가중 조합
   // 카테고리 점수와 전체 점수가 일관성 있게 나오도록 함
