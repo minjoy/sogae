@@ -492,8 +492,8 @@ export function analyzeFace(
   let philtrumAnalysis: { label: string; description: string };
   let philtrumLevel: number;
 
-  // 인중 임계값 조정: 적당한데 짧다고 나오는 문제 수정
-  if (philtrumRatio > 0.68) {
+  // 인중 임계값 조정: 적당한데 짧다고 나오는 문제 수정 (추가 하향)
+  if (philtrumRatio > 0.65) {
     philtrumAnalysis = {
       label: "인중이 매우 긴 편",
       description: "인간성이 뛰어나고 장수하는 경향이 있습니다. 물질적인 풍요로움과는 별개로 인품 자체가 높은 평가를 받습니다."
@@ -502,7 +502,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.62) {
+  } else if (philtrumRatio > 0.58) {
     philtrumAnalysis = {
       label: "인중이 긴 편",
       description: "종종 자신의 노력으로 설명할 수 없는 힘을 발휘하며, 내면적 가치와 성격이 외부 세계에 긍정적인 영향을 끼칩니다."
@@ -511,7 +511,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.55) {
+  } else if (philtrumRatio > 0.52) {
     philtrumAnalysis = {
       label: "인중이 이상적",
       description: "자녀운에 긍정적인 영향을 끌어당기는 경향이 있어, 가정 내에서도 긍정적인 역할을 합니다."
@@ -520,7 +520,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.48) {
+  } else if (philtrumRatio > 0.45) {
     philtrumAnalysis = {
       label: "인중이 짧은 편",
       description: "다양한 관심사를 가지고 있으며 새로운 것에 대한 호기심이 강합니다. 많은 사람과 교류하면 좋은 기회가 찾아옵니다."
