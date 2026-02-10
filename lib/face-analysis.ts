@@ -310,9 +310,8 @@ export function analyzeFace(
   let eyeAngleLevel: number;
 
   // draw.py와 동일한 방식: faceangle 기준 분류
-  // 원본: > -2 내려감, -2~-4 일자, -4~-11 올라감, <=-11 많이올라감
-  // 사용자 요청: 약간 올라감(2~4°)도 일자로 판정
-  if (eyeAngleDegrees > 8) {
+  // 임계값 조정: 살짝 올라갔는데 일자로 나오는 문제 수정
+  if (eyeAngleDegrees > 6) {
     // 눈꼬리 많이 올라감
     eyeAngleAnalysis = {
       label: "눈꼬리가 많이 올라감",
@@ -325,7 +324,7 @@ export function analyzeFace(
     facescore += WEIGHTS.r4_wind * 5; r4_wind_sum += WEIGHTS.r4_wind * 5;
     r2 += WEIGHTS.r2_spirit * 5 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 1 + WEIGHTS.r4_wind * 5;
-  } else if (eyeAngleDegrees > 4) {
+  } else if (eyeAngleDegrees > 3) {
     // 눈꼬리 올라감
     eyeAngleAnalysis = {
       label: "눈꼬리가 올라감",
@@ -338,8 +337,8 @@ export function analyzeFace(
     facescore += WEIGHTS.r4_wind * 4; r4_wind_sum += WEIGHTS.r4_wind * 4;
     r2 += WEIGHTS.r2_spirit * 4 + WEIGHTS.r2_adult * 4;
     r4 += WEIGHTS.r4_kind * 4 + WEIGHTS.r4_wind * 4;
-  } else if (eyeAngleDegrees > -3) {
-    // 눈꼬리 일자 (범위 확장: -3° ~ +4°)
+  } else if (eyeAngleDegrees > -4) {
+    // 눈꼬리 일자 (-4° ~ +3°)
     eyeAngleAnalysis = {
       label: "눈꼬리가 일자",
       description: "내면에 강한 의지와 결단력을 지니고 있습니다. 감정의 기복이 크지 않아 일관된 태도를 유지하는 데 강점을 가지고 있으며, 안정적인 성격의 소유자입니다."
@@ -352,7 +351,7 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_spirit * 3 + WEIGHTS.r2_adult * 3;
     r4 += WEIGHTS.r4_kind * 5 + WEIGHTS.r4_wind * 3;
   } else {
-    // 눈꼬리 내려감 (< -3°)
+    // 눈꼬리 내려감 (< -4°)
     eyeAngleAnalysis = {
       label: "눈꼬리가 내려감",
       description: "마음이 부드러우며 타인에 대한 배려가 깊습니다. 주변 환경에 능동적으로 적응하는 능력이 뛰어나며, 친화력이 좋아 사람들에게 호감을 받습니다."
@@ -493,8 +492,8 @@ export function analyzeFace(
   let philtrumAnalysis: { label: string; description: string };
   let philtrumLevel: number;
 
-  // draw.py 임계값: >0.7 (엄청긴), 0.65~0.7 (긴편), 0.58~0.65 (이상적), 0.5~0.58 (짧음), <0.5 (매우짧음)
-  if (philtrumRatio > 0.7) {
+  // 인중 임계값 조정: 적당한데 짧다고 나오는 문제 수정
+  if (philtrumRatio > 0.68) {
     philtrumAnalysis = {
       label: "인중이 매우 긴 편",
       description: "인간성이 뛰어나고 장수하는 경향이 있습니다. 물질적인 풍요로움과는 별개로 인품 자체가 높은 평가를 받습니다."
@@ -503,7 +502,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.65) {
+  } else if (philtrumRatio > 0.62) {
     philtrumAnalysis = {
       label: "인중이 긴 편",
       description: "종종 자신의 노력으로 설명할 수 없는 힘을 발휘하며, 내면적 가치와 성격이 외부 세계에 긍정적인 영향을 끼칩니다."
@@ -512,7 +511,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.58) {
+  } else if (philtrumRatio > 0.55) {
     philtrumAnalysis = {
       label: "인중이 이상적",
       description: "자녀운에 긍정적인 영향을 끌어당기는 경향이 있어, 가정 내에서도 긍정적인 역할을 합니다."
@@ -521,7 +520,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
     r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (philtrumRatio > 0.5) {
+  } else if (philtrumRatio > 0.48) {
     philtrumAnalysis = {
       label: "인중이 짧은 편",
       description: "다양한 관심사를 가지고 있으며 새로운 것에 대한 호기심이 강합니다. 많은 사람과 교류하면 좋은 기회가 찾아옵니다."
@@ -639,7 +638,8 @@ export function analyzeFace(
 
   // 실제 데이터 기반 임계값 (avgJawAngle 범위: 22~35°)
   // 높은 각도 = 튼튼한 턱, 낮은 각도 = 가는 턱
-  if (avgJawAngle > 31) {
+  // 임계값 상향: 갸름한데 튼튼으로 나오는 문제 수정
+  if (avgJawAngle > 33) {
     jawAnalysis = {
       label: "하관이 매우 튼튼함",
       description: "넓고 튼튼한 턱으로, 말년에 재물과 자녀의 복으로 큰 풍요를 누릴 예정입니다. 강한 의지력과 추진력을 가지고 있습니다."
@@ -647,7 +647,7 @@ export function analyzeFace(
     jawLevel = 5;
     r2 += WEIGHTS.r2_adult * 5; r2_adult_sum += WEIGHTS.r2_adult * 5;
     r3 += WEIGHTS.r3_social * 5; r3_social_sum += WEIGHTS.r3_social * 5;
-  } else if (avgJawAngle > 29) {
+  } else if (avgJawAngle > 31) {
     jawAnalysis = {
       label: "하관이 튼튼함",
       description: "안정적인 턱 구조로, 말년에 재물과 자녀의 복으로 풍요를 누릴 예정입니다. 삶의 후반기에 편안한 삶을 즐길 수 있습니다."
@@ -655,7 +655,7 @@ export function analyzeFace(
     jawLevel = 4;
     r2 += WEIGHTS.r2_adult * 4; r2_adult_sum += WEIGHTS.r2_adult * 4;
     r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
-  } else if (avgJawAngle > 27) {
+  } else if (avgJawAngle > 29) {
     jawAnalysis = {
       label: "하관이 이상적",
       description: "균형 잡힌 얼굴형으로 안정적인 인상을 줍니다. 말년에도 편안하고 충족된 삶을 즐길 수 있습니다."
@@ -663,7 +663,7 @@ export function analyzeFace(
     jawLevel = 3;
     r2 += WEIGHTS.r2_adult * 3; r2_adult_sum += WEIGHTS.r2_adult * 3;
     r3 += WEIGHTS.r3_social * 3; r3_social_sum += WEIGHTS.r3_social * 3;
-  } else if (avgJawAngle > 25) {
+  } else if (avgJawAngle > 27) {
     jawAnalysis = {
       label: "턱이 갸름한 편",
       description: "섬세하고 예민한 성격의 소유자입니다. 끊임없는 노력으로 자수성가의 길을 걷게 됩니다."
@@ -696,8 +696,8 @@ export function analyzeFace(
   let eyeSizeAnalysis: { label: string; description: string };
   let eyeSizeLevel: number;
 
-  // 눈 크기와 형태에 따른 분석 (회전 보정 적용으로 원래 임계값 사용)
-  if (eyeFaceWidthRatio < 4.5) {
+  // 눈 크기와 형태에 따른 분석 (임계값 상향: 큰 눈이 보통으로 나오는 문제 수정)
+  if (eyeFaceWidthRatio < 5.0) {
     // 눈이 큰 편
     if (eyeRatio > 3.0) {
       eyeSizeAnalysis = {
@@ -716,7 +716,7 @@ export function analyzeFace(
     r2 += WEIGHTS.r2_jealousy * 5; r2_jeal_sum += WEIGHTS.r2_jealousy * 5;
     r3 += WEIGHTS.r3_someone * 1; r3_someone_sum += WEIGHTS.r3_someone * 1;
     r4 += WEIGHTS.r4_kind * 1; r4_kind_sum += WEIGHTS.r4_kind * 1;
-  } else if (eyeFaceWidthRatio < 5.5) {
+  } else if (eyeFaceWidthRatio < 6.0) {
     // 눈이 보통
     eyeSizeAnalysis = {
       label: "눈이 보통 크기",
