@@ -759,16 +759,16 @@ export function analyzeFace(
 
   // 점수 분포 개선: facescore에 따라 15~95점 범위로 분포
   // facescore가 높을수록 좋은 관상 → 높은 점수
-  // 범위 조정으로 더 넓은 점수 분포 확보
-  const minFacescore = 165;  // 상향 조정 (낮은 점수도 나오도록)
-  const maxFacescore = 295;  // 하향 조정 (분포 확대)
+  // 실제 facescore 범위(100-350)에 맞게 조정
+  const minFacescore = 120;
+  const maxFacescore = 320;
   const scoreRange = maxFacescore - minFacescore;
 
-  // 선형 매핑: facescore를 15~95점으로 변환 (더 넓은 범위)
-  const normalizedScore = clamp(
-    Math.round(15 + ((facescore - minFacescore) / scoreRange) * 80),
-    15,
-    95
+  // 선형 매핑: facescore를 20~90점으로 변환
+  const facescoreNormalized = clamp(
+    Math.round(20 + ((facescore - minFacescore) / scoreRange) * 70),
+    20,
+    90
   );
 
   // draw.py 호환: 상위 X% 계산 (face_color)
@@ -792,6 +792,16 @@ export function analyzeFace(
   r2 = normalizeCategory(r2, 40, 20);
   r3 = normalizeCategory(r3, 30, 20);
   r4 = normalizeCategory(r4, 25, 15);
+
+  // 최종 점수: facescore 기반 점수와 카테고리 평균의 가중 조합
+  // 카테고리 점수와 전체 점수가 일관성 있게 나오도록 함
+  const categoryAvg = (r1 + r2 + r3 + r4) / 4;
+  // facescore 50%, 카테고리 평균 50% 조합
+  const normalizedScore = clamp(
+    Math.round(facescoreNormalized * 0.5 + categoryAvg * 0.5),
+    15,
+    95
+  );
 
   // === 관상 특성 점수 계산 (Excel 기반) ===
   let traits = createEmptyTraits();

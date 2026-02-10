@@ -923,16 +923,16 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       const rightEyeReduced = rightEye.filter((_, i) => i % 2 === 0);
       const lipsReduced = lipsOuter.filter((_, i) => i % 2 === 0);
 
-      drawDots(leftEyeReduced, 'rgba(150, 220, 255, 1)', 1.8, 0.6);
-      drawDots(rightEyeReduced, 'rgba(150, 220, 255, 1)', 1.8, 0.6);
-      drawDots(leftEyebrow, 'rgba(180, 200, 255, 1)', 1.8, 0.55);
-      drawDots(rightEyebrow, 'rgba(180, 200, 255, 1)', 1.8, 0.55);
-      drawDots(nose, 'rgba(255, 200, 180, 1)', 1.8, 0.6);
-      drawDots(lipsReduced, 'rgba(255, 180, 200, 1)', 1.8, 0.6);
+      drawDots(leftEyeReduced, 'rgba(150, 220, 255, 1)', 2, 0.7);
+      drawDots(rightEyeReduced, 'rgba(150, 220, 255, 1)', 2, 0.7);
+      drawDots(leftEyebrow, 'rgba(180, 200, 255, 1)', 2, 0.65);
+      drawDots(rightEyebrow, 'rgba(180, 200, 255, 1)', 2, 0.65);
+      drawDots(nose, 'rgba(255, 200, 180, 1)', 2, 0.7);
+      drawDots(lipsReduced, 'rgba(255, 180, 200, 1)', 2, 0.7);
 
       // 상단 윤곽선 (이마~관자놀이) - 은은한 점
-      drawDots(upperSilhouette, 'rgba(180, 220, 255, 1)', 1.5, 0.45);
-      drawDots(upperSilhouetteLeft, 'rgba(180, 220, 255, 1)', 1.5, 0.45);
+      drawDots(upperSilhouette, 'rgba(180, 220, 255, 1)', 1.8, 0.55);
+      drawDots(upperSilhouetteLeft, 'rgba(180, 220, 255, 1)', 1.8, 0.55);
 
       // 턱 윤곽선 - 하나로 연결 (jawContourLeft + jawContourRight를 연속으로)
       const fullJawContour = [...jawContourLeft, ...jawContourRight.slice(1)]; // 152 중복 제거
@@ -1091,9 +1091,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    // 얼굴 이미지 (1.5배 확대)
-    const faceY = 450;
-    const faceSize = 520; // 380 * 1.37 → 더 크게
+    // 얼굴 이미지 (1.2배 추가 확대)
+    const faceY = 480;
+    const faceSize = 624; // 520 * 1.2
 
     if (data.imageData && data.landmarks) {
       const img = new Image();
@@ -1124,60 +1124,71 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
         // 세련된 윤곽선 (티어 색상 적용)
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { jawLine, jawContourLeft, jawContourRight, ...faceFeatures } = FACE_CONNECTIONS;
+        const { jawLine, jawContourLeft, jawContourRight, leftEye, rightEye, leftEyebrow, rightEyebrow, nose: noseConn, lipsOuter, upperSilhouette, upperSilhouetteLeft, lowerJawInner } = FACE_CONNECTIONS;
 
-        ctx.strokeStyle = `${tierBg.accent}88`;
-        ctx.lineWidth = 2;
+        // 점 그리기 함수 (메인과 동일 스타일)
+        const drawCardDots = (indices: number[], color: string, size: number = 2, alpha: number = 0.7) => {
+          ctx.globalAlpha = alpha;
+          indices.forEach(idx => {
+            if (idx >= landmarks.length) return;
+            const point = transformPoint(idx);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+        };
+
+        // 눈, 눈썹, 코, 입 - 점으로 표현 (절반만)
+        const leftEyeReduced = leftEye.filter((_: number, i: number) => i % 2 === 0);
+        const rightEyeReduced = rightEye.filter((_: number, i: number) => i % 2 === 0);
+        const lipsReduced = lipsOuter.filter((_: number, i: number) => i % 2 === 0);
+
+        drawCardDots(leftEyeReduced, `${tierBg.accent}`, 2.5, 0.7);
+        drawCardDots(rightEyeReduced, `${tierBg.accent}`, 2.5, 0.7);
+        drawCardDots(leftEyebrow, `${tierBg.accent}`, 2.5, 0.65);
+        drawCardDots(rightEyebrow, `${tierBg.accent}`, 2.5, 0.65);
+        drawCardDots(noseConn, `${tierBg.accent}`, 2.5, 0.7);
+        drawCardDots(lipsReduced, `${tierBg.accent}`, 2.5, 0.7);
+
+        // 턱 윤곽선 - 하나로 연결 (메인과 동일)
+        const fullJawContour = [...jawContourLeft, ...jawContourRight.slice(1)];
         ctx.shadowColor = tierBg.glow;
         ctx.shadowBlur = 10;
-
-        // 기본 연결선
-        Object.values(faceFeatures).forEach(connection => {
-          ctx.beginPath();
-          connection.forEach((idx, i) => {
-            if (idx >= landmarks.length) return;
-            const point = transformPoint(idx);
-            if (i === 0) ctx.moveTo(point.x, point.y);
-            else ctx.lineTo(point.x, point.y);
-          });
-          ctx.stroke();
-        });
-
-        // 턱 윤곽선 (곡선만, 직선 제외)
         ctx.strokeStyle = `${tierBg.accent}cc`;
         ctx.lineWidth = 3;
-        [jawContourLeft, jawContourRight].forEach(connection => {
-          ctx.beginPath();
-          connection.forEach((idx, i) => {
-            if (idx >= landmarks.length) return;
-            const point = transformPoint(idx);
-            if (i === 0) ctx.moveTo(point.x, point.y);
-            else ctx.lineTo(point.x, point.y);
-          });
-          ctx.stroke();
+        ctx.beginPath();
+        fullJawContour.forEach((idx, i) => {
+          if (idx >= landmarks.length) return;
+          const point = transformPoint(idx);
+          if (i === 0) ctx.moveTo(point.x, point.y);
+          else ctx.lineTo(point.x, point.y);
         });
-
+        ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // 주요 포인트 (세련된 스타일)
-        ctx.globalAlpha = 0.7;
-        const keyPoints = [
-          DEBUG_POINTS.eyes.leftCenter, DEBUG_POINTS.eyes.rightCenter,
-          DEBUG_POINTS.nose.tip, DEBUG_POINTS.jaw.chin,
-          DEBUG_POINTS.mouth.left, DEBUG_POINTS.mouth.right
-        ];
-        keyPoints.forEach(idx => {
+        // 핵심 포인트 (눈꼬리, 코, 입, 턱)
+        const drawCardKeyPoint = (idx: number, size: number = 4) => {
           if (idx >= landmarks.length) return;
           const point = transformPoint(idx);
           ctx.beginPath();
-          ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+          ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
           ctx.fillStyle = tierBg.accent;
+          ctx.globalAlpha = 0.85;
           ctx.fill();
-          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.strokeStyle = 'rgba(255,255,255,0.4)';
           ctx.lineWidth = 1;
           ctx.stroke();
-        });
-        ctx.globalAlpha = 1;
+          ctx.globalAlpha = 1;
+        };
+
+        drawCardKeyPoint(DEBUG_POINTS.eyes.leftOuter, 4);
+        drawCardKeyPoint(DEBUG_POINTS.eyes.rightOuter, 4);
+        drawCardKeyPoint(DEBUG_POINTS.nose.tip, 5);
+        drawCardKeyPoint(DEBUG_POINTS.jaw.chin, 5);
+        drawCardKeyPoint(DEBUG_POINTS.mouth.left, 4);
+        drawCardKeyPoint(DEBUG_POINTS.mouth.right, 4);
 
         ctx.restore();
       }
@@ -1292,8 +1303,8 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
     // 워터마크
     ctx.fillStyle = tierBg.accent;
-    ctx.globalAlpha = 0.6;
-    ctx.font = '28px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.globalAlpha = 0.7;
+    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('mytype.co.kr', 540, 1320);
     ctx.globalAlpha = 1;
 
