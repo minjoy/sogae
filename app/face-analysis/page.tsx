@@ -86,11 +86,11 @@ function validateAnalysisResult(
     const faceHeightPixels = faceHeightRatio * imageHeight;
     const facePixels = Math.min(faceWidthPixels, faceHeightPixels);
 
-    // 얼굴이 100픽셀 미만이면 분석 불가 (랜드마크 정확도 떨어짐)
-    if (facePixels < 100) {
+    // 얼굴이 80픽셀 미만이면 분석 불가 (랜드마크 정확도 떨어짐)
+    if (facePixels < 80) {
       errors.push(`얼굴이 너무 작게 찍혔습니다 (${Math.round(facePixels)}px). 카메라에 가까이 다가가서 다시 촬영해주세요.`);
-    } else if (facePixels < 200) {
-      // 100~200px는 경고만 (무시하고 진행 가능)
+    } else if (facePixels < 150) {
+      // 80~150px는 경고만 (무시하고 진행 가능)
       warnings.push(`얼굴이 작게 찍혔습니다 (${Math.round(facePixels)}px). 가까이 촬영하면 더 정확한 분석이 가능합니다.`);
     }
 
@@ -777,7 +777,7 @@ export default function FaceAnalysisPage() {
         <div className="flex-1 relative overflow-hidden">
           <video
             ref={videoRef}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover -scale-x-100"
             playsInline
             muted
           />
@@ -796,8 +796,11 @@ export default function FaceAnalysisPage() {
                 ? 'bg-green-500 text-white'
                 : 'bg-white/80 text-gray-800'
             }`}>
-              {landmarks ? '얼굴 인식됨 - 촬영 가능' : '얼굴을 가이드에 맞춰주세요'}
+              {landmarks ? '✓ 촬영 가능' : '얼굴을 가이드에 맞춰주세요'}
             </span>
+            <p className="mt-2 text-white/80 text-xs">
+              카메라를 정면으로 바라봐 주세요
+            </p>
           </div>
 
           {/* 컨트롤 영역 - 비디오 위에 오버레이 */}
