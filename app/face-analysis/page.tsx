@@ -777,7 +777,7 @@ export default function FaceAnalysisPage() {
         <div className="flex-1 relative overflow-hidden">
           <video
             ref={videoRef}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover -scale-x-100"
             playsInline
             muted
           />
