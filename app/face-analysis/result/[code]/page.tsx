@@ -591,9 +591,11 @@ const FACE_CONNECTIONS = {
   upperSilhouetteLeft: [234, 127, 162, 21, 54, 103, 67, 109, 10],
   // 턱각 강조 윤곽선 (직선으로 연결하여 각진 턱 표현)
   jawLine: [234, 172, 152, 397, 454],
-  // 실제 턱 외곽선 (더 바깥쪽 점 사용 - 각진 턱용)
-  jawContourLeft: [234, 93, 132, 58, 172, 136, 150, 152],
-  jawContourRight: [152, 149, 176, 397, 288, 361, 323, 454],
+  // 실제 턱 외곽선 (MediaPipe 표준 face oval 기반)
+  // 왼쪽 관자놀이(234)에서 턱끝(152)까지
+  jawContourLeft: [234, 93, 132, 58, 172, 136, 150, 149, 176, 148, 152],
+  // 턱끝(152)에서 오른쪽 관자놀이(454)까지
+  jawContourRight: [152, 377, 400, 378, 379, 365, 397, 288, 361, 323, 454],
   // 하관 내측 윤곽 (부드러운 턱용)
   lowerJawInner: [172, 150, 149, 152, 148, 176, 397],
   leftEye: [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246, 33],
@@ -916,13 +918,17 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         ctx.globalAlpha = 1;
       };
 
-      // 눈, 눈썹, 코, 입 - 투명한 점으로 표현 (더 진하게)
-      drawDots(leftEye, 'rgba(150, 220, 255, 1)', 1.8, 0.6);
-      drawDots(rightEye, 'rgba(150, 220, 255, 1)', 1.8, 0.6);
+      // 눈, 눈썹, 코, 입 - 투명한 점으로 표현 (눈/입은 점 절반으로 줄임)
+      const leftEyeReduced = leftEye.filter((_, i) => i % 2 === 0);
+      const rightEyeReduced = rightEye.filter((_, i) => i % 2 === 0);
+      const lipsReduced = lipsOuter.filter((_, i) => i % 2 === 0);
+
+      drawDots(leftEyeReduced, 'rgba(150, 220, 255, 1)', 1.8, 0.6);
+      drawDots(rightEyeReduced, 'rgba(150, 220, 255, 1)', 1.8, 0.6);
       drawDots(leftEyebrow, 'rgba(180, 200, 255, 1)', 1.8, 0.55);
       drawDots(rightEyebrow, 'rgba(180, 200, 255, 1)', 1.8, 0.55);
       drawDots(nose, 'rgba(255, 200, 180, 1)', 1.8, 0.6);
-      drawDots(lipsOuter, 'rgba(255, 180, 200, 1)', 1.8, 0.6);
+      drawDots(lipsReduced, 'rgba(255, 180, 200, 1)', 1.8, 0.6);
 
       // 상단 윤곽선 (이마~관자놀이) - 은은한 점
       drawDots(upperSilhouette, 'rgba(180, 220, 255, 1)', 1.5, 0.45);
