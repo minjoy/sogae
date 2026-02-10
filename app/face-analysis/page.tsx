@@ -33,6 +33,81 @@ interface FaceLandmark {
   z: number;
 }
 
+// 분석 결과 유효성 검사 함수
+interface ValidationResult {
+  isValid: boolean;
+  warnings: string[];
+  errors: string[];
+}
+
+function validateAnalysisResult(
+  panAngle: number,
+  tiltAngle: number,
+  rollAngle: number,
+  faceLandmarks: FaceLandmark[],
+  imageWidth: number,
+  imageHeight: number
+): ValidationResult {
+  const warnings: string[] = [];
+  const errors: string[] = [];
+
+  // 1. 얼굴 회전 각도 검사 (40도 초과 시 경고)
+  const MAX_ROTATION_ANGLE = 40;
+
+  if (Math.abs(panAngle) > MAX_ROTATION_ANGLE) {
+    warnings.push(`얼굴이 좌우로 ${Math.abs(panAngle).toFixed(0)}° 돌아가 있습니다. 정면을 바라보면 더 정확한 분석이 가능합니다.`);
+  } else if (Math.abs(panAngle) > 25) {
+    warnings.push(`얼굴이 약간 옆으로 돌아가 있어 일부 측정값이 보정되었습니다.`);
+  }
+
+  if (Math.abs(tiltAngle) > MAX_ROTATION_ANGLE) {
+    warnings.push(`얼굴이 위/아래로 ${Math.abs(tiltAngle).toFixed(0)}° 기울어져 있습니다. 정면을 바라보면 더 정확한 분석이 가능합니다.`);
+  }
+
+  if (Math.abs(rollAngle) > 20) {
+    warnings.push(`얼굴이 ${Math.abs(rollAngle).toFixed(0)}° 기울어져 있습니다.`);
+  }
+
+  // 2. 얼굴 크기 검사 (너무 작으면 경고)
+  if (faceLandmarks && faceLandmarks.length > 0) {
+    let minX = 1, maxX = 0, minY = 1, maxY = 0;
+    faceLandmarks.forEach(lm => {
+      minX = Math.min(minX, lm.x);
+      maxX = Math.max(maxX, lm.x);
+      minY = Math.min(minY, lm.y);
+      maxY = Math.max(maxY, lm.y);
+    });
+
+    const faceWidthRatio = maxX - minX;
+    const faceHeightRatio = maxY - minY;
+    const faceArea = faceWidthRatio * faceHeightRatio;
+
+    // 얼굴이 이미지의 10% 미만이면 너무 작음
+    if (faceArea < 0.10) {
+      errors.push(`얼굴이 너무 작게 찍혔습니다 (${(faceArea * 100).toFixed(1)}%). 카메라에 가까이 다가가서 다시 촬영해주세요.`);
+    } else if (faceArea < 0.15) {
+      warnings.push(`얼굴이 조금 작게 찍혔습니다. 가까이 촬영하면 더 정확한 분석이 가능합니다.`);
+    }
+
+    // 얼굴이 화면 끝에 걸쳐있는지 확인
+    if (minX < 0.02 || maxX > 0.98) {
+      warnings.push(`얼굴 일부가 화면 밖으로 잘렸을 수 있습니다.`);
+    }
+  }
+
+  // 3. 복합적인 문제 (여러 각도가 동시에 크면 신뢰도 하락)
+  const totalRotation = Math.abs(panAngle) + Math.abs(tiltAngle) + Math.abs(rollAngle);
+  if (totalRotation > 60 && errors.length === 0) {
+    warnings.push(`얼굴 각도가 정면에서 많이 벗어나 있어 분석 정확도가 낮을 수 있습니다.`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    warnings,
+    errors,
+  };
+}
+
 export default function FaceAnalysisPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -313,6 +388,36 @@ export default function FaceAnalysisPage() {
       const data = await response.json();
 
       if (data.success) {
+        // 분석 결과 유효성 검사
+        const validation = validateAnalysisResult(
+          data.result.panAngle || 0,
+          data.result.tiltAngle || 0,
+          data.result.rollAngle || 0,
+          faceLandmarks,
+          imageWidth,
+          imageHeight
+        );
+
+        // 에러가 있으면 분석 중단하고 알림
+        if (!validation.isValid) {
+          const errorMessage = validation.errors.join('\n\n');
+          alert(`⚠️ 분석 정확도 문제\n\n${errorMessage}\n\n다시 촬영해주세요.`);
+          setError(validation.errors[0]);
+          setIsLoading(false);
+          return;
+        }
+
+        // 경고가 있으면 사용자에게 알림 (계속 진행 가능)
+        if (validation.warnings.length > 0) {
+          const warningMessage = validation.warnings.join('\n• ');
+          const shouldContinue = confirm(
+            `📌 분석 정확도 알림\n\n• ${warningMessage}\n\n계속 진행하시겠습니까?`
+          );
+          if (!shouldContinue) {
+            setIsLoading(false);
+            return;
+          }
+        }
         // 2. 얼굴 영역만 크롭하여 압축 + 랜드마크 변환
         let croppedData = {
           image: imageData || capturedImage || '',
@@ -488,7 +593,7 @@ export default function FaceAnalysisPage() {
           const imageData = canvas.toDataURL('image/jpeg', 0.9);
           await analyzeWithLandmarks(selectedLandmarks, img.width, img.height, imageData);
         } else {
-          setError('얼굴을 찾을 수 없습니다. 다른 사진을 시도해주세요.');
+          setError('😕 얼굴을 인식할 수 없습니다.\n\n가능한 원인:\n• 얼굴이 너무 작거나 멀리 있음\n• 얼굴이 흐릿하거나 가려져 있음\n• 조명이 너무 어둡거나 역광\n• 모자, 선글라스 등으로 가려짐\n\n💡 팁: 밝은 곳에서 정면을 바라보고 다시 촬영해주세요.');
           setIsLoading(false);
         }
       }
@@ -584,8 +689,14 @@ export default function FaceAnalysisPage() {
 
           {/* 에러 메시지 */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-              <p className="text-red-600">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <p className="text-red-600 whitespace-pre-line text-left text-sm">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="mt-3 w-full py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200"
+              >
+                닫기
+              </button>
             </div>
           )}
 
