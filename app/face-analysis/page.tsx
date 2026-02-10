@@ -68,7 +68,7 @@ function validateAnalysisResult(
     warnings.push(`얼굴이 ${Math.abs(rollAngle).toFixed(0)}° 기울어져 있습니다.`);
   }
 
-  // 2. 얼굴 크기 검사 (너무 작으면 경고)
+  // 2. 얼굴 크기 검사 (실제 픽셀 크기 기준)
   if (faceLandmarks && faceLandmarks.length > 0) {
     let minX = 1, maxX = 0, minY = 1, maxY = 0;
     faceLandmarks.forEach(lm => {
@@ -80,14 +80,18 @@ function validateAnalysisResult(
 
     const faceWidthRatio = maxX - minX;
     const faceHeightRatio = maxY - minY;
-    const faceArea = faceWidthRatio * faceHeightRatio;
 
-    // 얼굴이 이미지의 5% 미만이면 분석 불가 (차단)
-    if (faceArea < 0.05) {
-      errors.push(`얼굴이 너무 작게 찍혔습니다 (${(faceArea * 100).toFixed(1)}%). 카메라에 가까이 다가가서 다시 촬영해주세요.`);
-    } else if (faceArea < 0.15) {
-      // 5~15%는 경고만 (무시하고 진행 가능)
-      warnings.push(`얼굴이 작게 찍혔습니다 (${(faceArea * 100).toFixed(1)}%). 가까이 촬영하면 더 정확한 분석이 가능합니다.`);
+    // 실제 얼굴 픽셀 크기 계산
+    const faceWidthPixels = faceWidthRatio * imageWidth;
+    const faceHeightPixels = faceHeightRatio * imageHeight;
+    const facePixels = Math.min(faceWidthPixels, faceHeightPixels);
+
+    // 얼굴이 100픽셀 미만이면 분석 불가 (랜드마크 정확도 떨어짐)
+    if (facePixels < 100) {
+      errors.push(`얼굴이 너무 작게 찍혔습니다 (${Math.round(facePixels)}px). 카메라에 가까이 다가가서 다시 촬영해주세요.`);
+    } else if (facePixels < 200) {
+      // 100~200px는 경고만 (무시하고 진행 가능)
+      warnings.push(`얼굴이 작게 찍혔습니다 (${Math.round(facePixels)}px). 가까이 촬영하면 더 정확한 분석이 가능합니다.`);
     }
 
     // 얼굴이 화면 끝에 걸쳐있는지 확인
