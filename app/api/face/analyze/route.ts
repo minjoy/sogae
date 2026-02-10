@@ -83,9 +83,13 @@ function calculateFaceAngles(landmarks: Array<{ x: number; y: number; z: number 
   const rollAngle = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x) * 180 / Math.PI;
 
   // 2. Pan angle (좌우 회전): 코끝이 두 눈 중심에서 수평으로 얼마나 벗어났는지
+  // 미러링 감지: 일반적으로 rightEye.x > leftEye.x이지만, 셀카(미러링)에서는 반대
+  const isMirrored = leftEye.x > rightEye.x;
   // 정면일 때 코끝 x ≈ 눈 중심 x
-  // 왼쪽을 보면 코가 왼쪽으로 이동 (음수), 오른쪽을 보면 오른쪽으로 이동 (양수)
-  const noseOffsetX = noseTip.x - eyeCenterX;
+  // 미러링된 경우 부호 반전 필요
+  const noseOffsetX = isMirrored
+    ? (eyeCenterX - noseTip.x)  // 미러링된 경우
+    : (noseTip.x - eyeCenterX); // 정상적인 경우
   // 눈 거리 대비 비율로 각도 추정 (최대 ±45도 범위로 매핑)
   const panRatio = Math.max(-1, Math.min(1, noseOffsetX / (eyeDistance * 0.5)));
   const panAngle = Math.asin(panRatio) * 180 / Math.PI;
