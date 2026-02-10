@@ -532,6 +532,13 @@ export default function FaceAnalysisPage() {
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
+
+    // 비디오 크기 검증
+    if (!video.videoWidth || !video.videoHeight) {
+      console.error('Video dimensions not available');
+      return;
+    }
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
@@ -540,12 +547,18 @@ export default function FaceAnalysisPage() {
 
     ctx.drawImage(video, 0, 0);
     const imageData = canvas.toDataURL('image/jpeg', 0.9);
+
+    // landmarks를 로컬 변수에 복사 (stopCamera에서 null로 설정되기 전에)
+    const currentLandmarks = [...landmarks];
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+
     setCapturedImage(imageData);
     stopCamera();
     setMode('select');
 
-    // 분석 실행 (이미지 데이터 직접 전달)
-    await analyzeWithLandmarks(landmarks, video.videoWidth, video.videoHeight, imageData);
+    // 분석 실행 (복사된 landmarks 사용)
+    await analyzeWithLandmarks(currentLandmarks, width, height, imageData);
   }, [landmarks, stopCamera, analyzeWithLandmarks]);
 
   // 파일 업로드 처리
@@ -759,9 +772,9 @@ export default function FaceAnalysisPage() {
   // 카메라 모드
   if (mode === 'camera') {
     return (
-      <div className="min-h-screen bg-black flex flex-col">
+      <div className="fixed inset-0 bg-black flex flex-col z-50">
         {/* 비디오 영역 */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative overflow-hidden">
           <video
             ref={videoRef}
             className="w-full h-full object-cover"
@@ -777,7 +790,7 @@ export default function FaceAnalysisPage() {
           </div>
 
           {/* 상태 표시 */}
-          <div className="absolute top-4 left-0 right-0 text-center">
+          <div className="absolute top-4 left-0 right-0 text-center safe-area-top">
             <span className={`px-4 py-2 rounded-full text-sm font-medium ${
               landmarks
                 ? 'bg-green-500 text-white'
@@ -786,39 +799,39 @@ export default function FaceAnalysisPage() {
               {landmarks ? '얼굴 인식됨 - 촬영 가능' : '얼굴을 가이드에 맞춰주세요'}
             </span>
           </div>
-        </div>
 
-        {/* 컨트롤 영역 */}
-        <div className="bg-black/90 p-6">
-          <div className="flex items-center justify-center gap-6">
-            <button
-              onClick={() => {
-                stopCamera();
-                setMode('select');
-              }}
-              className="p-4 rounded-full bg-gray-700 text-white"
-            >
-              ✕
-            </button>
-            <button
-              onClick={capturePhoto}
-              disabled={!landmarks}
-              className={`w-20 h-20 rounded-full border-4 transition-all ${
-                landmarks
-                  ? 'bg-white border-green-500 hover:scale-105'
-                  : 'bg-gray-600 border-gray-500 cursor-not-allowed'
-              }`}
-            >
-              <span className="text-2xl">{landmarks ? '📸' : '🔍'}</span>
-            </button>
-            <button
-              onClick={() => {
-                // 전면/후면 카메라 전환 (모바일)
-              }}
-              className="p-4 rounded-full bg-gray-700 text-white"
-            >
-              🔄
-            </button>
+          {/* 컨트롤 영역 - 비디오 위에 오버레이 */}
+          <div className="absolute bottom-0 left-0 right-0 pb-8 pt-4 bg-gradient-to-t from-black/80 to-transparent">
+            <div className="flex items-center justify-center gap-8">
+              <button
+                onClick={() => {
+                  stopCamera();
+                  setMode('select');
+                }}
+                className="p-4 rounded-full bg-gray-700/80 text-white backdrop-blur-sm"
+              >
+                ✕
+              </button>
+              <button
+                onClick={capturePhoto}
+                disabled={!landmarks}
+                className={`w-20 h-20 rounded-full border-4 transition-all ${
+                  landmarks
+                    ? 'bg-white border-green-500 hover:scale-105 shadow-lg'
+                    : 'bg-gray-600 border-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <span className="text-2xl">{landmarks ? '📸' : '🔍'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  // 전면/후면 카메라 전환 (모바일)
+                }}
+                className="p-4 rounded-full bg-gray-700/80 text-white backdrop-blur-sm"
+              >
+                🔄
+              </button>
+            </div>
           </div>
         </div>
 
