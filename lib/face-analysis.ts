@@ -829,23 +829,23 @@ export function analyzeFace(
   // 7개 부위 × 레벨 기반 점수 (직관적 계산)
   const levels = [eyeAngleLevel, eyebrowLevel, noseLevel, philtrumLevel, mouthLevel, jawLevel, eyeSizeLevel];
 
-  // 레벨별 점수 계산 함수
-  // level 3 (이상적) = 10점, level 2,4 (양호) = 7점, level 1,5 (극단) = 3점
+  // 레벨별 점수 계산 함수 - 격차 확대
+  // level 3 (이상적) = 10점, level 2,4 (양호) = 5점, level 1,5 (극단) = 0점
   const getLevelScore = (level: number, isEyebrow: boolean = false): number => {
     // 눈두덩이 예외: 넓은 건(level 4, 5) 좋으므로 10점
     if (isEyebrow && level >= 4) return 10;
 
     if (level === 3) return 10;           // 이상적
-    if (level === 2 || level === 4) return 7;  // 양호
-    return 3;                              // 극단 (level 1 or 5)
+    if (level === 2 || level === 4) return 5;  // 양호 (7→5로 하향)
+    return 0;                              // 극단 (3→0으로 하향)
   };
 
   // 각 부위별 점수 계산
   const featureScores = levels.map((level, idx) => getLevelScore(level, idx === 1));
   const rawBalanceScore = featureScores.reduce((a, b) => a + b, 0);
 
-  // 최소 21점 (7×3), 최대 70점 (7×10) → 0~100으로 정규화
-  const minBalance = 21;
+  // 최소 0점 (7×0), 최대 70점 (7×10) → 0~100으로 정규화
+  const minBalance = 0;
   const maxBalance = 70;
   const balanceScore = clamp(
     Math.round(((rawBalanceScore - minBalance) / (maxBalance - minBalance)) * 100),
