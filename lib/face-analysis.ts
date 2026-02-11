@@ -800,9 +800,10 @@ export function analyzeFace(
 
   // 점수 분포 개선: facescore에 따라 0~100점 범위로 분포
   // facescore가 높을수록 좋은 관상 → 높은 점수
-  // 부위별 가중치 적용으로 범위 조정 (평균 중요도 ~1.2)
-  const minFacescore = 100;
-  const maxFacescore = 400;
+  // 부위별 가중치 적용 시 실제 최대 facescore: ~366
+  // 실제 최소 facescore: ~120 (모든 레벨 1~2)
+  const minFacescore = 120;
+  const maxFacescore = 360;
   const scoreRange = maxFacescore - minFacescore;
 
   // 선형 매핑: facescore를 0~100점으로 변환
