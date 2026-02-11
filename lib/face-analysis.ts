@@ -154,6 +154,12 @@ export interface FaceAnalysisResult {
     // 회전 보정 팩터
     rotationCompHorizontal: number; // 수평 보정 팩터 (좌우 회전)
     rotationCompVertical: number;   // 수직 보정 팩터 (상하 회전)
+    // 균형 점수 관련
+    balanceScore: number;           // 균형 점수 (0~100)
+    idealCount: number;             // 이상적(level 3) 부위 개수
+    extremeCount: number;           // 극단값(level 1 또는 5) 부위 개수
+    variance: number;               // 레벨 분산
+    featureLevels: number[];        // 각 부위별 레벨 [눈꼬리, 눈두덩이, 코, 인중, 입, 턱, 눈크기]
   };
 }
 
@@ -816,6 +822,38 @@ export function analyzeFace(
   // draw.py 호환: 상위 X% 계산 (face_color)
   const faceColor = (150 - (facescore - 172)) / 149 * 100;
 
+  // === 균형 점수 계산 ===
+  // 관상학에서 균형 잡힌 얼굴이 가장 좋은 얼굴
+  const levels = [eyeAngleLevel, eyebrowLevel, noseLevel, philtrumLevel, mouthLevel, jawLevel, eyeSizeLevel];
+
+  // 눈두덩이 예외 처리: 넓은 건(level > 3) 좋으므로 분산 계산 시 level 3으로 취급
+  // 단, 좁은 건(level < 3) 그대로 반영
+  const levelsForBalance = levels.map((level, idx) => {
+    // eyebrowLevel은 index 1
+    if (idx === 1 && level > 3) return 3; // 넓은 눈두덩이는 이상적으로 취급
+    return level;
+  });
+
+  // 1. 이상적(level 3) 개수 - 균형의 핵심
+  const idealCount = levelsForBalance.filter(l => l === 3).length;
+
+  // 2. 극단값(level 1 또는 5) 개수 - 불균형 요소
+  const extremeCount = levelsForBalance.filter(l => l === 1 || l === 5).length;
+
+  // 3. 분산 계산 - 낮을수록 균형
+  const avgLevel = levelsForBalance.reduce((a, b) => a + b, 0) / levelsForBalance.length;
+  const variance = levelsForBalance.reduce((a, l) => a + Math.pow(l - avgLevel, 2), 0) / levelsForBalance.length;
+
+  // 균형 점수: 0~100 범위
+  // - 이상적 많으면 +, 극단값 많으면 -, 분산 높으면 -
+  // 최대: 7개 이상적 = 30 + 70 = 100점
+  // 기본 30점 + 이상적 보너스 - 극단값 페널티 - 분산 페널티
+  const balanceScore = clamp(
+    Math.round(30 + (idealCount * 10) - (extremeCount * 8) - (variance * 5)),
+    0,
+    100
+  );
+
   // === 카테고리 점수 정규화 ===
   // 각 카테고리 raw 점수를 0~100 범위로 변환
   // 실제 raw 점수 분포에 맞춰 avgVal, spread 설정
@@ -839,12 +877,12 @@ export function analyzeFace(
   r3 = normalizeCategory(r3, 75, 20);
   r4 = normalizeCategory(r4, 50, 15);
 
-  // 최종 점수: facescore 기반 점수와 카테고리 평균의 가중 조합
-  // 카테고리 점수와 전체 점수가 일관성 있게 나오도록 함
+  // 최종 점수: facescore + 카테고리 + 균형의 조합
+  // 균형 잡힌 얼굴이 높은 점수를 받도록 설계
   const categoryAvg = (r1 + r2 + r3 + r4) / 4;
-  // facescore 40%, 카테고리 평균 60% 조합 (0~100 범위)
+  // facescore 25% + 카테고리 평균 35% + 균형 점수 40% (균형이 가장 중요)
   const normalizedScore = clamp(
-    Math.round(facescoreNormalized * 0.4 + categoryAvg * 0.6),
+    Math.round(facescoreNormalized * 0.25 + categoryAvg * 0.35 + balanceScore * 0.4),
     0,
     100
   );
@@ -1144,6 +1182,12 @@ export function analyzeFace(
       // 회전 보정 팩터
       rotationCompHorizontal: rotationComp.horizontal,
       rotationCompVertical: rotationComp.vertical,
+      // 균형 점수 관련
+      balanceScore,
+      idealCount,
+      extremeCount,
+      variance,
+      featureLevels: levels, // [눈꼬리, 눈두덩이, 코, 인중, 입, 턱, 눈크기]
     },
   };
 }
