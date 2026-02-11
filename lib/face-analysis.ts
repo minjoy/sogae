@@ -156,6 +156,8 @@ export interface FaceAnalysisResult {
     rotationCompVertical: number;   // 수직 보정 팩터 (상하 회전)
     // 균형 점수 관련
     balanceScore: number;           // 균형 점수 (0~100)
+    rawBalanceScore: number;        // 원시 균형 점수 (21~70)
+    featureScores: number[];        // 각 부위별 점수 [눈꼬리, 눈두덩이, 코, 인중, 입, 턱, 눈크기]
     idealCount: number;             // 이상적(level 3) 부위 개수
     extremeCount: number;           // 극단값(level 1 또는 5) 부위 개수
     variance: number;               // 레벨 분산
@@ -824,35 +826,38 @@ export function analyzeFace(
 
   // === 균형 점수 계산 ===
   // 관상학에서 균형 잡힌 얼굴이 가장 좋은 얼굴
+  // 7개 부위 × 레벨 기반 점수 (직관적 계산)
   const levels = [eyeAngleLevel, eyebrowLevel, noseLevel, philtrumLevel, mouthLevel, jawLevel, eyeSizeLevel];
 
-  // 눈두덩이 예외 처리: 넓은 건(level > 3) 좋으므로 분산 계산 시 level 3으로 취급
-  // 단, 좁은 건(level < 3) 그대로 반영
-  const levelsForBalance = levels.map((level, idx) => {
-    // eyebrowLevel은 index 1
-    if (idx === 1 && level > 3) return 3; // 넓은 눈두덩이는 이상적으로 취급
-    return level;
-  });
+  // 레벨별 점수 계산 함수
+  // level 3 (이상적) = 10점, level 2,4 (양호) = 7점, level 1,5 (극단) = 3점
+  const getLevelScore = (level: number, isEyebrow: boolean = false): number => {
+    // 눈두덩이 예외: 넓은 건(level 4, 5) 좋으므로 10점
+    if (isEyebrow && level >= 4) return 10;
 
-  // 1. 이상적(level 3) 개수 - 균형의 핵심
-  const idealCount = levelsForBalance.filter(l => l === 3).length;
+    if (level === 3) return 10;           // 이상적
+    if (level === 2 || level === 4) return 7;  // 양호
+    return 3;                              // 극단 (level 1 or 5)
+  };
 
-  // 2. 극단값(level 1 또는 5) 개수 - 불균형 요소
-  const extremeCount = levelsForBalance.filter(l => l === 1 || l === 5).length;
+  // 각 부위별 점수 계산
+  const featureScores = levels.map((level, idx) => getLevelScore(level, idx === 1));
+  const rawBalanceScore = featureScores.reduce((a, b) => a + b, 0);
 
-  // 3. 분산 계산 - 낮을수록 균형
-  const avgLevel = levelsForBalance.reduce((a, b) => a + b, 0) / levelsForBalance.length;
-  const variance = levelsForBalance.reduce((a, l) => a + Math.pow(l - avgLevel, 2), 0) / levelsForBalance.length;
-
-  // 균형 점수: 0~100 범위
-  // - 이상적 많으면 +, 극단값 많으면 -, 분산 높으면 -
-  // 최대: 7개 이상적 = 30 + 70 = 100점
-  // 기본 30점 + 이상적 보너스 - 극단값 페널티 - 분산 페널티
+  // 최소 21점 (7×3), 최대 70점 (7×10) → 0~100으로 정규화
+  const minBalance = 21;
+  const maxBalance = 70;
   const balanceScore = clamp(
-    Math.round(30 + (idealCount * 10) - (extremeCount * 8) - (variance * 5)),
+    Math.round(((rawBalanceScore - minBalance) / (maxBalance - minBalance)) * 100),
     0,
     100
   );
+
+  // 디버그용 값들
+  const idealCount = levels.filter(l => l === 3).length;
+  const extremeCount = levels.filter(l => l === 1 || l === 5).length;
+  const avgLevel = levels.reduce((a, b) => a + b, 0) / levels.length;
+  const variance = levels.reduce((a, l) => a + Math.pow(l - avgLevel, 2), 0) / levels.length;
 
   // === 카테고리 점수 정규화 ===
   // 각 카테고리 raw 점수를 0~100 범위로 변환
@@ -1184,6 +1189,8 @@ export function analyzeFace(
       rotationCompVertical: rotationComp.vertical,
       // 균형 점수 관련
       balanceScore,
+      rawBalanceScore,
+      featureScores, // 각 부위별 점수 (3, 7, 10)
       idealCount,
       extremeCount,
       variance,
