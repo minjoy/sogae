@@ -1,125 +1,150 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Input from '@/components/Input';
-import Button from '@/components/Button';
+import { useEffect, useState } from 'react';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+  // 에러 메시지 처리
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      switch (errorParam) {
+        case 'OAuthCallback':
+          setError('카카오 로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+          break;
+        case 'AccessDenied':
+          setError('로그인이 거부되었습니다.');
+          break;
+        default:
+          setError('로그인 중 오류가 발생했습니다.');
+      }
     }
-  };
+  }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.email || !formData.password) {
-      setErrors({ general: '이메일과 비밀번호를 모두 입력해주세요' });
-      return;
+  // 이미 로그인된 경우 리다이렉트
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      if (!session.user.isOnboarded) {
+        router.push('/onboarding');
+      } else {
+        router.push('/');
+      }
     }
+  }, [session, status, router]);
 
+  const handleKakaoLogin = async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      await signIn('kakao', {
+        callbackUrl: '/onboarding',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setErrors({ general: data.error || '로그인에 실패했습니다' });
-        return;
-      }
-
-      // 토큰 저장
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      // 비회원 테스트 데이터 삭제
-      localStorage.removeItem('guestResults');
-
-      // 메인 페이지로 이동
-      router.push('/');
-    } catch (error) {
-      console.error('Login error:', error);
-      setErrors({ general: '로그인 중 오류가 발생했습니다' });
-    } finally {
+    } catch (err) {
+      console.error('Kakao login error:', err);
+      setError('카카오 로그인 중 오류가 발생했습니다.');
       setIsLoading(false);
     }
   };
 
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto" />
+          <p className="mt-4 text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-start justify-center px-4 pt-8 pb-4">
+    <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-white flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">로그인</h1>
-          <p className="text-gray-600">다시 만나서 반가워요</p>
+        {/* 로고 및 타이틀 */}
+        <div className="text-center mb-8">
+          <div className="text-6xl mb-4">🔮</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">마이타입</h1>
+          <p className="text-gray-600">AI 관상 분석 서비스</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="이메일"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              placeholder="example@email.com"
-            />
+        {/* 로그인 카드 */}
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          {/* 에러 메시지 */}
+          {error && (
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm mb-4">
+              {error}
+            </div>
+          )}
 
-            <Input
-              label="비밀번호"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              placeholder="비밀번호를 입력해주세요"
-            />
-
-            {errors.general && (
-              <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm">
-                {errors.general}
-              </div>
+          {/* 카카오 로그인 버튼 */}
+          <button
+            onClick={handleKakaoLogin}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-[#FEE500] hover:bg-[#FDD835] text-[#191919] font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900" />
+                <span>로그인 중...</span>
+              </>
+            ) : (
+              <>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M12 4C7.029 4 3 7.13 3 10.95C3 13.38 4.558 15.52 6.932 16.78L5.936 20.42C5.879 20.64 6.119 20.82 6.313 20.69L10.613 17.82C11.067 17.87 11.53 17.9 12 17.9C16.971 17.9 21 14.77 21 10.95C21 7.13 16.971 4 12 4Z"
+                    fill="#191919"
+                  />
+                </svg>
+                <span>카카오로 시작하기</span>
+              </>
             )}
+          </button>
 
-            <Button
-              type="submit"
-              fullWidth
-              isLoading={isLoading}
-              className="mt-6"
-            >
-              로그인
-            </Button>
-          </form>
-
+          {/* 안내 문구 */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              계정이 없으신가요?{' '}
-              <Link href="/signup" className="text-blue-600 font-semibold hover:underline">
-                회원가입
-              </Link>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              로그인 시{' '}
+              <a href="/terms" className="text-blue-500 hover:underline">
+                서비스 이용약관
+              </a>
+              {' '}및{' '}
+              <a href="/privacy" className="text-blue-500 hover:underline">
+                개인정보 처리방침
+              </a>
+              에 동의하게 됩니다.
             </p>
           </div>
+
+          {/* 성인 인증 안내 */}
+          <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
+            <p className="text-xs text-yellow-800 leading-relaxed">
+              <span className="font-semibold">⚠️ 성인 전용 서비스</span>
+              <br />
+              카카오 계정의 생년월일 정보를 통해 만 20세 이상임을 확인합니다.
+              미성년자는 서비스를 이용할 수 없습니다.
+            </p>
+          </div>
+        </div>
+
+        {/* 비회원 이용 안내 */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => router.push('/face-analysis')}
+            className="text-gray-500 hover:text-gray-700 text-sm underline"
+          >
+            로그인 없이 관상 분석 체험하기
+          </button>
         </div>
       </div>
     </div>

@@ -11,19 +11,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 사용자 테이블
+// 사용자 테이블 (카카오 로그인 기반)
 model User {
-  id              String   @id @default(uuid())
-  email           String   @unique
-  passwordHash    String   @map("password_hash")
-  nickname        String
+  id              String    @id @default(cuid())
+  kakaoId         String    @unique @map("kakao_id")
+  email           String?
+  nickname        String    @unique
+  profileImage    String?   @map("profile_image") @db.Text
+  bio             String?   @db.Text
   gender          String?
-  birthyear       Int?
-  personalityCode String?  @map("personality_code") // 성격 유형 코드 (예: SHCP)
-  isDummy         Boolean  @default(false) @map("is_dummy") // 더미 사용자 여부
-  sweetnessPoints Int      @default(0) @map("sweetness_points") // 달달함 점수
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  birthYear       String?   @map("birth_year")
+  region          String    @default("서울")
+  regionCode      String?   @map("region_code")
+  level           Int       @default(1)
+  exp             Int       @default(0)
+  personalityCode String?   @map("personality_code") // 성격 유형 코드 (예: SHCP)
+
+  // 계정 상태
+  isBanned        Boolean   @default(false) @map("is_banned")
+  bannedAt        DateTime? @map("banned_at")
+  bannedUntil     DateTime? @map("banned_until") // null이면 영구정지
+  banReason       String?   @map("ban_reason") @db.Text
+
+  // 온보딩 완료 여부
+  isOnboarded     Boolean   @default(false) @map("is_onboarded")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   // Relations
   testResults     TestResult[]
@@ -33,7 +47,20 @@ model User {
   storeReports    StoreReport[]    // 신고한 매장
 
   @@index([personalityCode])
+  @@index([kakaoId])
   @@map("users")
+}
+
+// 카카오 영구정지 테이블
+model BannedKakao {
+  id               String    @id @default(cuid())
+  kakaoId          String    @unique @map("kakao_id")
+  reason           String?   @db.Text
+  bannedAt         DateTime  @default(now()) @map("banned_at")
+  originalUserId   String?   @map("original_user_id")
+  originalNickname String?   @map("original_nickname")
+
+  @@map("banned_kakaos")
 }
 
 // 테스트 결과 테이블

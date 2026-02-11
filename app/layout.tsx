@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mytype.co.kr";
 
@@ -113,11 +114,13 @@ export default function RootLayout({
             gtag('config', 'G-7LK6RWFPHP');
           `}
         </Script>
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider>
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
