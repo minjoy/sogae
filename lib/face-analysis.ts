@@ -888,17 +888,17 @@ export function analyzeFace(
   // facescore 25% + 카테고리 평균 35% + 균형 점수 40% (균형이 가장 중요)
   const rawFinalScore = facescoreNormalized * 0.25 + categoryAvg * 0.35 + balanceScore * 0.4;
 
-  // 50점 이상 구간에 가중치 적용 (좋은 관상은 더 높게)
-  // 50점 미만: 그대로 유지
-  // 50점 이상: 비례적으로 부스트 (50→50, 75→85, 100→100)
+  // 35점 이상 구간에 가중치 적용 (전체적으로 점수 상향)
+  // 35점 미만: 그대로 유지 (낮은 점수는 낮게)
+  // 35점 이상: 적극적으로 부스트
   let adjustedScore: number;
-  if (rawFinalScore < 50) {
+  if (rawFinalScore < 35) {
     adjustedScore = rawFinalScore;
   } else {
-    // 50~100 구간을 확장: (score-50)/50의 제곱근 사용
-    const excess = (rawFinalScore - 50) / 50; // 0~1 범위
-    const boosted = Math.pow(excess, 0.6) * 50; // 0.6 제곱 = 상위 점수 부스트
-    adjustedScore = 50 + boosted;
+    // 35~100 구간을 확장: 제곱근으로 부스트
+    const excess = (rawFinalScore - 35) / 65; // 0~1 범위
+    const boosted = Math.pow(excess, 0.5) * 65; // 0.5 제곱 = 더 강한 부스트
+    adjustedScore = 35 + boosted;
   }
 
   const normalizedScore = clamp(Math.round(adjustedScore), 0, 100);
