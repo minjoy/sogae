@@ -131,7 +131,7 @@ function generateDetailedAdvice(
   if (jawLabel.includes('튼튼')) {
     strengths.push('튼튼한 턱은 끈기와 추진력이 강한 상이에요');
     compatible.push('턱이 갸름하고 섬세한 인상의 사람');
-    incompatible.push('턱이 각진 사람끼리는 고집 싸움이 있을 수 있어요');
+    incompatible.push('하관이 튼튼한 사람끼리는 고집 싸움이 있을 수 있어요');
   } else if (jawLabel.includes('좁') || jawLabel.includes('갸름')) {
     strengths.push('갸름한 턱은 섬세하고 예민한 감각의 상이에요');
     compatible.push('턱이 튼튼하고 듬직한 인상의 사람');
