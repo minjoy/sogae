@@ -895,9 +895,9 @@ export function analyzeFace(
   if (rawFinalScore < 40) {
     adjustedScore = rawFinalScore;
   } else {
-    // 40~100 구간을 확장: 0.4 제곱으로 강력 부스트
+    // 40~100 구간을 확장: 0.35 제곱으로 더 강력한 부스트
     const excess = (rawFinalScore - 40) / 60; // 0~1 범위
-    const boosted = Math.pow(excess, 0.4) * 60; // 0.4 제곱 = 확실한 부스트
+    const boosted = Math.pow(excess, 0.35) * 60; // 0.35 제곱 = 더 강력한 부스트
     adjustedScore = 40 + boosted;
   }
 
