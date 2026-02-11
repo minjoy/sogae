@@ -817,22 +817,26 @@ export function analyzeFace(
 
   // === 카테고리 점수 정규화 ===
   // 각 카테고리 raw 점수를 0~100 범위로 변환
-  // 기준점 45, 편차 크게 반영하여 변별력 확보
+  // 실제 raw 점수 분포에 맞춰 avgVal, spread 설정
   const normalizeCategory = (val: number, avgVal: number, spread: number): number => {
     const deviation = (val - avgVal) / spread;
-    // 기준점 45, 편차 50배 반영 (0~100 전체 범위 활용)
-    const normalized = 45 + deviation * 50;
+    // 기준점 50, 편차 반영 (0~100 범위)
+    const normalized = 50 + deviation * 25;
     return clamp(Math.round(normalized), 0, 100);
   };
 
   // r1~r4 raw 값 저장 (디버그용)
   const rawR1 = r1, rawR2 = r2, rawR3 = r3, rawR4 = r4;
 
-  // 각 카테고리 정규화 - avgVal 상향으로 점수 기준 엄격하게
-  r1 = normalizeCategory(r1, 25, 12);  // 기준 상향, spread 축소
-  r2 = normalizeCategory(r2, 50, 18);
-  r3 = normalizeCategory(r3, 40, 16);
-  r4 = normalizeCategory(r4, 32, 12);
+  // 각 카테고리 정규화 - 실제 raw 점수 분포 기반
+  // r1: 운명/권력 (raw 범위 ~13~65, 평균 ~40)
+  // r2: 정신/성인/사랑 (raw 범위 ~50~160, 평균 ~100)
+  // r3: 일/사교/돈 (raw 범위 ~45~107, 평균 ~75)
+  // r4: 친절/책임/진실 (raw 범위 ~25~77, 평균 ~50)
+  r1 = normalizeCategory(r1, 40, 15);
+  r2 = normalizeCategory(r2, 100, 35);
+  r3 = normalizeCategory(r3, 75, 20);
+  r4 = normalizeCategory(r4, 50, 15);
 
   // 최종 점수: facescore 기반 점수와 카테고리 평균의 가중 조합
   // 카테고리 점수와 전체 점수가 일관성 있게 나오도록 함
