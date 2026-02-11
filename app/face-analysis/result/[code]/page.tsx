@@ -1163,10 +1163,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   }, [data]);
 
   useEffect(() => {
-    if (data?.imageData && data?.landmarks) {
+    // 애니메이션이 끝난 후 캔버스가 마운트되면 다시 그리기
+    if (!showRevealAnimation && data?.imageData && data?.landmarks) {
       drawFaceMesh();
     }
-  }, [data, drawFaceMesh]);
+  }, [data, drawFaceMesh, showRevealAnimation]);
 
   // 공유 카드 생성
   const generateShareCard = useCallback(async () => {
