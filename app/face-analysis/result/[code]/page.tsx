@@ -1998,40 +1998,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           );
         })()}
 
-        {/* 광고 영역 - 서비스 후원 */}
-        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 backdrop-blur rounded-2xl p-5 mb-6 border border-amber-500/20">
-          <div className="text-center mb-4">
-            <p className="text-amber-300 text-sm font-medium mb-1">
-              🙏 관상 복비는 광고 한 번으로 충분해요
-            </p>
-            <p className="text-white/50 text-xs">
-              광고 클릭이 더 좋은 관상 서비스를 만드는 데 큰 힘이 됩니다
-            </p>
-          </div>
-
-          {/* 구글 애드센스 영역 */}
-          <div className="bg-black/20 rounded-xl p-4 mb-3 min-h-[100px] flex items-center justify-center">
-            {/* Google AdSense 코드가 들어갈 자리 */}
-            <div className="text-white/30 text-xs text-center">
-              <p>광고 영역</p>
-              <p className="text-[10px] mt-1">(Google AdSense)</p>
-            </div>
-          </div>
-
-          {/* 쿠팡 파트너스 영역 */}
-          <div className="bg-black/20 rounded-xl p-4 min-h-[80px] flex items-center justify-center">
-            {/* 쿠팡 파트너스 배너 코드가 들어갈 자리 */}
-            <div className="text-white/30 text-xs text-center">
-              <p>광고 영역</p>
-              <p className="text-[10px] mt-1">(쿠팡 파트너스)</p>
-            </div>
-          </div>
-
-          <p className="text-center text-white/40 text-[10px] mt-3">
-            여러분의 클릭 하나가 무료 관상 서비스를 유지하는 원동력입니다 💪
-          </p>
-        </div>
-
         {/* 상세 분석 (접을 수 있음) */}
         <div className="bg-white/5 backdrop-blur rounded-2xl overflow-hidden mb-6 border border-white/10">
           <button
@@ -2135,6 +2101,40 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </button>
           <p className="text-white/40 text-xs mt-2 text-center">
             이 링크를 공유하면 누구나 결과를 볼 수 있어요
+          </p>
+        </div>
+
+        {/* 광고 영역 - 서비스 후원 */}
+        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 backdrop-blur rounded-2xl p-5 mb-6 border border-amber-500/20">
+          <div className="text-center mb-4">
+            <p className="text-amber-300 text-sm font-medium mb-1">
+              🙏 관상 복비는 광고 한 번으로 충분해요
+            </p>
+            <p className="text-white/50 text-xs">
+              광고 클릭이 더 좋은 관상 서비스를 만드는 데 큰 힘이 됩니다
+            </p>
+          </div>
+
+          {/* 구글 애드센스 영역 */}
+          <div className="bg-black/20 rounded-xl p-4 mb-3 min-h-[100px] flex items-center justify-center">
+            {/* Google AdSense 코드가 들어갈 자리 */}
+            <div className="text-white/30 text-xs text-center">
+              <p>광고 영역</p>
+              <p className="text-[10px] mt-1">(Google AdSense)</p>
+            </div>
+          </div>
+
+          {/* 쿠팡 파트너스 영역 */}
+          <div className="bg-black/20 rounded-xl p-4 min-h-[80px] flex items-center justify-center">
+            {/* 쿠팡 파트너스 배너 코드가 들어갈 자리 */}
+            <div className="text-white/30 text-xs text-center">
+              <p>광고 영역</p>
+              <p className="text-[10px] mt-1">(쿠팡 파트너스)</p>
+            </div>
+          </div>
+
+          <p className="text-center text-white/40 text-[10px] mt-3">
+            여러분의 클릭 하나가 무료 관상 서비스를 유지하는 원동력입니다 💪
           </p>
         </div>
 
