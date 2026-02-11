@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 
 // 전체 관상 해석 타입
@@ -36,6 +36,126 @@ interface OverallFaceReading {
   };
   advice: string[];
   oneLiner: string;
+}
+
+// 분석 결과로부터 조언/주의사항/궁합 생성
+function generateDetailedAdvice(
+  score: number,
+  categories: { r1: number; r2: number; r3: number; r4: number },
+  analysis: Record<string, unknown>
+): {
+  strengths: string[];
+  cautions: string[];
+  compatible: string[];
+  incompatible: string[];
+} {
+  const getLabel = (key: string): string => {
+    const val = analysis[key];
+    if (typeof val === 'object' && val !== null && 'label' in val) {
+      return (val as { label: string }).label;
+    }
+    return '';
+  };
+
+  const strengths: string[] = [];
+  const cautions: string[] = [];
+  const compatible: string[] = [];
+  const incompatible: string[] = [];
+
+  // 눈꼬리 분석
+  const eyeLabel = getLabel('eyeAngle');
+  if (eyeLabel.includes('올라감')) {
+    strengths.push('강한 의지력과 리더십을 가지고 있어요');
+    cautions.push('지나친 고집이 대인관계를 해칠 수 있으니 융통성을 가져보세요');
+    compatible.push('차분하고 수용적인 성격의 사람');
+    incompatible.push('같이 고집이 센 사람과는 충돌이 있을 수 있어요');
+  } else if (eyeLabel.includes('내려감')) {
+    strengths.push('부드러운 인상으로 사람들에게 호감을 얻기 쉬워요');
+    cautions.push('너무 순한 인상으로 가끔 무시당할 수 있으니 자기 주장을 명확히 해보세요');
+    compatible.push('리더십 있고 결단력 있는 사람');
+    incompatible.push('우유부단한 사람과는 답답함을 느낄 수 있어요');
+  } else {
+    strengths.push('균형 잡힌 눈매로 신뢰감을 주는 인상이에요');
+  }
+
+  // 눈두덩이 분석
+  const eyebrowLabel = getLabel('eyebrowDistance');
+  if (eyebrowLabel.includes('넓')) {
+    strengths.push('복을 받을 운이 있고, 조상의 덕이 있는 상이에요');
+    compatible.push('함께 있으면 운이 좋아지는 복 많은 사람');
+  } else if (eyebrowLabel.includes('좁')) {
+    cautions.push('스트레스를 받기 쉬운 상이니 휴식을 자주 취하세요');
+  }
+
+  // 코 분석
+  const noseLabel = getLabel('noseLength');
+  if (noseLabel.includes('긴')) {
+    strengths.push('자존심이 강하고 성취욕이 높아 큰 일을 할 수 있어요');
+    cautions.push('남의 말을 무시하는 경향이 있으니 경청하는 습관을 들이세요');
+  } else if (noseLabel.includes('짧')) {
+    strengths.push('사교성이 좋고 친근한 인상이에요');
+    cautions.push('때로는 단호함이 필요한 상황이 있으니 연습해보세요');
+  }
+
+  // 입 분석
+  const mouthLabel = getLabel('mouthWidth');
+  if (mouthLabel.includes('큰')) {
+    strengths.push('표현력이 풍부하고 설득력 있는 말솜씨를 가졌어요');
+    compatible.push('말을 잘 들어주는 경청형 사람');
+  } else if (mouthLabel.includes('작')) {
+    strengths.push('신중하고 깊이 있는 대화를 나눌 수 있어요');
+    cautions.push('속마음을 표현하는 것을 연습해보세요');
+  }
+
+  // 턱 분석
+  const jawLabel = getLabel('jawWidth');
+  if (jawLabel.includes('튼튼')) {
+    strengths.push('끈기와 인내심이 강해 어떤 일이든 끝까지 해내요');
+    cautions.push('너무 고집스러워 보일 수 있으니 유연함도 필요해요');
+    compatible.push('추진력 있고 활동적인 사람');
+  } else if (jawLabel.includes('좁')) {
+    strengths.push('섬세하고 예민한 감각을 가지고 있어요');
+    cautions.push('체력 관리에 신경 쓰세요');
+  }
+
+  // 카테고리 점수 기반 조언
+  if (categories.r1 >= 70) {
+    strengths.push('리더십과 권위가 느껴지는 상이에요');
+  }
+  if (categories.r2 >= 70) {
+    strengths.push('감성적이고 사랑을 주고받는 능력이 뛰어나요');
+    compatible.push('감성을 공유할 수 있는 예술적인 사람');
+  }
+  if (categories.r3 >= 70) {
+    strengths.push('재물운과 사업운이 좋은 상이에요');
+  }
+  if (categories.r4 >= 70) {
+    strengths.push('성실하고 책임감 있어 신뢰를 얻기 쉬워요');
+  }
+
+  // 전체 점수 기반
+  if (score >= 80) {
+    strengths.push('전체적으로 균형 잡힌 복 많은 관상이에요');
+    compatible.push('긍정적인 에너지를 가진 밝은 사람');
+  } else if (score < 50) {
+    cautions.push('자기 관리와 긍정적인 마인드가 운을 바꿀 수 있어요');
+  }
+
+  // 기본값 추가
+  if (strengths.length === 0) {
+    strengths.push('자신만의 독특한 매력을 가지고 있어요');
+  }
+  if (cautions.length === 0) {
+    cautions.push('꾸준한 자기 관리로 더 좋은 인상을 만들 수 있어요');
+  }
+  if (compatible.length === 0) {
+    compatible.push('자신과 보완이 되는 성격의 사람');
+  }
+  if (incompatible.length === 0) {
+    incompatible.push('서로의 단점을 자극하는 사람과는 거리를 두세요');
+  }
+
+  return { strengths, cautions, compatible, incompatible };
 }
 
 interface FaceAnalysisData {
@@ -809,8 +929,12 @@ function RadarChart({ categories }: { categories: { r1: number; r2: number; r3: 
 export default function FaceAnalysisResultPage({ params }: { params: Promise<{ code: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shareCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // 디버그 모드는 URL 파라미터로만 활성화 (?debug=true)
+  const isDebugMode = searchParams.get('debug') === 'true';
 
   const [data, setData] = useState<FaceAnalysisData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -821,6 +945,8 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [memo, setMemo] = useState('');
+  const [showRevealAnimation, setShowRevealAnimation] = useState(true);
+  const [revealStep, setRevealStep] = useState(0);
 
   // 데이터 로드
   useEffect(() => {
@@ -843,6 +969,20 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           json.data.analysis
         );
         setOneLiner(liner);
+
+        // 점수 공개 애니메이션 시작
+        setShowRevealAnimation(true);
+        setRevealStep(0);
+
+        // 단계별 애니메이션 (점수가 높을수록 더 길고 화려하게)
+        const score = json.data.score;
+        const baseDelay = score >= 80 ? 400 : score >= 60 ? 300 : 200;
+
+        setTimeout(() => setRevealStep(1), baseDelay); // 얼굴 표시
+        setTimeout(() => setRevealStep(2), baseDelay * 2); // 점수 카운트 시작
+        setTimeout(() => setRevealStep(3), baseDelay * 5); // 점수 완료 + 효과
+        setTimeout(() => setShowRevealAnimation(false), baseDelay * 7); // 애니메이션 종료
+
       } catch (err) {
         console.error('Fetch error:', err);
         setError('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -1399,6 +1539,140 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
   const scoreGrade = getScoreGrade(data.score);
 
+  // 점수 공개 애니메이션 (높은 점수일수록 화려함)
+  if (showRevealAnimation && revealStep < 3) {
+    const isHighScore = data.score >= 80;
+    const isMidScore = data.score >= 60;
+
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center z-50 overflow-hidden">
+        {/* 배경 파티클 (높은 점수만) */}
+        {isHighScore && (
+          <div className="absolute inset-0 overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-2 h-2 rounded-full animate-float"
+                style={{
+                  backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#FF69B4'][i % 4],
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  animationDuration: `${3 + Math.random() * 2}s`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* 중앙 내용 */}
+        <div className="relative text-center px-8">
+          {/* 글로우 배경 */}
+          <div
+            className={`absolute inset-0 rounded-full blur-3xl transition-all duration-1000 ${
+              revealStep >= 1 ? 'opacity-30 scale-100' : 'opacity-0 scale-50'
+            }`}
+            style={{ backgroundColor: scoreGrade.color }}
+          />
+
+          {/* 얼굴 이미지 (단계 1) */}
+          {revealStep >= 1 && data.imageData && (
+            <div className={`relative mb-8 transition-all duration-700 ${revealStep >= 1 ? 'opacity-100 scale-100' : 'opacity-0 scale-75'}`}>
+              <div
+                className="w-48 h-48 mx-auto rounded-full overflow-hidden border-4 shadow-2xl"
+                style={{ borderColor: scoreGrade.color, boxShadow: `0 0 40px ${scoreGrade.color}50` }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={data.imageData} alt="분석된 얼굴" className="w-full h-full object-cover" />
+              </div>
+
+              {/* 스캔 라인 효과 */}
+              {revealStep < 2 && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-48 h-48 rounded-full border-2 border-white/30 animate-ping" />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 점수 표시 (단계 2) */}
+          {revealStep >= 2 && (
+            <div className={`transition-all duration-500 ${revealStep >= 2 ? 'opacity-100' : 'opacity-0'}`}>
+              <p className="text-white/70 text-lg mb-2">당신의 얼굴력은</p>
+              <div className="relative">
+                <span
+                  className={`text-8xl font-black animate-countUp ${isHighScore ? 'animate-pulse' : ''}`}
+                  style={{
+                    color: scoreGrade.color,
+                    textShadow: isHighScore ? `0 0 30px ${scoreGrade.color}, 0 0 60px ${scoreGrade.color}` : `0 0 20px ${scoreGrade.color}50`
+                  }}
+                >
+                  {data.score}
+                </span>
+                <span className="text-white/70 text-2xl ml-2">점</span>
+
+                {/* 높은 점수 특수 효과 */}
+                {isHighScore && (
+                  <>
+                    <div className="absolute -top-4 -right-4 text-4xl animate-bounce">✨</div>
+                    <div className="absolute -bottom-2 -left-4 text-3xl animate-bounce" style={{ animationDelay: '0.2s' }}>🌟</div>
+                  </>
+                )}
+              </div>
+
+              {/* 티어 배지 */}
+              <div className="mt-4">
+                <span
+                  className="inline-block px-6 py-2 rounded-full text-lg font-bold animate-fadeIn"
+                  style={{
+                    backgroundColor: `${scoreGrade.color}30`,
+                    color: scoreGrade.color,
+                    border: `2px solid ${scoreGrade.color}`
+                  }}
+                >
+                  {data.score >= 85 ? '✨ LEGENDARY' :
+                    data.score >= 70 ? '🔥 EPIC' :
+                      data.score >= 55 ? '💎 RARE' :
+                        data.score >= 40 ? '🌿 UNCOMMON' : '⚪ COMMON'}
+                </span>
+              </div>
+
+              {/* 로딩 표시 */}
+              <p className="text-white/50 text-sm mt-6 animate-pulse">
+                상세 결과 불러오는 중...
+              </p>
+            </div>
+          )}
+        </div>
+
+        <style jsx>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+          }
+          @keyframes countUp {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-float {
+            animation: float 3s ease-in-out infinite;
+          }
+          .animate-countUp {
+            animation: countUp 0.8s ease-out forwards;
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800">
       <div className="container mx-auto px-4 py-6 max-w-lg">
@@ -1446,8 +1720,10 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           )}
         </div>
 
-        {/* 디버그 정보 섹션 - 한줄평 위에 표시 */}
-        <DebugPanel analysis={data.analysis} memo={memo} setMemo={setMemo} shareCode={data.shareCode} />
+        {/* 디버그 정보 섹션 - 관리자 전용 (?debug=true) */}
+        {isDebugMode && (
+          <DebugPanel analysis={data.analysis} memo={memo} setMemo={setMemo} shareCode={data.shareCode} />
+        )}
 
         {/* 한줄평 카드 */}
         <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">
@@ -1623,6 +1899,135 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             )}
           </div>
         )}
+
+        {/* 조언 및 궁합 정보 */}
+        {(() => {
+          const advice = generateDetailedAdvice(data.score, data.categories, data.analysis);
+          return (
+            <div className="bg-white/5 backdrop-blur rounded-2xl overflow-hidden mb-6 border border-white/10">
+              <button
+                onClick={() => setExpandedItem(expandedItem === 'advice' ? null : 'advice')}
+                className="w-full px-6 py-4 flex items-center justify-between text-white"
+              >
+                <span className="font-bold flex items-center gap-2">
+                  <span>💡</span> 조언 및 인간관계 궁합
+                </span>
+                <span className={`transform transition-transform ${expandedItem === 'advice' ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+
+              {expandedItem === 'advice' && (
+                <div className="px-6 pb-6 space-y-4">
+                  {/* 장점 */}
+                  <div className="bg-green-500/10 rounded-xl p-4 border border-green-500/20">
+                    <div className="text-green-400 text-sm font-medium mb-2 flex items-center gap-2">
+                      <span>✨</span> 당신의 강점
+                    </div>
+                    <ul className="space-y-2">
+                      {advice.strengths.map((item, i) => (
+                        <li key={i} className="text-white/80 text-sm flex items-start gap-2">
+                          <span className="text-green-400 mt-0.5">•</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* 주의사항 */}
+                  <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20">
+                    <div className="text-amber-400 text-sm font-medium mb-2 flex items-center gap-2">
+                      <span>⚠️</span> 이것만 주의하세요
+                    </div>
+                    <ul className="space-y-2">
+                      {advice.cautions.map((item, i) => (
+                        <li key={i} className="text-white/80 text-sm flex items-start gap-2">
+                          <span className="text-amber-400 mt-0.5">•</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* 잘 맞는 사람 */}
+                  <div className="bg-pink-500/10 rounded-xl p-4 border border-pink-500/20">
+                    <div className="text-pink-400 text-sm font-medium mb-2 flex items-center gap-2">
+                      <span>💕</span> 잘 맞는 사람
+                    </div>
+                    <ul className="space-y-2">
+                      {advice.compatible.map((item, i) => (
+                        <li key={i} className="text-white/80 text-sm flex items-start gap-2">
+                          <span className="text-pink-400 mt-0.5">•</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* 조심해야 할 사람 */}
+                  <div className="bg-red-500/10 rounded-xl p-4 border border-red-500/20">
+                    <div className="text-red-400 text-sm font-medium mb-2 flex items-center gap-2">
+                      <span>🚫</span> 조심해야 할 관계
+                    </div>
+                    <ul className="space-y-2">
+                      {advice.incompatible.map((item, i) => (
+                        <li key={i} className="text-white/80 text-sm flex items-start gap-2">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* 두 사람 궁합 분석 - 유료 기능 티저 */}
+        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur rounded-2xl p-6 mb-6 border border-purple-500/30">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="text-4xl">👫</div>
+            <div>
+              <h3 className="text-white font-bold text-lg">두 사람 궁합 분석</h3>
+              <p className="text-white/60 text-sm">두 얼굴을 비교해서 정확한 궁합을 알아보세요</p>
+            </div>
+          </div>
+          <div className="bg-black/20 rounded-xl p-4 mb-4">
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center text-2xl">
+                  👤
+                </div>
+                <p className="text-white/60 text-xs mt-2">나</p>
+              </div>
+              <div className="text-center text-pink-400 text-2xl">💗</div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center text-2xl">
+                  👤
+                </div>
+                <p className="text-white/60 text-xs mt-2">상대방</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2 text-sm text-white/70 mb-4">
+            <p className="flex items-center gap-2">
+              <span className="text-purple-400">✓</span> 관상학 기반 정밀 궁합 분석
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="text-purple-400">✓</span> 연애/결혼/비즈니스 궁합 점수
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="text-purple-400">✓</span> 상대와의 주의점 및 조언 제공
+            </p>
+          </div>
+          <button
+            className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+            onClick={() => alert('곧 출시됩니다! 기대해주세요 💕')}
+          >
+            ✨ 궁합 분석하기 (준비중)
+          </button>
+        </div>
 
         {/* 공유 카드 생성 */}
         <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">

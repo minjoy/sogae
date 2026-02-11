@@ -126,6 +126,20 @@ export default function FaceAnalysisPage() {
   const [faceMeshLoaded, setFaceMeshLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [landmarks, setLandmarks] = useState<FaceLandmark[] | null>(null);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState<number>(0);
+  const [showAnalysisAnimation, setShowAnalysisAnimation] = useState(false);
+
+  // 분석 단계 정보
+  const analysisSteps = [
+    { icon: '👁️', label: '눈 분석 중...', detail: '눈꼬리 각도, 눈 크기 측정' },
+    { icon: '👃', label: '코 분석 중...', detail: '코 길이, 콧볼 너비 측정' },
+    { icon: '💋', label: '입 분석 중...', detail: '입 크기, 인중 길이 측정' },
+    { icon: '🏛️', label: '하관 분석 중...', detail: '턱선, 얼굴 너비 측정' },
+    { icon: '📐', label: '얼굴 비율 분석 중...', detail: '삼정 비율, 황금비율 계산' },
+    { icon: '🔮', label: '관상 해석 중...', detail: '운세, 성격 특성 분석' },
+  ];
 
   const faceMeshRef = useRef<MediaPipeFaceMesh | null>(null);
   const cameraRef = useRef<MediaPipeCamera | null>(null);
@@ -374,6 +388,15 @@ export default function FaceAnalysisPage() {
   ) => {
     setIsLoading(true);
     setError(null);
+    setShowAnalysisAnimation(true);
+    setAnalysisStep(0);
+
+    // 분석 애니메이션 시작 (5초 동안 각 단계 표시)
+    const stepDuration = 800; // 각 단계 0.8초
+    for (let i = 0; i < 6; i++) {
+      await new Promise(resolve => setTimeout(resolve, stepDuration));
+      setAnalysisStep(i + 1);
+    }
 
     try {
       // 1. 얼굴 분석 실행
@@ -528,6 +551,7 @@ export default function FaceAnalysisPage() {
       setError(`오류: ${err instanceof Error ? err.message : '서버 연결 실패'}`);
     } finally {
       setIsLoading(false);
+      setShowAnalysisAnimation(false);
     }
   }, [gender, capturedImage, router, cropFaceImage]);
 
@@ -710,22 +734,51 @@ export default function FaceAnalysisPage() {
             </div>
           </div>
 
+          {/* 개인정보 동의 */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="privacy-consent"
+                checked={privacyConsent}
+                onChange={(e) => setPrivacyConsent(e.target.checked)}
+                className="mt-1 w-5 h-5 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+              />
+              <label htmlFor="privacy-consent" className="text-sm text-gray-700 leading-relaxed">
+                <span className="font-medium text-gray-900">[필수]</span> 얼굴 분석을 위한{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowPrivacyModal(true)}
+                  className="text-amber-600 underline font-medium"
+                >
+                  개인정보 수집 및 이용
+                </button>
+                에 동의합니다.
+              </label>
+            </div>
+            <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-500 space-y-1">
+              <p>• 수집 항목: 얼굴 이미지, 성별 정보</p>
+              <p>• 이용 목적: AI 관상 분석 서비스 제공</p>
+              <p>• 보유 기간: 분석 후 7일 이내 자동 삭제</p>
+            </div>
+          </div>
+
           {/* 분석 방법 선택 */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">분석 방법 선택</h3>
             <div className="space-y-4">
               <button
                 onClick={() => setMode('camera')}
-                disabled={!faceMeshLoaded}
-                className="w-full py-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                disabled={!faceMeshLoaded || !privacyConsent}
+                className="w-full py-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-2xl block mb-1">📸</span>
                 카메라로 촬영하기
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={!faceMeshLoaded}
-                className="w-full py-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                disabled={!faceMeshLoaded || !privacyConsent}
+                className="w-full py-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-2xl block mb-1">🖼️</span>
                 사진 업로드하기
@@ -733,10 +786,15 @@ export default function FaceAnalysisPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 onChange={handleFileUpload}
                 className="hidden"
               />
+              {!privacyConsent && (
+                <p className="text-center text-sm text-amber-600">
+                  분석을 시작하려면 개인정보 수집에 동의해주세요
+                </p>
+              )}
             </div>
           </div>
 
@@ -785,6 +843,146 @@ export default function FaceAnalysisPage() {
 
         {/* 숨겨진 캔버스 */}
         <canvas ref={canvasRef} className="hidden" />
+
+        {/* 분석 애니메이션 오버레이 */}
+        {showAnalysisAnimation && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+            <div className="text-center px-8 max-w-sm">
+              {/* 얼굴 아이콘과 스캔 효과 */}
+              <div className="relative w-40 h-40 mx-auto mb-8">
+                <div className="absolute inset-0 rounded-full border-4 border-amber-500/30 animate-pulse"></div>
+                <div className="absolute inset-2 rounded-full border-2 border-amber-400/50 animate-ping"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-7xl animate-bounce">{analysisSteps[Math.min(analysisStep, 5)]?.icon || '🔮'}</span>
+                </div>
+                {/* 스캔 라인 */}
+                <div
+                  className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-scan"
+                  style={{
+                    top: `${20 + (analysisStep * 10)}%`,
+                    animation: 'scan 1s ease-in-out infinite'
+                  }}
+                ></div>
+              </div>
+
+              {/* 현재 분석 단계 */}
+              <div className="space-y-3 mb-6">
+                <h2 className="text-2xl font-bold text-amber-400">
+                  {analysisSteps[Math.min(analysisStep, 5)]?.label || '분석 완료!'}
+                </h2>
+                <p className="text-white/70 text-sm">
+                  {analysisSteps[Math.min(analysisStep, 5)]?.detail || '결과 페이지로 이동합니다...'}
+                </p>
+              </div>
+
+              {/* 진행 단계 표시 */}
+              <div className="flex justify-center gap-2 mb-6">
+                {analysisSteps.map((step, i) => (
+                  <div
+                    key={i}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      i < analysisStep
+                        ? 'bg-amber-400 scale-100'
+                        : i === analysisStep
+                          ? 'bg-amber-400 scale-125 animate-pulse'
+                          : 'bg-white/20'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* 완료된 분석 항목 */}
+              <div className="space-y-2">
+                {analysisSteps.slice(0, analysisStep).map((step, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 text-sm text-green-400 animate-fadeIn"
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                  >
+                    <span>✓</span>
+                    <span>{step.icon} {step.label.replace(' 중...', ' 완료')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <style jsx>{`
+              @keyframes scan {
+                0%, 100% { opacity: 0.3; transform: scaleX(0.8); }
+                50% { opacity: 1; transform: scaleX(1); }
+              }
+              @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-5px); }
+                to { opacity: 1; transform: translateY(0); }
+              }
+              .animate-scan {
+                animation: scan 1s ease-in-out infinite;
+              }
+              .animate-fadeIn {
+                animation: fadeIn 0.3s ease-out forwards;
+              }
+            `}</style>
+          </div>
+        )}
+
+        {/* 개인정보 처리방침 모달 */}
+        {showPrivacyModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-xl font-bold text-gray-900">개인정보 수집 및 이용 동의</h2>
+              </div>
+              <div className="p-6 overflow-y-auto max-h-[50vh] text-sm text-gray-700 space-y-4">
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">1. 수집하는 개인정보 항목</h3>
+                  <p>• 얼굴 이미지 (촬영 또는 업로드한 사진)</p>
+                  <p>• 성별 정보 (사용자 선택)</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">2. 개인정보 수집 및 이용 목적</h3>
+                  <p>• AI 기반 관상 분석 서비스 제공</p>
+                  <p>• 분석 결과 생성 및 공유 링크 제공</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">3. 개인정보 보유 및 이용 기간</h3>
+                  <p>• 얼굴 이미지: 분석 완료 후 <strong>7일 이내 자동 삭제</strong></p>
+                  <p>• 분석 결과 데이터: 공유 링크 만료 후 삭제</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">4. 개인정보 처리 위탁</h3>
+                  <p>• 얼굴 이미지는 사용자 기기에서 처리되며, 외부 서버로 전송되지 않습니다.</p>
+                  <p>• 분석 결과만 서버에 저장되어 공유 기능을 제공합니다.</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">5. 동의 거부권 및 불이익</h3>
+                  <p>• 개인정보 수집에 동의하지 않을 권리가 있습니다.</p>
+                  <p>• 다만, 동의하지 않을 경우 관상 분석 서비스를 이용할 수 없습니다.</p>
+                </div>
+                <div className="bg-amber-50 p-4 rounded-lg">
+                  <p className="text-amber-800 font-medium">⚠️ 주의사항</p>
+                  <p className="text-amber-700 mt-1">본 서비스는 재미 목적의 AI 관상 분석이며, 실제 성격이나 운세를 정확히 예측하지 않습니다. 결과는 참고용으로만 활용해주세요.</p>
+                </div>
+              </div>
+              <div className="p-6 border-t border-gray-100 flex gap-3">
+                <button
+                  onClick={() => setShowPrivacyModal(false)}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
+                >
+                  닫기
+                </button>
+                <button
+                  onClick={() => {
+                    setPrivacyConsent(true);
+                    setShowPrivacyModal(false);
+                  }}
+                  className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-all"
+                >
+                  동의합니다
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
