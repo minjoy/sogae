@@ -945,7 +945,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [memo, setMemo] = useState('');
-  const [showRevealAnimation, setShowRevealAnimation] = useState(true);
+  const [showRevealAnimation, setShowRevealAnimation] = useState(false);
   const [revealStep, setRevealStep] = useState(0);
 
   // 데이터 로드
@@ -974,14 +974,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         setShowRevealAnimation(true);
         setRevealStep(0);
 
-        // 단계별 애니메이션 (점수가 높을수록 더 길고 화려하게)
-        const score = json.data.score;
-        const baseDelay = score >= 80 ? 400 : score >= 60 ? 300 : 200;
-
-        setTimeout(() => setRevealStep(1), baseDelay); // 얼굴 표시
-        setTimeout(() => setRevealStep(2), baseDelay * 2); // 점수 카운트 시작
-        setTimeout(() => setRevealStep(3), baseDelay * 5); // 점수 완료 + 효과
-        setTimeout(() => setShowRevealAnimation(false), baseDelay * 7); // 애니메이션 종료
+        // 단계별 애니메이션 (더 짧고 확실하게)
+        setTimeout(() => setRevealStep(1), 300); // 얼굴 표시
+        setTimeout(() => setRevealStep(2), 800); // 점수 표시
+        setTimeout(() => setRevealStep(3), 1500); // 완료
+        setTimeout(() => setShowRevealAnimation(false), 2000); // 애니메이션 종료
 
       } catch (err) {
         console.error('Fetch error:', err);
@@ -1542,7 +1539,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   // 점수 공개 애니메이션 (높은 점수일수록 화려함)
   if (showRevealAnimation && revealStep < 3) {
     const isHighScore = data.score >= 80;
-    const isMidScore = data.score >= 60;
 
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center z-50 overflow-hidden">
