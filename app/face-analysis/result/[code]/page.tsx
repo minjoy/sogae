@@ -38,7 +38,7 @@ interface OverallFaceReading {
   oneLiner: string;
 }
 
-// 분석 결과로부터 조언/주의사항/궁합 생성
+// 분석 결과로부터 조언/주의사항/궁합 생성 (얼굴 특징 기반)
 function generateDetailedAdvice(
   score: number,
   categories: { r1: number; r2: number; r3: number; r4: number },
@@ -65,94 +65,111 @@ function generateDetailedAdvice(
   // 눈꼬리 분석
   const eyeLabel = getLabel('eyeAngle');
   if (eyeLabel.includes('올라감')) {
-    strengths.push('강한 의지력과 리더십을 가지고 있어요');
-    cautions.push('지나친 고집이 대인관계를 해칠 수 있으니 융통성을 가져보세요');
-    compatible.push('차분하고 수용적인 성격의 사람');
-    incompatible.push('같이 고집이 센 사람과는 충돌이 있을 수 있어요');
+    strengths.push('강한 의지력과 리더십을 가진 눈매예요');
+    cautions.push('눈꼬리가 올라간 사람끼리는 충돌이 있을 수 있어요');
+    compatible.push('눈꼬리가 내려간 부드러운 눈매의 사람');
+    incompatible.push('눈꼬리가 많이 올라간 날카로운 눈매의 사람');
   } else if (eyeLabel.includes('내려감')) {
-    strengths.push('부드러운 인상으로 사람들에게 호감을 얻기 쉬워요');
-    cautions.push('너무 순한 인상으로 가끔 무시당할 수 있으니 자기 주장을 명확히 해보세요');
-    compatible.push('리더십 있고 결단력 있는 사람');
-    incompatible.push('우유부단한 사람과는 답답함을 느낄 수 있어요');
+    strengths.push('부드럽고 친근한 인상의 눈매예요');
+    cautions.push('눈꼬리가 처진 사람끼리는 결단력이 부족할 수 있어요');
+    compatible.push('눈꼬리가 올라간 카리스마 있는 눈매의 사람');
+    incompatible.push('눈꼬리가 많이 처진 우울해 보이는 눈매의 사람');
   } else {
-    strengths.push('균형 잡힌 눈매로 신뢰감을 주는 인상이에요');
+    strengths.push('균형 잡힌 눈매로 누구와도 잘 어울려요');
+    compatible.push('어떤 눈매를 가진 사람과도 잘 맞아요');
+  }
+
+  // 눈 크기 분석
+  const eyeSizeLabel = getLabel('eyeSize');
+  if (eyeSizeLabel.includes('큰')) {
+    strengths.push('큰 눈으로 감정 표현이 풍부하고 매력적이에요');
+    compatible.push('작고 날카로운 눈을 가진 이성적인 사람');
+  } else if (eyeSizeLabel.includes('작')) {
+    strengths.push('작은 눈으로 신중하고 집중력이 높아요');
+    compatible.push('크고 둥근 눈을 가진 감성적인 사람');
   }
 
   // 눈두덩이 분석
   const eyebrowLabel = getLabel('eyebrowDistance');
   if (eyebrowLabel.includes('넓')) {
-    strengths.push('복을 받을 운이 있고, 조상의 덕이 있는 상이에요');
-    compatible.push('함께 있으면 운이 좋아지는 복 많은 사람');
+    strengths.push('넓은 눈두덩이로 복이 많은 상이에요');
+    compatible.push('마찬가지로 눈두덩이가 넓은 복 많은 사람');
+    cautions.push('눈두덩이가 좁은 사람과는 운의 흐름이 다를 수 있어요');
   } else if (eyebrowLabel.includes('좁')) {
-    cautions.push('스트레스를 받기 쉬운 상이니 휴식을 자주 취하세요');
+    cautions.push('좁은 눈두덩이는 스트레스에 취약하니 관리가 필요해요');
+    compatible.push('눈두덩이가 넓어 여유로운 인상의 사람');
+    incompatible.push('마찬가지로 눈두덩이가 좁은 예민한 사람');
   }
 
   // 코 분석
   const noseLabel = getLabel('noseLength');
   if (noseLabel.includes('긴')) {
-    strengths.push('자존심이 강하고 성취욕이 높아 큰 일을 할 수 있어요');
-    cautions.push('남의 말을 무시하는 경향이 있으니 경청하는 습관을 들이세요');
+    strengths.push('긴 코는 자존심과 성취욕이 높은 상이에요');
+    compatible.push('코가 작고 오똑한 겸손한 인상의 사람');
+    incompatible.push('코가 길고 높은 자존심 강한 사람');
   } else if (noseLabel.includes('짧')) {
-    strengths.push('사교성이 좋고 친근한 인상이에요');
-    cautions.push('때로는 단호함이 필요한 상황이 있으니 연습해보세요');
+    strengths.push('짧은 코는 사교성이 좋고 친근한 인상이에요');
+    compatible.push('코가 길고 오뚝한 리더십 있는 사람');
+  } else {
+    strengths.push('이상적인 코 길이로 균형 잡힌 인상이에요');
   }
 
   // 입 분석
   const mouthLabel = getLabel('mouthWidth');
   if (mouthLabel.includes('큰')) {
-    strengths.push('표현력이 풍부하고 설득력 있는 말솜씨를 가졌어요');
-    compatible.push('말을 잘 들어주는 경청형 사람');
+    strengths.push('큰 입은 표현력과 설득력이 뛰어난 상이에요');
+    compatible.push('입이 작고 신중한 인상의 경청형 사람');
+    incompatible.push('입이 큰 사람끼리는 말싸움이 잦을 수 있어요');
   } else if (mouthLabel.includes('작')) {
-    strengths.push('신중하고 깊이 있는 대화를 나눌 수 있어요');
-    cautions.push('속마음을 표현하는 것을 연습해보세요');
+    strengths.push('작은 입은 신중하고 깊이 있는 인상이에요');
+    compatible.push('입이 크고 표현력 좋은 활발한 사람');
+    cautions.push('입이 작은 사람끼리는 소통이 부족할 수 있어요');
   }
 
   // 턱 분석
   const jawLabel = getLabel('jawWidth');
   if (jawLabel.includes('튼튼')) {
-    strengths.push('끈기와 인내심이 강해 어떤 일이든 끝까지 해내요');
-    cautions.push('너무 고집스러워 보일 수 있으니 유연함도 필요해요');
-    compatible.push('추진력 있고 활동적인 사람');
-  } else if (jawLabel.includes('좁')) {
-    strengths.push('섬세하고 예민한 감각을 가지고 있어요');
-    cautions.push('체력 관리에 신경 쓰세요');
+    strengths.push('튼튼한 턱은 끈기와 추진력이 강한 상이에요');
+    compatible.push('턱이 갸름하고 섬세한 인상의 사람');
+    incompatible.push('턱이 각진 사람끼리는 고집 싸움이 있을 수 있어요');
+  } else if (jawLabel.includes('좁') || jawLabel.includes('갸름')) {
+    strengths.push('갸름한 턱은 섬세하고 예민한 감각의 상이에요');
+    compatible.push('턱이 튼튼하고 듬직한 인상의 사람');
+    cautions.push('턱이 좁은 사람끼리는 체력적으로 지칠 수 있어요');
+  } else {
+    strengths.push('균형 잡힌 턱선으로 안정적인 인상이에요');
   }
 
-  // 카테고리 점수 기반 조언
-  if (categories.r1 >= 70) {
-    strengths.push('리더십과 권위가 느껴지는 상이에요');
-  }
-  if (categories.r2 >= 70) {
-    strengths.push('감성적이고 사랑을 주고받는 능력이 뛰어나요');
-    compatible.push('감성을 공유할 수 있는 예술적인 사람');
-  }
-  if (categories.r3 >= 70) {
-    strengths.push('재물운과 사업운이 좋은 상이에요');
-  }
-  if (categories.r4 >= 70) {
-    strengths.push('성실하고 책임감 있어 신뢰를 얻기 쉬워요');
+  // 인중 분석
+  const philtrumLabel = getLabel('philtrumLength');
+  if (philtrumLabel.includes('긴')) {
+    strengths.push('긴 인중은 장수와 자녀복이 있는 상이에요');
+    compatible.push('인중이 짧고 활기찬 인상의 사람');
+  } else if (philtrumLabel.includes('짧')) {
+    strengths.push('짧은 인중은 활기차고 젊어 보이는 인상이에요');
+    compatible.push('인중이 길고 침착한 인상의 사람');
   }
 
-  // 전체 점수 기반
+  // 전체적인 얼굴 균형 기반
   if (score >= 80) {
-    strengths.push('전체적으로 균형 잡힌 복 많은 관상이에요');
-    compatible.push('긍정적인 에너지를 가진 밝은 사람');
-  } else if (score < 50) {
-    cautions.push('자기 관리와 긍정적인 마인드가 운을 바꿀 수 있어요');
+    strengths.push('전체적으로 균형 잡힌 황금비율의 얼굴이에요');
+    compatible.push('마찬가지로 균형 잡힌 얼굴의 사람과 좋은 궁합');
+  } else if (score >= 60) {
+    strengths.push('매력적인 특징이 있는 개성 있는 얼굴이에요');
   }
 
   // 기본값 추가
   if (strengths.length === 0) {
-    strengths.push('자신만의 독특한 매력을 가지고 있어요');
+    strengths.push('자신만의 독특한 얼굴 매력을 가지고 있어요');
   }
   if (cautions.length === 0) {
-    cautions.push('꾸준한 자기 관리로 더 좋은 인상을 만들 수 있어요');
+    cautions.push('표정 관리로 더 좋은 인상을 만들 수 있어요');
   }
   if (compatible.length === 0) {
-    compatible.push('자신과 보완이 되는 성격의 사람');
+    compatible.push('자신과 상반된 얼굴 특징을 가진 사람');
   }
   if (incompatible.length === 0) {
-    incompatible.push('서로의 단점을 자극하는 사람과는 거리를 두세요');
+    incompatible.push('너무 비슷한 얼굴 특징을 가진 사람과는 주의');
   }
 
   return { strengths, cautions, compatible, incompatible };
