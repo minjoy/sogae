@@ -991,11 +991,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         setShowRevealAnimation(true);
         setRevealStep(0);
 
-        // 단계별 애니메이션 (더 짧고 확실하게)
+        // 단계별 애니메이션
         setTimeout(() => setRevealStep(1), 300); // 얼굴 표시
-        setTimeout(() => setRevealStep(2), 800); // 점수 표시
-        setTimeout(() => setRevealStep(3), 1500); // 완료
-        setTimeout(() => setShowRevealAnimation(false), 2000); // 애니메이션 종료
+        setTimeout(() => setRevealStep(2), 1000); // 점수 표시
+        setTimeout(() => setRevealStep(3), 3000); // 완료 (3초)
+        setTimeout(() => setShowRevealAnimation(false), 3500); // 애니메이션 종료
 
       } catch (err) {
         console.error('Fetch error:', err);
@@ -1998,49 +1998,54 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           );
         })()}
 
-        {/* 두 사람 궁합 분석 - 유료 기능 티저 */}
-        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur rounded-2xl p-6 mb-6 border border-purple-500/30">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="text-4xl">👫</div>
-            <div>
-              <h3 className="text-white font-bold text-lg">두 사람 궁합 분석</h3>
-              <p className="text-white/60 text-sm">두 얼굴을 비교해서 정확한 궁합을 알아보세요</p>
-            </div>
-          </div>
-          <div className="bg-black/20 rounded-xl p-4 mb-4">
-            <div className="grid grid-cols-3 gap-3 items-center">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center text-2xl">
-                  👤
-                </div>
-                <p className="text-white/60 text-xs mt-2">나</p>
-              </div>
-              <div className="text-center text-pink-400 text-2xl">💗</div>
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center text-2xl">
-                  👤
-                </div>
-                <p className="text-white/60 text-xs mt-2">상대방</p>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-2 text-sm text-white/70 mb-4">
-            <p className="flex items-center gap-2">
-              <span className="text-purple-400">✓</span> 관상학 기반 정밀 궁합 분석
-            </p>
-            <p className="flex items-center gap-2">
-              <span className="text-purple-400">✓</span> 연애/결혼/비즈니스 궁합 점수
-            </p>
-            <p className="flex items-center gap-2">
-              <span className="text-purple-400">✓</span> 상대와의 주의점 및 조언 제공
-            </p>
-          </div>
+        {/* 상세 분석 (접을 수 있음) */}
+        <div className="bg-white/5 backdrop-blur rounded-2xl overflow-hidden mb-6 border border-white/10">
           <button
-            className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
-            onClick={() => alert('곧 출시됩니다! 기대해주세요 💕')}
+            onClick={() => setExpandedItem(expandedItem === 'detail' ? null : 'detail')}
+            className="w-full px-6 py-4 flex items-center justify-between text-white"
           >
-            ✨ 궁합 분석하기 (준비중)
+            <span className="font-bold flex items-center gap-2">
+              <span>🔍</span> 상세 분석 보기
+            </span>
+            <span className={`transform transition-transform ${expandedItem === 'detail' ? 'rotate-180' : ''}`}>
+              ▼
+            </span>
           </button>
+
+          {expandedItem === 'detail' && (
+            <div className="px-6 pb-6 space-y-3">
+              <div className="space-y-3">
+                {Object.entries(data.analysis).map(([key, value]) => {
+                  const analysisValue = value as { label?: string; description?: string } | number;
+                  const isObject = typeof analysisValue === 'object' && analysisValue !== null;
+
+                  return (
+                    <div key={key} className="bg-white/5 rounded-xl p-4">
+                      <div className="text-white/70 text-sm mb-1">
+                        {key === 'eyeAngle' && '👁️ 눈꼬리 각도'}
+                        {key === 'eyebrowDistance' && '🎯 눈-눈썹 거리'}
+                        {key === 'noseLength' && '👃 코 길이'}
+                        {key === 'philtrumLength' && '💋 인중 길이'}
+                        {key === 'mouthWidth' && '😊 입 너비'}
+                        {key === 'jawWidth' && '🏛️ 하관(턱)'}
+                        {key === 'eyeSize' && '✨ 눈 크기'}
+                      </div>
+                      {isObject ? (
+                        <>
+                          <div className="text-white font-medium mb-2">{analysisValue.label}</div>
+                          <div className="text-white/60 text-sm">{analysisValue.description}</div>
+                        </>
+                      ) : (
+                        <div className="text-white font-medium">
+                          {typeof analysisValue === 'number' ? analysisValue.toFixed(1) : String(analysisValue)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 공유 카드 생성 */}
@@ -2099,56 +2104,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </p>
         </div>
 
-        {/* 상세 분석 (접을 수 있음) */}
-        <div className="bg-white/5 backdrop-blur rounded-2xl overflow-hidden mb-6 border border-white/10">
-          <button
-            onClick={() => setExpandedItem(expandedItem === 'detail' ? null : 'detail')}
-            className="w-full px-6 py-4 flex items-center justify-between text-white"
-          >
-            <span className="font-bold flex items-center gap-2">
-              <span>🔍</span> 상세 분석 보기
-            </span>
-            <span className={`transform transition-transform ${expandedItem === 'detail' ? 'rotate-180' : ''}`}>
-              ▼
-            </span>
-          </button>
-
-          {expandedItem === 'detail' && (
-            <div className="px-6 pb-6 space-y-3">
-              <div className="space-y-3">
-                {Object.entries(data.analysis).map(([key, value]) => {
-                  const analysisValue = value as { label?: string; description?: string } | number;
-                  const isObject = typeof analysisValue === 'object' && analysisValue !== null;
-
-                  return (
-                    <div key={key} className="bg-white/5 rounded-xl p-4">
-                      <div className="text-white/70 text-sm mb-1">
-                        {key === 'eyeAngle' && '👁️ 눈꼬리 각도'}
-                        {key === 'eyebrowDistance' && '🎯 눈-눈썹 거리'}
-                        {key === 'noseLength' && '👃 코 길이'}
-                        {key === 'philtrumLength' && '💋 인중 길이'}
-                        {key === 'mouthWidth' && '😊 입 너비'}
-                        {key === 'jawWidth' && '🏛️ 하관(턱)'}
-                        {key === 'eyeSize' && '✨ 눈 크기'}
-                      </div>
-                      {isObject ? (
-                        <>
-                          <div className="text-white font-medium mb-2">{analysisValue.label}</div>
-                          <div className="text-white/60 text-sm">{analysisValue.description}</div>
-                        </>
-                      ) : (
-                        <div className="text-white font-medium">
-                          {typeof analysisValue === 'number' ? analysisValue.toFixed(1) : String(analysisValue)}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* 액션 버튼 */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <button
@@ -2166,13 +2121,61 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         </div>
 
         {/* 조회수 및 면책 조항 */}
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-2 mb-8">
           <p className="text-white/40 text-xs">
             👀 {data.viewCount}회 조회
           </p>
           <p className="text-white/40 text-xs">
             🔮 AI 관상 분석은 재미로만 참고해주세요
           </p>
+        </div>
+
+        {/* 구분선 */}
+        <div className="border-t border-white/10 my-6"></div>
+
+        {/* 두 사람 궁합 분석 - 유료 기능 티저 (별도 영역) */}
+        <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur rounded-2xl p-6 mb-6 border border-purple-500/30">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="text-4xl">👫</div>
+            <div>
+              <h3 className="text-white font-bold text-lg">두 사람 궁합 분석</h3>
+              <p className="text-white/60 text-sm">두 얼굴을 비교해서 정확한 궁합을 알아보세요</p>
+            </div>
+          </div>
+          <div className="bg-black/20 rounded-xl p-4 mb-4">
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center text-2xl">
+                  👤
+                </div>
+                <p className="text-white/60 text-xs mt-2">나</p>
+              </div>
+              <div className="text-center text-pink-400 text-2xl">💗</div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center text-2xl">
+                  👤
+                </div>
+                <p className="text-white/60 text-xs mt-2">상대방</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2 text-sm text-white/70 mb-4">
+            <p className="flex items-center gap-2">
+              <span className="text-purple-400">✓</span> 관상학 기반 정밀 궁합 분석
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="text-purple-400">✓</span> 연애/결혼/비즈니스 궁합 점수
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="text-purple-400">✓</span> 상대와의 주의점 및 조언 제공
+            </p>
+          </div>
+          <button
+            className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+            onClick={() => alert('곧 출시됩니다! 기대해주세요 💕')}
+          >
+            ✨ 궁합 분석하기 (준비중)
+          </button>
         </div>
       </div>
 
