@@ -886,11 +886,22 @@ export function analyzeFace(
   // 균형 잡힌 얼굴이 높은 점수를 받도록 설계
   const categoryAvg = (r1 + r2 + r3 + r4) / 4;
   // facescore 25% + 카테고리 평균 35% + 균형 점수 40% (균형이 가장 중요)
-  const normalizedScore = clamp(
-    Math.round(facescoreNormalized * 0.25 + categoryAvg * 0.35 + balanceScore * 0.4),
-    0,
-    100
-  );
+  const rawFinalScore = facescoreNormalized * 0.25 + categoryAvg * 0.35 + balanceScore * 0.4;
+
+  // 50점 이상 구간에 가중치 적용 (좋은 관상은 더 높게)
+  // 50점 미만: 그대로 유지
+  // 50점 이상: 비례적으로 부스트 (50→50, 75→85, 100→100)
+  let adjustedScore: number;
+  if (rawFinalScore < 50) {
+    adjustedScore = rawFinalScore;
+  } else {
+    // 50~100 구간을 확장: (score-50)/50의 제곱근 사용
+    const excess = (rawFinalScore - 50) / 50; // 0~1 범위
+    const boosted = Math.pow(excess, 0.6) * 50; // 0.6 제곱 = 상위 점수 부스트
+    adjustedScore = 50 + boosted;
+  }
+
+  const normalizedScore = clamp(Math.round(adjustedScore), 0, 100);
 
   // === 관상 특성 점수 계산 (Excel 기반) ===
   let traits = createEmptyTraits();
