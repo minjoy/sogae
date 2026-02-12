@@ -1183,7 +1183,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
       loadScript.onload = () => {
         const adScript = document.createElement('script');
-        adScript.textContent = `new PartnersCoupang.G({"id":964752,"template":"carousel","trackingCode":"AF2407547","width":"800","height":"200","tsource":""});`;
+        adScript.textContent = `new PartnersCoupang.G({"id":964752,"template":"carousel","trackingCode":"AF2407547","width":"320","height":"100","tsource":""});`;
         container.appendChild(adScript);
       };
     }
