@@ -210,8 +210,8 @@ model FaceAnalysis {
   // 부위별 분석 결과 (JSON)
   analysis        Json     // eyeAngle, eyebrowDistance, noseLength, etc.
 
-  // 랜드마크 데이터 (JSON) - 이미지 재생성용
-  landmarks       Json?    @db.MediumText
+  // 랜드마크 데이터 (JSON 문자열) - 이미지 재생성용
+  landmarks       String?  @db.MediumText
   imageWidth      Int?     @map("image_width")
   imageHeight     Int?     @map("image_height")
 
