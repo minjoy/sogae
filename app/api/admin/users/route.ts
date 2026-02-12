@@ -23,7 +23,7 @@ export async function POST(request: Request) {
         email: true,
         nickname: true,
         gender: true,
-        birthyear: true,
+        birthYear: true,
         createdAt: true,
         _count: {
           select: {
@@ -36,10 +36,10 @@ export async function POST(request: Request) {
 
     const formattedUsers = users.map((user: {
       id: string;
-      email: string;
+      email: string | null;
       nickname: string;
       gender: string | null;
-      birthyear: number | null;
+      birthYear: string | null;
       createdAt: Date;
       _count: { testResults: number; unifiedCards: number };
     }) => ({
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       email: user.email,
       nickname: user.nickname,
       gender: user.gender,
-      birthyear: user.birthyear,
+      birthYear: user.birthYear,
       createdAt: user.createdAt,
       testCount: user._count.testResults,
       cardCount: user._count.unifiedCards,
