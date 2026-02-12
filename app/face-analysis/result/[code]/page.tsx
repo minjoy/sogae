@@ -317,7 +317,7 @@ function generateDeterministicOneLiner(
 
   // 특징 조합 한줄평
   if (subFeature) {
-    return `${mainFeature}과 ${subFeature}의 소유자`;
+    return `${mainFeature}, ${subFeature}의 소유자`;
   }
   return `${mainFeature}의 소유자`;
 }
