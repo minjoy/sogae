@@ -4,7 +4,7 @@ import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 
 async function handleGetResults(request: AuthenticatedRequest) {
   try {
-    const userId = request.user!.userId;
+    const userId = request.userId!;
 
     // 각 테스트 타입별로 최신 결과 1개씩 가져오기
     const results = await Promise.all(

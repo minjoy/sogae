@@ -17,7 +17,7 @@ import {
 
 async function handleGenerateCard(request: AuthenticatedRequest) {
   try {
-    const userId = request.user!.userId;
+    const userId = request.userId!;
 
     // 모든 테스트 결과 가져오기
     const results = await Promise.all(

@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 // POST: 매장 등록 (로그인 필요)
 async function handleCreateStore(request: AuthenticatedRequest) {
   try {
-    const userId = request.user!.userId;
+    const userId = request.userId!;
     const body = await request.json();
     const { name, category, categories, address, lat, lng, phone, description, imageUrl, storeUrl, passOrderUrl, dessertName, price } = body;
 

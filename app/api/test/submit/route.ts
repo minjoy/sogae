@@ -18,7 +18,7 @@ async function handleSubmit(request: AuthenticatedRequest) {
   try {
     const body = await request.json();
     const validatedData = submitSchema.parse(body);
-    const userId = request.user!.userId;
+    const userId = request.userId!;
 
     // 테스트 채점
     const score = scoreTest(validatedData.testType, validatedData.answers);

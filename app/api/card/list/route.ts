@@ -4,7 +4,7 @@ import { withAuth, AuthenticatedRequest } from '@/lib/middleware';
 
 async function handleGetCards(request: AuthenticatedRequest) {
   try {
-    const userId = request.user!.userId;
+    const userId = request.userId!;
 
     // 사용자의 모든 카드 가져오기 (최신순)
     const cards = await prisma.unifiedCard.findMany({
