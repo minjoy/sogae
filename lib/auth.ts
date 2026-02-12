@@ -110,13 +110,8 @@ export const authOptions: NextAuthOptions = {
           return true;
         }
 
-        // 3. 신규 사용자 - 성인 인증
+        // 3. 신규 사용자 생성
         const birthYear = kakaoAccount?.birthyear;
-        if (!isAdult(birthYear)) {
-          return `/auth-error?error=age_restriction`;
-        }
-
-        // 4. 신규 사용자 생성
         const tempNickname = generateTempNickname(kakaoId);
 
         // 닉네임 중복 체크 및 고유 닉네임 생성

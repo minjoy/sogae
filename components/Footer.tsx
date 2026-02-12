@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export default function Footer() {
@@ -42,10 +43,19 @@ export default function Footer() {
         </div>
 
         <div className="text-center text-xs text-gray-500 border-t border-gray-200 pt-4">
-          <p className="mb-1">
+          <p className="mb-2">
             이 결과는 참고용이며, 전문 심리 상담이나 의료 진단을 대체하지 않습니다.
           </p>
-          <p>© 2026 언연이. All rights reserved.</p>
+          <div className="flex justify-center gap-4 mb-2">
+            <Link href="/terms" className="hover:text-gray-700 hover:underline">
+              이용약관
+            </Link>
+            <span>|</span>
+            <Link href="/privacy" className="hover:text-gray-700 hover:underline">
+              개인정보처리방침
+            </Link>
+          </div>
+          <p>© 2026 와하공방. All rights reserved.</p>
         </div>
       </div>
     </footer>

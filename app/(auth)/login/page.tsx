@@ -70,9 +70,9 @@ function LoginContent() {
       <div className="max-w-md w-full">
         {/* 로고 및 타이틀 */}
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🔮</div>
+          <div className="text-6xl mb-4">✨</div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">마이타입</h1>
-          <p className="text-gray-600">AI 관상 분석 서비스</p>
+          <p className="text-gray-600">나를 알아가는 다양한 테스트</p>
         </div>
 
         {/* 로그인 카드 */}
@@ -125,13 +125,12 @@ function LoginContent() {
             </p>
           </div>
 
-          {/* 성인 인증 안내 */}
-          <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
-            <p className="text-xs text-yellow-800 leading-relaxed">
-              <span className="font-semibold">⚠️ 성인 전용 서비스</span>
+          {/* 연령 안내 */}
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+            <p className="text-xs text-blue-800 leading-relaxed">
+              <span className="font-semibold">ℹ️ 서비스 이용 안내</span>
               <br />
-              카카오 계정의 생년월일 정보를 통해 만 20세 이상임을 확인합니다.
-              미성년자는 서비스를 이용할 수 없습니다.
+              일부 서비스는 만 20세 이상 회원만 이용할 수 있습니다.
             </p>
           </div>
         </div>
@@ -139,10 +138,10 @@ function LoginContent() {
         {/* 비회원 이용 안내 */}
         <div className="mt-6 text-center">
           <button
-            onClick={() => router.push('/face-analysis')}
+            onClick={() => router.push('/')}
             className="text-gray-500 hover:text-gray-700 text-sm underline"
           >
-            로그인 없이 관상 분석 체험하기
+            둘러보기
           </button>
         </div>
       </div>
