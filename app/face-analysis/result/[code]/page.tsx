@@ -1169,6 +1169,18 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     }
   }, [data, drawFaceMesh, showRevealAnimation]);
 
+  // 광고 초기화
+  useEffect(() => {
+    if (!showRevealAnimation && data) {
+      try {
+        // @ts-expect-error adsbygoogle is defined by external script
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.error('AdSense error:', e);
+      }
+    }
+  }, [showRevealAnimation, data]);
+
   // 공유 카드 생성
   const generateShareCard = useCallback(async () => {
     if (!shareCanvasRef.current || !data) return;
@@ -1745,6 +1757,18 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           <p className="text-white text-xl font-bold leading-relaxed mt-2">
             {oneLiner}
           </p>
+        </div>
+
+        {/* 광고 배너 */}
+        <div className="mb-6 overflow-hidden rounded-xl">
+          <ins
+            className="adsbygoogle"
+            style={{ display: 'block', width: '100%', height: '120px' }}
+            data-ad-client="ca-pub-3512251263610351"
+            data-ad-slot="auto"
+            data-ad-format="horizontal"
+            data-full-width-responsive="true"
+          />
         </div>
 
         {/* 레이더 차트 (육각형 대신 사각형 - 4개 카테고리) */}
