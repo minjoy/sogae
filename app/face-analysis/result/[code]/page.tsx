@@ -2127,18 +2127,15 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           {/* 쿠팡 파트너스 영역 */}
           <div className="rounded-xl overflow-hidden">
             <iframe
-              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=&width=680&height=140&tsource="
-              width="100%"
+              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=140&tsource="
+              width="684"
               height="140"
               frameBorder="0"
               scrolling="no"
               referrerPolicy="unsafe-url"
             />
           </div>
-
-          <p className="text-center text-white/40 text-[10px] mt-3">
-            여러분의 클릭 하나가 무료 관상 서비스를 유지하는 원동력입니다 💪
-          </p>
+          <p className="text-white/30 text-[10px] mt-1 text-center">파트너스 수수료를 받을 수 있습니다</p>
         </div>
 
         {/* 액션 버튼 */}
