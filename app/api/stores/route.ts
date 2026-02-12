@@ -154,16 +154,16 @@ async function handleCreateStore(request: AuthenticatedRequest) {
       },
     });
 
-    // 사용자에게 달달함 점수 +2
+    // 사용자에게 경험치 +2
     await prisma.user.update({
       where: { id: userId },
-      data: { sweetnessPoints: { increment: 2 } },
+      data: { exp: { increment: 2 } },
     });
 
     return NextResponse.json({
       success: true,
       store,
-      message: '매장이 등록되었습니다! 달달함 점수 +2점!',
+      message: '매장이 등록되었습니다!',
     });
   } catch (error) {
     console.error('Store create error:', error);
