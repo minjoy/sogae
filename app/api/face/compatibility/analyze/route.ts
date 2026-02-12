@@ -128,10 +128,10 @@ export async function POST(request: NextRequest) {
     const maleAngles = calculateFaceAngles(male.landmarks);
     const maleAnalysis = analyzeFace(
       maleFaceLandmarks,
+      'male',
       maleAngles.panAngle,
       maleAngles.tiltAngle,
-      maleAngles.rollAngle,
-      'male'
+      maleAngles.rollAngle
     );
 
     // 여자 관상 분석
@@ -144,10 +144,10 @@ export async function POST(request: NextRequest) {
     const femaleAngles = calculateFaceAngles(female.landmarks);
     const femaleAnalysis = analyzeFace(
       femaleFaceLandmarks,
+      'female',
       femaleAngles.panAngle,
       femaleAngles.tiltAngle,
-      femaleAngles.rollAngle,
-      'female'
+      femaleAngles.rollAngle
     );
 
     // 궁합 분석
