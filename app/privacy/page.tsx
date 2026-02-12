@@ -117,7 +117,7 @@ export default function PrivacyPage() {
             <div className="bg-gray-50 p-4 rounded-lg text-gray-700">
               <p><strong>개인정보 보호책임자</strong></p>
               <p>회사명: 와하공방</p>
-              <p>이메일: privacy@waha.studio</p>
+              <p>이메일: miniface.ai@gmail.com</p>
             </div>
           </section>
 

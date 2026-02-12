@@ -120,6 +120,15 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">제11조 (문의)</h2>
+            <p className="text-gray-700 mb-3">서비스 이용에 관한 문의는 아래 연락처로 해주시기 바랍니다:</p>
+            <div className="bg-gray-50 p-4 rounded-lg text-gray-700">
+              <p>회사명: 와하공방</p>
+              <p>이메일: miniface.ai@gmail.com</p>
+            </div>
+          </section>
+
+          <section className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-3">부칙</h2>
             <p className="text-gray-700">본 약관은 2024년 1월 1일부터 시행됩니다.</p>
           </section>
