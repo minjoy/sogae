@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // 2. 기존 사용자 확인
-        let existingUser = await prisma.user.findUnique({
+        const existingUser = await prisma.user.findUnique({
           where: { kakaoId },
         });
 
