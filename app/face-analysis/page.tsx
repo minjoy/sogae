@@ -608,6 +608,13 @@ export default function FaceAnalysisPage() {
     // file input 초기화 (같은 파일 재선택 가능하도록)
     e.target.value = '';
 
+    // 이미지 파일 타입 검증
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validImageTypes.includes(file.type)) {
+      alert('이미지 파일만 업로드할 수 있습니다.\n(JPG, PNG, WebP, GIF)');
+      return;
+    }
+
     // 이전 상태 초기화
     setIsLoading(true);
     setError(null);
@@ -816,7 +823,6 @@ export default function FaceAnalysisPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".jpg,.jpeg,.png,.webp,.gif"
                 onChange={handleFileUpload}
                 className="hidden"
               />
