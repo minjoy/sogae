@@ -1488,7 +1488,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
       if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: 'AI 관상 분석 결과',
+          title: '관상 분석 결과',
           text: oneLiner,
           files: [file],
         });
@@ -2160,7 +2160,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             👀 {data.viewCount}회 조회
           </p>
           <p className="text-white/40 text-xs">
-            🔮 AI 관상 분석은 재미로만 참고해주세요
+            🔮 관상 분석은 재미로만 참고해주세요
           </p>
         </div>
 

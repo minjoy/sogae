@@ -382,7 +382,7 @@ export default function FaceAnalysisResultPage() {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('🔮 AI 관상 분석', 540, 60);
+    ctx.fillText('🔮 관상 분석', 540, 60);
 
     // 점수 배지
     const badgeY = faceY + faceSize/2 + 50;
@@ -466,7 +466,7 @@ export default function FaceAnalysisResultPage() {
 
       if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          title: 'AI 관상 분석 결과',
+          title: '관상 분석 결과',
           text: oneLiner,
           files: [file],
         });
@@ -642,7 +642,7 @@ export default function FaceAnalysisResultPage() {
 
         {/* 면책 조항 */}
         <div className="text-center text-white/40 text-xs">
-          🔮 AI 관상 분석은 재미로만 참고해주세요
+          🔮 관상 분석은 재미로만 참고해주세요
         </div>
       </div>
 

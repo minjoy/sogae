@@ -263,7 +263,7 @@ export default function MyPage() {
                 아직 관상 분석 기록이 없어요
               </p>
               <p className="text-sm text-purple-500 mt-1">
-                AI 관상 분석 시작하기 →
+                관상 분석 시작하기 →
               </p>
             </Link>
           )}

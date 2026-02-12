@@ -46,7 +46,7 @@ export default function TermsPage() {
               <li>회사는 다음과 같은 서비스를 제공합니다:
                 <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
                   <li>심리 테스트 및 성격 분석 서비스</li>
-                  <li>AI 기반 관상 분석 서비스</li>
+                  <li>경험 기반 관상 분석 서비스</li>
                   <li>기타 회사가 정하는 서비스</li>
                 </ul>
               </li>
