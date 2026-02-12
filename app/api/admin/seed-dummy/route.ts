@@ -62,14 +62,14 @@ export async function POST(request: NextRequest) {
       const nickname = generateNickname(name);
       const personalityCode = getRandomElement(personalityCodes);
 
+      const uniqueId = randomBytes(8).toString('hex');
       users.push({
-        email: `dummy_${randomBytes(8).toString('hex')}@dummy.local`,
-        passwordHash: 'dummy_not_loginable',
+        kakaoId: `dummy_${uniqueId}`,
+        email: `dummy_${uniqueId}@dummy.local`,
         nickname,
         gender,
         personalityCode,
-        isDummy: true,
-        birthyear: 1990 + Math.floor(Math.random() * 15),
+        birthYear: String(1990 + Math.floor(Math.random() * 15)),
       });
     }
 
@@ -104,7 +104,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const result = await prisma.user.deleteMany({
-      where: { isDummy: true },
+      where: { kakaoId: { startsWith: 'dummy_' } },
     });
 
     return NextResponse.json({
