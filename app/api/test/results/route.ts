@@ -41,7 +41,7 @@ async function handleGetResults(request: AuthenticatedRequest) {
 
 async function handleDeleteAllResults(request: AuthenticatedRequest) {
   try {
-    const userId = request.user!.userId;
+    const userId = request.userId!;
 
     // 해당 사용자의 모든 테스트 결과 삭제
     const deleteResult = await prisma.testResult.deleteMany({
