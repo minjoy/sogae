@@ -1559,7 +1559,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     const isHighScore = data.score >= 80;
 
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center z-50 overflow-hidden">
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 flex items-center justify-center z-50 overflow-hidden" style={{ minHeight: '-webkit-fill-available' }}>
         {/* 배경 파티클 (높은 점수만) */}
         {isHighScore && (
           <div className="absolute inset-0 overflow-hidden">
