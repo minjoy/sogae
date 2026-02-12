@@ -1,73 +1,100 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { data: session, status } = useSession();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
-  }, [pathname]);
+  const isLoggedIn = status === 'authenticated' && !!session?.user;
 
-  // /test 경로인지 확인
-  const isTestPage = pathname?.startsWith('/test');
+  // 메뉴 항목
+  const menuItems = [
+    { name: '언연이', href: '/test', emoji: '💕' },
+    { name: '관상보기', href: '/face-analysis', emoji: '🔮' },
+    { name: '두쫀쿠맵', href: '/dujjonku-map', emoji: '🍪' },
+  ];
 
   return (
     <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 z-50">
       <div className="container mx-auto px-4 py-3 max-w-7xl">
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            <span className="text-2xl">💕</span>
-            <span className="text-xl font-bold text-primary-600">언연이</span>
-          </button>
+          {/* 왼쪽: 로고 + 메뉴 */}
+          <div className="flex items-center gap-6">
+            {/* 로고 */}
+            <Link
+              href="/"
+              className="flex items-center gap-1 hover:opacity-80 transition-opacity"
+            >
+              <span className="text-xl font-bold text-primary-600">마이타입</span>
+            </Link>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/face-analysis')}
-              className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
-            >
-              관상분석
-            </button>
-            <button
-              onClick={() => router.push('/dujjonku-map')}
-              className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
-            >
-              두쫀쿠맵
-            </button>
+            {/* 메뉴 */}
+            <nav className="hidden sm:flex items-center gap-1">
+              {menuItems.map((item) => {
+                const isActive = pathname?.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-primary-50 text-primary-600'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <span>{item.emoji}</span>
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* 오른쪽: 로그인/MY 버튼 */}
+          <div className="flex items-center gap-2">
             {isLoggedIn ? (
               <button
                 onClick={() => router.push('/my')}
-                className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-600 rounded-lg font-medium hover:bg-primary-100 transition-colors"
               >
-                마이페이지
+                <span className="text-lg">👤</span>
+                <span className="hidden sm:inline">MY</span>
               </button>
             ) : (
-              <>
-                <button
-                  onClick={() => router.push('/login')}
-                  className="text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors"
-                >
-                  로그인
-                </button>
-                {!isTestPage && (
-                  <button
-                    onClick={() => router.push('/test')}
-                    className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-                  >
-                    시작하기
-                  </button>
-                )}
-              </>
+              <button
+                onClick={() => router.push('/login')}
+                className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                로그인
+              </button>
             )}
           </div>
         </div>
+
+        {/* 모바일 메뉴 */}
+        <nav className="flex sm:hidden items-center gap-1 mt-2 -mx-1 overflow-x-auto pb-1">
+          {menuItems.map((item) => {
+            const isActive = pathname?.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                  isActive
+                    ? 'bg-primary-50 text-primary-600'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <span>{item.emoji}</span>
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </header>
   );
