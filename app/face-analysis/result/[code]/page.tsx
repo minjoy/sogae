@@ -1169,15 +1169,23 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     }
   }, [data, drawFaceMesh, showRevealAnimation]);
 
-  // 광고 초기화
+  // 쿠팡 파트너스 광고 초기화
   useEffect(() => {
     if (!showRevealAnimation && data) {
-      try {
-        // @ts-expect-error adsbygoogle is defined by external script
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch (e) {
-        console.error('AdSense error:', e);
-      }
+      const container = document.getElementById('coupang-ad-container');
+      if (!container || container.querySelector('iframe')) return;
+
+      // 쿠팡 파트너스 스크립트 로드
+      const loadScript = document.createElement('script');
+      loadScript.src = 'https://ads-partners.coupang.com/g.js';
+      loadScript.async = true;
+      document.head.appendChild(loadScript);
+
+      loadScript.onload = () => {
+        const adScript = document.createElement('script');
+        adScript.textContent = `new PartnersCoupang.G({"id":964752,"template":"carousel","trackingCode":"AF2407547","width":"800","height":"200","tsource":""});`;
+        container.appendChild(adScript);
+      };
     }
   }, [showRevealAnimation, data]);
 
@@ -1759,17 +1767,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </p>
         </div>
 
-        {/* 광고 배너 */}
-        <div className="mb-6 overflow-hidden rounded-xl">
-          <ins
-            className="adsbygoogle"
-            style={{ display: 'block', width: '100%', height: '120px' }}
-            data-ad-client="ca-pub-3512251263610351"
-            data-ad-slot="auto"
-            data-ad-format="horizontal"
-            data-full-width-responsive="true"
-          />
-        </div>
+        {/* 쿠팡 파트너스 광고 배너 */}
+        <div className="mb-6 overflow-hidden rounded-xl flex justify-center">
+          <div id="coupang-ad-container" style={{ maxWidth: '100%', overflow: 'hidden' }} /></div>
 
         {/* 레이더 차트 (육각형 대신 사각형 - 4개 카테고리) */}
         <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">
