@@ -700,7 +700,7 @@ export default function FaceAnalysisPage() {
           {/* 헤더 */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">🔮</div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">관상 풀이</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">경험 기반 관상 풀이</h1>
             <p className="text-gray-600">
               다년간의 관상학 연구와 고전 문헌을 바탕으로
             </p>
@@ -787,6 +787,7 @@ export default function FaceAnalysisPage() {
                 onClick={() => {
                   if (!privacyConsent) {
                     setShowConsentWarning(true);
+                    alert('📌 개인정보 수집 동의가 필요합니다\n\n분석을 시작하려면 위의 개인정보 수집 및 이용에 동의해주세요.');
                     return;
                   }
                   setMode('camera');
@@ -801,6 +802,7 @@ export default function FaceAnalysisPage() {
                 onClick={() => {
                   if (!privacyConsent) {
                     setShowConsentWarning(true);
+                    alert('📌 개인정보 수집 동의가 필요합니다\n\n분석을 시작하려면 위의 개인정보 수집 및 이용에 동의해주세요.');
                     return;
                   }
                   fileInputRef.current?.click();
