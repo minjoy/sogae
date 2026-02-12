@@ -816,7 +816,7 @@ export default function FaceAnalysisPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
+                accept=".jpg,.jpeg,.png,.webp,.gif"
                 onChange={handleFileUpload}
                 className="hidden"
               />
