@@ -2209,9 +2209,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </div>
           <button
             className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
-            onClick={() => alert('곧 출시됩니다! 기대해주세요 💕')}
+            onClick={() => router.push('/face-analysis/compatibility')}
           >
-            ✨ 궁합 분석하기 (준비중)
+            💕 궁합 분석하기
           </button>
         </div>
       </div>
