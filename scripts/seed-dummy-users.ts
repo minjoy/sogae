@@ -57,14 +57,14 @@ export async function seedDummyUsers(count: number = 50) {
     const nickname = generateNickname(name);
     const personalityCode = getRandomElement(personalityCodes);
 
+    const uniqueId = randomBytes(8).toString('hex');
     users.push({
-      email: `dummy_${randomBytes(8).toString('hex')}@dummy.local`,
-      passwordHash: 'dummy_not_loginable',
+      kakaoId: `dummy_${uniqueId}`,
+      email: `dummy_${uniqueId}@dummy.local`,
       nickname,
       gender,
       personalityCode,
-      isDummy: true,
-      birthyear: 1990 + Math.floor(Math.random() * 15), // 1990-2004
+      birthYear: String(1990 + Math.floor(Math.random() * 15)),
     });
   }
 
@@ -81,7 +81,7 @@ export async function seedDummyUsers(count: number = 50) {
 // 더미 사용자 삭제
 export async function deleteDummyUsers() {
   const result = await prisma.user.deleteMany({
-    where: { isDummy: true },
+    where: { kakaoId: { startsWith: 'dummy_' } },
   });
   console.log(`더미 사용자 ${result.count}명 삭제 완료!`);
   return result;
