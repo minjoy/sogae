@@ -33,10 +33,10 @@ export default function Header() {
   return (
     <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 z-50">
       <div className="container mx-auto px-4 max-w-7xl">
-        {/* 로고 영역 - 스크롤 시 숨김 */}
+        {/* 로고 + 로그인 버튼 영역 - 스크롤 시 숨김 */}
         <div
           className={`flex items-center justify-between overflow-hidden transition-all duration-300 ${
-            isScrolled ? 'max-h-0 py-0' : 'max-h-12 py-2'
+            isScrolled ? 'max-h-0 py-0 opacity-0' : 'max-h-12 py-2 opacity-100'
           }`}
         >
           <Link
@@ -45,11 +45,28 @@ export default function Header() {
           >
             <span className="text-xl font-bold text-primary-600">마이타입</span>
           </Link>
+
+          {/* 로그인/MY 버튼 */}
+          {isLoggedIn ? (
+            <button
+              onClick={() => router.push('/my')}
+              className="flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-primary-50 text-primary-600 rounded-lg font-medium hover:bg-primary-100 transition-colors"
+            >
+              <span className="text-lg">👤</span>
+              <span className="hidden sm:inline text-sm">MY</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/login')}
+              className="px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              로그인
+            </button>
+          )}
         </div>
 
-        {/* 메뉴 + 로그인 버튼 영역 */}
-        <div className="flex items-center justify-between py-2">
-          {/* 왼쪽: 메뉴 */}
+        {/* 메뉴 영역 */}
+        <div className="flex items-center justify-center py-2">
           <nav className="flex items-center gap-1">
             {menuItems.map((item) => {
               const isActive = pathname?.startsWith(item.href);
@@ -69,26 +86,6 @@ export default function Header() {
               );
             })}
           </nav>
-
-          {/* 오른쪽: 로그인/MY 버튼 */}
-          <div className="flex items-center gap-2">
-            {isLoggedIn ? (
-              <button
-                onClick={() => router.push('/my')}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-50 text-primary-600 rounded-lg font-medium hover:bg-primary-100 transition-colors"
-              >
-                <span className="text-lg">👤</span>
-                <span className="hidden sm:inline">MY</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => router.push('/login')}
-                className="px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                로그인
-              </button>
-            )}
-          </div>
         </div>
       </div>
     </header>
