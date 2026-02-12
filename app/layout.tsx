@@ -92,16 +92,16 @@ export default function RootLayout({
     <html lang="ko">
       <head>
         <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3512251263610351"
+          crossOrigin="anonymous"
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="antialiased bg-warm-50 flex flex-col min-h-screen">
-        <Script
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3512251263610351"
-          crossOrigin="anonymous"
-          strategy="beforeInteractive"
-        />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-7LK6RWFPHP"
           strategy="afterInteractive"
