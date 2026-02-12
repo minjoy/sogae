@@ -1169,26 +1169,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     }
   }, [data, drawFaceMesh, showRevealAnimation]);
 
-  // 쿠팡 파트너스 광고 초기화
-  useEffect(() => {
-    if (!showRevealAnimation && data) {
-      const container = document.getElementById('coupang-ad-container');
-      if (!container || container.querySelector('iframe')) return;
-
-      // 쿠팡 파트너스 스크립트 로드
-      const loadScript = document.createElement('script');
-      loadScript.src = 'https://ads-partners.coupang.com/g.js';
-      loadScript.async = true;
-      document.head.appendChild(loadScript);
-
-      loadScript.onload = () => {
-        const adScript = document.createElement('script');
-        adScript.textContent = `new PartnersCoupang.G({"id":964752,"template":"carousel","trackingCode":"AF2407547","width":"320","height":"100","tsource":""});`;
-        container.appendChild(adScript);
-      };
-    }
-  }, [showRevealAnimation, data]);
-
   // 공유 카드 생성
   const generateShareCard = useCallback(async () => {
     if (!shareCanvasRef.current || !data) return;
@@ -2145,8 +2125,15 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </div>
 
           {/* 쿠팡 파트너스 영역 */}
-          <div className="bg-black/20 rounded-xl p-4 min-h-[100px] flex items-center justify-center overflow-hidden">
-            <div id="coupang-ad-container" style={{ maxWidth: '100%' }} />
+          <div className="bg-black/20 rounded-xl p-4 flex items-center justify-center overflow-hidden">
+            <iframe
+              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=&width=320&height=100&tsource="
+              width="320"
+              height="100"
+              frameBorder="0"
+              scrolling="no"
+              referrerPolicy="unsafe-url"
+            />
           </div>
 
           <p className="text-center text-white/40 text-[10px] mt-3">
