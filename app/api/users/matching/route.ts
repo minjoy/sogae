@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
         nickname: true,
         gender: true,
         personalityCode: true,
-        isDummy: true,
       },
       take: 20, // 최대 20명
       orderBy: {
@@ -39,15 +38,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // 실제 사용자를 먼저 보여주고, 그 다음 더미 사용자
-    const sortedUsers = users.sort((a: typeof users[number], b: typeof users[number]) => {
-      if (a.isDummy === b.isDummy) return 0;
-      return a.isDummy ? 1 : -1;
-    });
-
     return NextResponse.json({
       success: true,
-      users: sortedUsers.map((user: typeof users[number]) => ({
+      users: users.map((user) => ({
         id: user.id,
         nickname: user.nickname,
         gender: user.gender,
