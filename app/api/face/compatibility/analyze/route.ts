@@ -172,30 +172,33 @@ export async function POST(request: NextRequest) {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     // DB에 저장
+    // JSON 직렬화로 Prisma 타입 호환성 확보
+    const analysisData = JSON.parse(JSON.stringify({
+      ...compatibility,
+      maleAnalysis: {
+        score: maleAnalysis.score,
+        categories: maleAnalysis.categories,
+        traits: maleAnalysis.traits || null,
+        gender: maleAnalysis.gender,
+      },
+      femaleAnalysis: {
+        score: femaleAnalysis.score,
+        categories: femaleAnalysis.categories,
+        traits: femaleAnalysis.traits || null,
+        gender: femaleAnalysis.gender,
+      },
+      maleImage: male.imageData,
+      femaleImage: female.imageData,
+    }));
+
     await prisma.faceCompatibility.create({
       data: {
         shareCode,
-        maleAnalysisId: '', // 개별 분석은 저장하지 않음
+        maleAnalysisId: '',
         femaleAnalysisId: '',
         compatibilityScore: compatibility.totalScore,
-        categoryScores: compatibility.categoryScores,
-        analysis: {
-          ...compatibility,
-          maleAnalysis: {
-            score: maleAnalysis.score,
-            categories: maleAnalysis.categories,
-            traits: maleAnalysis.traits,
-            gender: maleAnalysis.gender,
-          },
-          femaleAnalysis: {
-            score: femaleAnalysis.score,
-            categories: femaleAnalysis.categories,
-            traits: femaleAnalysis.traits,
-            gender: femaleAnalysis.gender,
-          },
-          maleImage: male.imageData,
-          femaleImage: female.imageData,
-        },
+        categoryScores: compatibility.categoryScores as Record<string, number>,
+        analysis: analysisData,
         isPaid: false,
         expiresAt,
       },
