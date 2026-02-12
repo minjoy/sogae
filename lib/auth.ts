@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.KAKAO_CLIENT_SECRET || '',
       authorization: {
         params: {
-          scope: 'account_email gender birthyear',
+          scope: 'gender birthyear',
         },
       },
     }),
