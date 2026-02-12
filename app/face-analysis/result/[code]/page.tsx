@@ -2115,13 +2115,16 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             </p>
           </div>
 
-          {/* 구글 애드센스 영역 */}
-          <div className="bg-black/20 rounded-xl p-4 mb-3 min-h-[100px] flex items-center justify-center">
-            {/* Google AdSense 코드가 들어갈 자리 */}
-            <div className="text-white/30 text-xs text-center">
-              <p>광고 영역</p>
-              <p className="text-[10px] mt-1">(Google AdSense)</p>
-            </div>
+          {/* 광고 영역 1 */}
+          <div className="rounded-xl overflow-hidden mb-3">
+            <iframe
+              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=&width=684&height=100&tsource="
+              width="684"
+              height="100"
+              frameBorder="0"
+              scrolling="no"
+              referrerPolicy="unsafe-url"
+            />
           </div>
 
           {/* 쿠팡 파트너스 영역 */}
