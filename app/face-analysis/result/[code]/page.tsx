@@ -1767,10 +1767,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </p>
         </div>
 
-        {/* 쿠팡 파트너스 광고 배너 */}
-        <div className="mb-6 overflow-hidden rounded-xl flex justify-center">
-          <div id="coupang-ad-container" style={{ maxWidth: '100%', overflow: 'hidden' }} /></div>
-
         {/* 레이더 차트 (육각형 대신 사각형 - 4개 카테고리) */}
         <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
@@ -2149,12 +2145,8 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </div>
 
           {/* 쿠팡 파트너스 영역 */}
-          <div className="bg-black/20 rounded-xl p-4 min-h-[80px] flex items-center justify-center">
-            {/* 쿠팡 파트너스 배너 코드가 들어갈 자리 */}
-            <div className="text-white/30 text-xs text-center">
-              <p>광고 영역</p>
-              <p className="text-[10px] mt-1">(쿠팡 파트너스)</p>
-            </div>
+          <div className="bg-black/20 rounded-xl p-4 min-h-[100px] flex items-center justify-center overflow-hidden">
+            <div id="coupang-ad-container" style={{ maxWidth: '100%' }} />
           </div>
 
           <p className="text-center text-white/40 text-[10px] mt-3">
