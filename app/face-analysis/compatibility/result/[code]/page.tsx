@@ -318,7 +318,7 @@ export default function CompatibilityResultPage({
                 <span className="text-4xl">✨</span>
               </div>
               <p className="text-white/90 text-center leading-relaxed italic">
-                "{result.destinyMessage}"
+                &ldquo;{result.destinyMessage}&rdquo;
               </p>
             </div>
           </div>
