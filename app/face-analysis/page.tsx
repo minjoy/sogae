@@ -130,6 +130,7 @@ export default function FaceAnalysisPage() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [analysisStep, setAnalysisStep] = useState<number>(0);
   const [showAnalysisAnimation, setShowAnalysisAnimation] = useState(false);
+  const [showConsentWarning, setShowConsentWarning] = useState(false);
 
   // 분석 단계 정보
   const analysisSteps = [
@@ -699,9 +700,12 @@ export default function FaceAnalysisPage() {
           {/* 헤더 */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">🔮</div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">AI 관상 분석</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">관상 풀이</h1>
             <p className="text-gray-600">
-              얼굴 특징을 분석하여 성격과 운세를 알려드려요
+              다년간의 관상학 연구와 고전 문헌을 바탕으로
+            </p>
+            <p className="text-gray-600">
+              얼굴 특징에 담긴 의미를 풀어드려요
             </p>
           </div>
 
@@ -735,17 +739,24 @@ export default function FaceAnalysisPage() {
           </div>
 
           {/* 개인정보 동의 */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <div className={`bg-white rounded-2xl shadow-lg p-6 mb-6 transition-all duration-300 ${
+            showConsentWarning ? 'ring-2 ring-red-500 ring-offset-2' : ''
+          }`}>
             <div className="flex items-start gap-3">
               <input
                 type="checkbox"
                 id="privacy-consent"
                 checked={privacyConsent}
-                onChange={(e) => setPrivacyConsent(e.target.checked)}
-                className="mt-1 w-5 h-5 rounded border-gray-300 text-amber-500 focus:ring-amber-500"
+                onChange={(e) => {
+                  setPrivacyConsent(e.target.checked);
+                  if (e.target.checked) setShowConsentWarning(false);
+                }}
+                className={`mt-1 w-5 h-5 rounded border-gray-300 text-amber-500 focus:ring-amber-500 ${
+                  showConsentWarning ? 'border-red-500' : ''
+                }`}
               />
               <label htmlFor="privacy-consent" className="text-sm text-gray-700 leading-relaxed">
-                <span className="font-medium text-gray-900">[필수]</span> 얼굴 분석을 위한{' '}
+                <span className={`font-medium ${showConsentWarning ? 'text-red-600' : 'text-gray-900'}`}>[필수]</span> 얼굴 분석을 위한{' '}
                 <button
                   type="button"
                   onClick={() => setShowPrivacyModal(true)}
@@ -756,9 +767,14 @@ export default function FaceAnalysisPage() {
                 에 동의합니다.
               </label>
             </div>
+            {showConsentWarning && (
+              <p className="mt-2 text-sm text-red-600 font-medium animate-pulse">
+                분석을 시작하려면 개인정보 수집에 동의해주세요
+              </p>
+            )}
             <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-500 space-y-1">
               <p>• 수집 항목: 얼굴 이미지, 성별 정보</p>
-              <p>• 이용 목적: AI 관상 분석 서비스 제공</p>
+              <p>• 이용 목적: 관상 분석 서비스 제공</p>
               <p>• 보유 기간: 분석 후 7일 이내 자동 삭제</p>
             </div>
           </div>
@@ -768,16 +784,28 @@ export default function FaceAnalysisPage() {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">분석 방법 선택</h3>
             <div className="space-y-4">
               <button
-                onClick={() => setMode('camera')}
-                disabled={!faceMeshLoaded || !privacyConsent}
+                onClick={() => {
+                  if (!privacyConsent) {
+                    setShowConsentWarning(true);
+                    return;
+                  }
+                  setMode('camera');
+                }}
+                disabled={!faceMeshLoaded}
                 className="w-full py-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-2xl block mb-1">📸</span>
                 카메라로 촬영하기
               </button>
               <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={!faceMeshLoaded || !privacyConsent}
+                onClick={() => {
+                  if (!privacyConsent) {
+                    setShowConsentWarning(true);
+                    return;
+                  }
+                  fileInputRef.current?.click();
+                }}
+                disabled={!faceMeshLoaded}
                 className="w-full py-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-2xl block mb-1">🖼️</span>
@@ -790,11 +818,6 @@ export default function FaceAnalysisPage() {
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              {!privacyConsent && (
-                <p className="text-center text-sm text-amber-600">
-                  분석을 시작하려면 개인정보 수집에 동의해주세요
-                </p>
-              )}
             </div>
           </div>
 
@@ -940,7 +963,7 @@ export default function FaceAnalysisPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">2. 개인정보 수집 및 이용 목적</h3>
-                  <p>• AI 기반 관상 분석 서비스 제공</p>
+                  <p>• 관상 분석 서비스 제공</p>
                   <p>• 분석 결과 생성 및 공유 링크 제공</p>
                 </div>
                 <div>
@@ -960,7 +983,7 @@ export default function FaceAnalysisPage() {
                 </div>
                 <div className="bg-amber-50 p-4 rounded-lg">
                   <p className="text-amber-800 font-medium">⚠️ 주의사항</p>
-                  <p className="text-amber-700 mt-1">본 서비스는 재미 목적의 AI 관상 분석이며, 실제 성격이나 운세를 정확히 예측하지 않습니다. 결과는 참고용으로만 활용해주세요.</p>
+                  <p className="text-amber-700 mt-1">본 서비스는 전통 관상학 문헌을 참고한 재미 목적의 풀이이며, 실제 성격이나 운세를 정확히 예측하지 않습니다. 결과는 참고용으로만 활용해주세요.</p>
                 </div>
               </div>
               <div className="p-6 border-t border-gray-100 flex gap-3">
