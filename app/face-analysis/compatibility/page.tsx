@@ -378,7 +378,7 @@ export default function CompatibilityPage() {
             {/* 사진 업로드 영역 */}
             <div
               onClick={() => !isLoading && fileInputRef.current?.click()}
-              className={`aspect-square rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center ${
+              className={`h-40 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center ${
                 isLoading
                   ? 'border-blue-500/50 bg-blue-500/10'
                   : 'border-white/30 hover:border-blue-400 hover:bg-blue-500/10'
@@ -386,14 +386,14 @@ export default function CompatibilityPage() {
             >
               {isLoading ? (
                 <div className="text-center">
-                  <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-white/70">얼굴 인식 중...</p>
+                  <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-white/70 text-sm">얼굴 인식 중...</p>
                 </div>
               ) : (
                 <>
-                  <div className="text-6xl mb-4">📸</div>
-                  <p className="text-white font-medium mb-2">사진 선택하기</p>
-                  <p className="text-white/50 text-sm">탭하여 갤러리에서 선택</p>
+                  <div className="text-4xl mb-2">📸</div>
+                  <p className="text-white font-medium text-sm mb-1">사진 선택하기</p>
+                  <p className="text-white/50 text-xs">탭하여 갤러리에서 선택</p>
                 </>
               )}
             </div>
@@ -462,7 +462,7 @@ export default function CompatibilityPage() {
             {/* 사진 업로드 영역 */}
             <div
               onClick={() => !isLoading && fileInputRef.current?.click()}
-              className={`aspect-square rounded-3xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center ${
+              className={`h-40 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center ${
                 isLoading
                   ? 'border-pink-500/50 bg-pink-500/10'
                   : 'border-white/30 hover:border-pink-400 hover:bg-pink-500/10'
@@ -470,14 +470,14 @@ export default function CompatibilityPage() {
             >
               {isLoading ? (
                 <div className="text-center">
-                  <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-white/70">얼굴 인식 중...</p>
+                  <div className="w-10 h-10 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-white/70 text-sm">얼굴 인식 중...</p>
                 </div>
               ) : (
                 <>
-                  <div className="text-6xl mb-4">📸</div>
-                  <p className="text-white font-medium mb-2">사진 선택하기</p>
-                  <p className="text-white/50 text-sm">탭하여 갤러리에서 선택</p>
+                  <div className="text-4xl mb-2">📸</div>
+                  <p className="text-white font-medium text-sm mb-1">사진 선택하기</p>
+                  <p className="text-white/50 text-xs">탭하여 갤러리에서 선택</p>
                 </>
               )}
             </div>
