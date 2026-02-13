@@ -323,30 +323,35 @@ function generateDeterministicOneLiner(
 }
 
 // 점수에 따른 등급 색상 (얼굴력 : n점 형식으로 표시)
-function getScoreGrade(score: number): { color: string; bgGradient: string; tier: string } {
+function getScoreGrade(score: number): { color: string; bgGradient: string; cssGradient: string; tier: string } {
   if (score >= 85) return {
     color: '#FFD700',
     bgGradient: 'from-amber-900 via-yellow-800 to-amber-900',
+    cssGradient: 'linear-gradient(135deg, #78350f 0%, #854d0e 50%, #78350f 100%)',
     tier: 'legendary'
   };
   if (score >= 70) return {
     color: '#FF6B6B',
     bgGradient: 'from-rose-900 via-pink-800 to-rose-900',
+    cssGradient: 'linear-gradient(135deg, #881337 0%, #9d174d 50%, #881337 100%)',
     tier: 'epic'
   };
   if (score >= 55) return {
     color: '#4ECDC4',
     bgGradient: 'from-teal-900 via-cyan-800 to-teal-900',
+    cssGradient: 'linear-gradient(135deg, #134e4a 0%, #155e75 50%, #134e4a 100%)',
     tier: 'rare'
   };
   if (score >= 40) return {
     color: '#95E1D3',
     bgGradient: 'from-emerald-900 via-green-800 to-emerald-900',
+    cssGradient: 'linear-gradient(135deg, #064e3b 0%, #166534 50%, #064e3b 100%)',
     tier: 'uncommon'
   };
   return {
     color: '#A8A8A8',
     bgGradient: 'from-gray-800 via-slate-700 to-gray-800',
+    cssGradient: 'linear-gradient(135deg, #1f2937 0%, #334155 50%, #1f2937 100%)',
     tier: 'common'
   };
 }
@@ -1559,7 +1564,14 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     const isHighScore = data.score >= 80;
 
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center z-50 overflow-hidden" style={{ minHeight: '-webkit-fill-available' }}>
+      <div
+        className="fixed inset-0 flex items-center justify-center z-50 overflow-hidden min-h-screen"
+        style={{
+          background: scoreGrade.cssGradient,
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
         {/* 배경 파티클 (높은 점수만) */}
         {isHighScore && (
           <div className="absolute inset-0 overflow-hidden">
