@@ -342,7 +342,14 @@ export default function CompatibilityPage() {
 
             {/* 시작 버튼 */}
             <button
-              onClick={() => privacyConsent ? setStep('male') : setError('개인정보 수집에 동의해주세요.')}
+              onClick={() => {
+                if (privacyConsent) {
+                  setError(null);
+                  setStep('male');
+                } else {
+                  setError('개인정보 수집에 동의해주세요.');
+                }
+              }}
               disabled={!faceMeshLoaded}
               className={`w-full py-4 rounded-2xl font-bold text-lg transition-all ${
                 faceMeshLoaded && privacyConsent
