@@ -390,6 +390,49 @@ export default function FaceAnalysisPage() {
   ) => {
     setIsLoading(true);
     setError(null);
+
+    // ===== 애니메이션 전 사전 검증 (얼굴 크기) =====
+    if (faceLandmarks && faceLandmarks.length > 0) {
+      let minX = 1, maxX = 0, minY = 1, maxY = 0;
+      faceLandmarks.forEach(lm => {
+        minX = Math.min(minX, lm.x);
+        maxX = Math.max(maxX, lm.x);
+        minY = Math.min(minY, lm.y);
+        maxY = Math.max(maxY, lm.y);
+      });
+
+      const faceWidthPixels = (maxX - minX) * imageWidth;
+      const faceHeightPixels = (maxY - minY) * imageHeight;
+      const facePixels = Math.min(faceWidthPixels, faceHeightPixels);
+
+      // 얼굴이 80픽셀 미만이면 분석 불가
+      if (facePixels < 80) {
+        alert(`⚠️ 얼굴이 너무 작습니다\n\n얼굴 크기: ${Math.round(facePixels)}px\n\n카메라에 더 가까이 다가가서 다시 촬영해주세요.`);
+        setError(`얼굴이 너무 작게 찍혔습니다 (${Math.round(facePixels)}px). 카메라에 가까이 다가가서 다시 촬영해주세요.`);
+        setIsLoading(false);
+        return;
+      }
+
+      // 얼굴이 화면 끝에 걸쳐있는지 확인
+      if (minX < 0.02 || maxX > 0.98) {
+        const shouldContinue = confirm(`📌 얼굴 일부가 화면 밖으로 잘렸을 수 있습니다.\n\n계속 진행하시겠습니까?`);
+        if (!shouldContinue) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // 80~150px는 경고 (진행 가능)
+      if (facePixels < 150) {
+        const shouldContinue = confirm(`📌 얼굴이 작게 찍혔습니다 (${Math.round(facePixels)}px)\n\n가까이 촬영하면 더 정확한 분석이 가능합니다.\n\n계속 진행하시겠습니까?`);
+        if (!shouldContinue) {
+          setIsLoading(false);
+          return;
+        }
+      }
+    }
+
+    // ===== 사전 검증 통과 후 애니메이션 시작 =====
     setShowAnalysisAnimation(true);
     setAnalysisStep(0);
 
