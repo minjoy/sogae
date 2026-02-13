@@ -2080,7 +2080,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
               <img
                 src={shareCardUrl}
                 alt="공유 카드"
-                className="w-full rounded-xl"
+                className="w-full rounded-xl border border-white/30"
               />
               <div className="grid grid-cols-2 gap-3">
                 <button
