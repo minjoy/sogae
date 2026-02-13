@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mytype.site'
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mytype.co.kr'
 
 export const metadata: Metadata = {
   title: '궁합 분석 결과 | 언연이',

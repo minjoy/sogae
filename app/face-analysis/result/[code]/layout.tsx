@@ -100,7 +100,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const analysis = result.analysis as Record<string, unknown>
     const oneLiner = generateDeterministicOneLiner(analysis)
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mytype.site'
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mytype.co.kr'
 
     return {
       title: '친구의 관상을 구경하세요',
