@@ -311,6 +311,35 @@ export default function CompatibilityPage() {
               </label>
             </div>
 
+            {/* 후원 안내 */}
+            <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur rounded-2xl p-5 border border-amber-500/20">
+              <div className="text-center space-y-3">
+                <div className="text-3xl">☕️</div>
+                <div>
+                  <p className="text-white/90 font-medium text-sm leading-relaxed">
+                    이 서비스는 광고 없이 무료로 운영되고 있어요
+                  </p>
+                  <p className="text-white/60 text-xs mt-2 leading-relaxed">
+                    혼자서 밤늦게까지 만든 작은 서비스입니다.<br/>
+                    재미있게 즐기셨다면, 개발자에게<br/>
+                    따뜻한 커피 한 잔을 선물해주세요 🙏
+                  </p>
+                </div>
+                <a
+                  href="https://litt.ly/miniface"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/20"
+                >
+                  <span>☕️</span>
+                  <span>커피 한 잔 후원하기</span>
+                </a>
+                <p className="text-white/40 text-xs">
+                  작은 응원이 큰 힘이 됩니다
+                </p>
+              </div>
+            </div>
+
             {/* 시작 버튼 */}
             <button
               onClick={() => privacyConsent ? setStep('male') : setError('개인정보 수집에 동의해주세요.')}

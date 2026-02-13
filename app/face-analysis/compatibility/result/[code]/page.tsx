@@ -399,6 +399,32 @@ export default function CompatibilityResultPage({
           {copied ? '✅ 링크 복사됨!' : '📋 결과 링크 공유하기'}
         </button>
 
+        {/* 후원 안내 */}
+        <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur rounded-2xl p-5 border border-amber-500/20">
+          <div className="text-center space-y-3">
+            <div className="text-3xl">💝</div>
+            <div>
+              <p className="text-white/90 font-medium text-sm leading-relaxed">
+                궁합 분석이 재미있으셨나요?
+              </p>
+              <p className="text-white/60 text-xs mt-2 leading-relaxed">
+                이 서비스는 한 사람이 정성껏 만들어<br/>
+                무료로 운영하고 있습니다.<br/>
+                작은 후원이 큰 힘이 됩니다 🙏
+              </p>
+            </div>
+            <a
+              href="https://litt.ly/miniface"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/20"
+            >
+              <span>☕️</span>
+              <span>개발자에게 커피 사주기</span>
+            </a>
+          </div>
+        </div>
+
         <p className="text-white/30 text-xs text-center">
           이 결과는 7일 후 자동으로 삭제됩니다
         </p>
