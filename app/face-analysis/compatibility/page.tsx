@@ -46,6 +46,7 @@ export default function CompatibilityPage() {
   const [faceMeshLoaded, setFaceMeshLoaded] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [showDonationPopup, setShowDonationPopup] = useState(false);
 
   const faceMeshRef = useRef<MediaPipeFaceMesh | null>(null);
 
@@ -239,6 +240,63 @@ export default function CompatibilityPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900">
+      {/* 후원 팝업 */}
+      {showDonationPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => {
+              setShowDonationPopup(false);
+              setStep('male');
+            }}
+          />
+          <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 max-w-sm w-full border border-white/10 shadow-2xl">
+            <button
+              onClick={() => {
+                setShowDonationPopup(false);
+                setStep('male');
+              }}
+              className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+            <div className="text-center space-y-4">
+              <div className="text-4xl">☕️</div>
+              <div>
+                <p className="text-white/90 font-medium text-sm leading-relaxed">
+                  이 서비스는 무료로 운영되고 있어요
+                </p>
+                <p className="text-white/60 text-xs mt-2 leading-relaxed">
+                  혼자서 밤늦게까지 만든 작은 서비스입니다.<br/>
+                  재미있게 즐기셨다면, 개발자에게<br/>
+                  따뜻한 커피 한 잔을 선물해주세요 🙏
+                </p>
+              </div>
+              <a
+                href="https://litt.ly/miniface"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/20"
+              >
+                <span>☕️</span>
+                <span>커피 한 잔 후원하기</span>
+              </a>
+              <p className="text-white/40 text-xs">
+                작은 응원이 큰 힘이 됩니다
+              </p>
+              <button
+                onClick={() => {
+                  setShowDonationPopup(false);
+                  setStep('male');
+                }}
+                className="w-full py-3 bg-white/10 text-white/70 rounded-xl hover:bg-white/20 transition-colors text-sm"
+              >
+                다음에 할게요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* 헤더 */}
       <div className="bg-black/20 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
@@ -311,41 +369,12 @@ export default function CompatibilityPage() {
               </label>
             </div>
 
-            {/* 후원 안내 */}
-            <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur rounded-2xl p-5 border border-amber-500/20">
-              <div className="text-center space-y-3">
-                <div className="text-3xl">☕️</div>
-                <div>
-                  <p className="text-white/90 font-medium text-sm leading-relaxed">
-                    이 서비스는 광고 없이 무료로 운영되고 있어요
-                  </p>
-                  <p className="text-white/60 text-xs mt-2 leading-relaxed">
-                    혼자서 밤늦게까지 만든 작은 서비스입니다.<br/>
-                    재미있게 즐기셨다면, 개발자에게<br/>
-                    따뜻한 커피 한 잔을 선물해주세요 🙏
-                  </p>
-                </div>
-                <a
-                  href="https://litt.ly/miniface"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/20"
-                >
-                  <span>☕️</span>
-                  <span>커피 한 잔 후원하기</span>
-                </a>
-                <p className="text-white/40 text-xs">
-                  작은 응원이 큰 힘이 됩니다
-                </p>
-              </div>
-            </div>
-
             {/* 시작 버튼 */}
             <button
               onClick={() => {
                 if (privacyConsent) {
                   setError(null);
-                  setStep('male');
+                  setShowDonationPopup(true);
                 } else {
                   setError('개인정보 수집에 동의해주세요.');
                 }
