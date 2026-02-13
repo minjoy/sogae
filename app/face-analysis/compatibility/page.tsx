@@ -245,17 +245,11 @@ export default function CompatibilityPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => {
-              setShowDonationPopup(false);
-              setStep('male');
-            }}
+            onClick={() => setShowDonationPopup(false)}
           />
           <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 max-w-sm w-full border border-white/10 shadow-2xl">
             <button
-              onClick={() => {
-                setShowDonationPopup(false);
-                setStep('male');
-              }}
+              onClick={() => setShowDonationPopup(false)}
               className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
             >
               ✕
@@ -285,10 +279,7 @@ export default function CompatibilityPage() {
                 작은 응원이 큰 힘이 됩니다
               </p>
               <button
-                onClick={() => {
-                  setShowDonationPopup(false);
-                  setStep('male');
-                }}
+                onClick={() => setShowDonationPopup(false)}
                 className="w-full py-3 bg-white/10 text-white/70 rounded-xl hover:bg-white/20 transition-colors text-sm"
               >
                 다음에 할게요
@@ -374,6 +365,7 @@ export default function CompatibilityPage() {
               onClick={() => {
                 if (privacyConsent) {
                   setError(null);
+                  setStep('male');
                   setShowDonationPopup(true);
                 } else {
                   setError('개인정보 수집에 동의해주세요.');
