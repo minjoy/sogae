@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     url: `${baseUrl}/face-analysis`,
     images: [
       {
-        url: `${baseUrl}/D70AA339-A120-4BA2-8ABD-EB70D2D0B791.png`,
+        url: `${baseUrl}/og-image-optimized.png`,
         width: 1200,
         height: 630,
         alt: '관상 분석',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '경험 기반 관상 풀이 | 언연이',
     description: '다년간의 관상학 연구와 고전 문헌을 바탕으로 얼굴 특징에 담긴 의미를 풀어드려요.',
-    images: [`${baseUrl}/D70AA339-A120-4BA2-8ABD-EB70D2D0B791.png`],
+    images: [`${baseUrl}/og-image-optimized.png`],
   },
 }
 

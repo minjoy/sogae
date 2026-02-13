@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import FaceAnalysisToggle from '@/components/FaceAnalysisToggle';
 
 // MediaPipe 타입 선언
 declare global {
@@ -303,6 +304,9 @@ export default function CompatibilityPage() {
       </div>
 
       <div className="max-w-md mx-auto px-4 py-6">
+        {/* 페이지 전환 토글 */}
+        {step === 'intro' && <FaceAnalysisToggle variant="dark" />}
+
         {/* 소개 화면 */}
         {step === 'intro' && (
           <div className="space-y-6">

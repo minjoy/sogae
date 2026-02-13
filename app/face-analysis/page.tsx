@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import FaceAnalysisToggle from '@/components/FaceAnalysisToggle';
 
 // MediaPipe 타입 선언
 declare global {
@@ -704,6 +705,9 @@ export default function FaceAnalysisPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
         <div className="container mx-auto px-4 py-8 max-w-lg">
+          {/* 페이지 전환 토글 */}
+          <FaceAnalysisToggle variant="light" />
+
           {/* 헤더 */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">🔮</div>

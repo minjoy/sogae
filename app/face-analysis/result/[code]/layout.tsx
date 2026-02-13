@@ -112,7 +112,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: `${baseUrl}/face-analysis/result/${code}`,
         images: [
           {
-            url: `${baseUrl}/D70AA339-A120-4BA2-8ABD-EB70D2D0B791.png`,
+            url: `${baseUrl}/og-image-optimized.png`,
             width: 1200,
             height: 630,
             alt: '관상 분석 결과',
@@ -123,7 +123,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         card: 'summary_large_image',
         title: '친구의 관상을 구경하세요',
         description: oneLiner,
-        images: [`${baseUrl}/D70AA339-A120-4BA2-8ABD-EB70D2D0B791.png`],
+        images: [`${baseUrl}/og-image-optimized.png`],
       },
     }
   } catch (error) {
