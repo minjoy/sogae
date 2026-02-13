@@ -21,29 +21,27 @@ export default function FaceAnalysisToggle({ variant = 'dark' }: FaceAnalysisTog
     : 'text-white/70 hover:text-white';
 
   return (
-    <div className="flex justify-center mb-6">
-      <div className={`inline-flex ${bgClass} rounded-full p-1 border`}>
+    <div className="flex justify-start mb-4">
+      <div className={`inline-flex ${bgClass} rounded-full p-0.5 border`}>
         <button
           onClick={() => router.push('/face-analysis')}
-          className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
             !isCompatibility
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg'
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow'
               : inactiveClass
           }`}
         >
-          <span className="mr-1.5">👤</span>
-          한사람 관상
+          한사람
         </button>
         <button
           onClick={() => router.push('/face-analysis/compatibility')}
-          className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
             isCompatibility
-              ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+              ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow'
               : inactiveClass
           }`}
         >
-          <span className="mr-1.5">👥</span>
-          두사람 궁합
+          두사람
         </button>
       </div>
     </div>
