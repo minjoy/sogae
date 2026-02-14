@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeFace, convertVisionLandmarks } from '@/lib/face-analysis';
 import { analyzeCompatibility } from '@/lib/compatibility-analysis';
-import { prisma } from '@/lib/prisma';
+import { prismaAny as prisma } from '@/lib/prisma';
 
 // MediaPipe 랜드마크를 Google Vision 형식으로 변환
 function convertMediaPipeLandmarks(

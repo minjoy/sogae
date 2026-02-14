@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prismaAny as prisma } from '@/lib/prisma';
 
 const ADMIN_PASSWORD = 'care1234@';
 
@@ -34,23 +34,16 @@ export async function POST(request: Request) {
       },
     });
 
-    const formattedUsers = users.map((user: {
-      id: string;
-      email: string | null;
-      nickname: string;
-      gender: string | null;
-      birthYear: string | null;
-      createdAt: Date;
-      _count: { testResults: number; unifiedCards: number };
-    }) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formattedUsers = (users as any[]).map((user) => ({
       id: user.id,
       email: user.email,
       nickname: user.nickname,
       gender: user.gender,
       birthYear: user.birthYear,
       createdAt: user.createdAt,
-      testCount: user._count.testResults,
-      cardCount: user._count.unifiedCards,
+      testCount: user._count?.testResults ?? 0,
+      cardCount: user._count?.unifiedCards ?? 0,
     }));
 
     return NextResponse.json({

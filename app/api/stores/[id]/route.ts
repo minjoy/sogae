@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prismaAny as prisma } from '@/lib/prisma';
 
 // GET: 매장 상세 조회 & 클릭 수 증가
 export async function GET(

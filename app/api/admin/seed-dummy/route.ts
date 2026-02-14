@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prismaAny as prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
 
 // 한국 이름 생성용 데이터
@@ -73,8 +73,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 타입 캐스팅: Prisma 클라이언트가 재생성되기 전까지 임시 처리
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await prisma.user.createMany({
-      data: users,
+      data: users as any,
       skipDuplicates: true,
     });
 
@@ -103,6 +105,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // 타입 캐스팅: Prisma 클라이언트가 재생성되기 전까지 임시 처리
     const result = await prisma.user.deleteMany({
       where: { kakaoId: { startsWith: 'dummy_' } },
     });

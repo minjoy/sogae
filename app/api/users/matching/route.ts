@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prismaAny as prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      users: users.map((user) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      users: users.map((user: any) => ({
         id: user.id,
         nickname: user.nickname,
         gender: user.gender,

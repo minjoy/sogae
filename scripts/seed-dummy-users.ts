@@ -69,8 +69,9 @@ export async function seedDummyUsers(count: number = 50) {
   }
 
   // 배치로 생성
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await prisma.user.createMany({
-    data: users,
+    data: users as any,
     skipDuplicates: true,
   });
 
@@ -80,8 +81,9 @@ export async function seedDummyUsers(count: number = 50) {
 
 // 더미 사용자 삭제
 export async function deleteDummyUsers() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = await prisma.user.deleteMany({
-    where: { kakaoId: { startsWith: 'dummy_' } },
+    where: { kakaoId: { startsWith: 'dummy_' } } as any,
   });
   console.log(`더미 사용자 ${result.count}명 삭제 완료!`);
   return result;

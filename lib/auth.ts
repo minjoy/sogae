@@ -1,6 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import KakaoProvider from 'next-auth/providers/kakao';
-import { prisma } from '@/lib/prisma';
+import { prismaAny as prisma } from '@/lib/prisma';
 
 // 현재 연도 기준 성인 판별 (20세 이상)
 function isAdult(birthYear: string | undefined): boolean {
