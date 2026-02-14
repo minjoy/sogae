@@ -102,7 +102,7 @@ export default function CompatibilityResultPage({
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900">
       {/* 헤더 */}
       <div className="bg-black/20 backdrop-blur-sm border-b border-white/10 sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => router.push('/face-analysis')}
             className="text-white/60 hover:text-white transition-colors"
@@ -119,7 +119,7 @@ export default function CompatibilityResultPage({
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* 메인 점수 카드 */}
         <div className={`bg-gradient-to-br ${getScoreColor(result.totalScore)} rounded-3xl p-6 text-center shadow-2xl`}>
           {/* 두 사람 사진 */}
@@ -419,8 +419,8 @@ export default function CompatibilityResultPage({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/20"
             >
-              <span>☕️</span>
-              <span>개발자에게 커피 사주기</span>
+              <span>☕</span>
+              <span>개발자에게 믹스커피 사주기</span>
             </a>
           </div>
         </div>

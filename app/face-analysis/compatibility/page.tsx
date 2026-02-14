@@ -256,7 +256,7 @@ export default function CompatibilityPage() {
               ✕
             </button>
             <div className="text-center space-y-4">
-              <div className="text-4xl">☕️</div>
+              <div className="text-4xl">☕</div>
               <div>
                 <p className="text-white/90 font-medium text-sm leading-relaxed">
                   이 서비스는 무료로 운영되고 있어요
@@ -264,7 +264,7 @@ export default function CompatibilityPage() {
                 <p className="text-white/60 text-xs mt-2 leading-relaxed">
                   혼자서 밤늦게까지 만든 작은 서비스입니다.<br/>
                   재미있게 즐기셨다면, 개발자에게<br/>
-                  따뜻한 커피 한 잔을 선물해주세요 🙏
+                  따뜻한 믹스커피 한 잔을 선물해주세요 🙏
                 </p>
               </div>
               <a
@@ -273,8 +273,8 @@ export default function CompatibilityPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/20"
               >
-                <span>☕️</span>
-                <span>커피 한 잔 후원하기</span>
+                <span>☕</span>
+                <span>믹스커피 한 잔 후원하기</span>
               </a>
               <p className="text-white/40 text-xs">
                 작은 응원이 큰 힘이 됩니다
@@ -291,7 +291,7 @@ export default function CompatibilityPage() {
       )}
       {/* 헤더 */}
       <div className="bg-black/20 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => router.back()}
             className="text-white/60 hover:text-white transition-colors"
@@ -303,7 +303,7 @@ export default function CompatibilityPage() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-6">
+      <div className="max-w-lg mx-auto px-4 py-6">
         {/* 페이지 전환 토글 */}
         {step === 'intro' && <FaceAnalysisToggle variant="dark" />}
 
