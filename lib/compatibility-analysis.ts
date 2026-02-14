@@ -242,6 +242,18 @@ function createDefaultTraits(): PhysiognomyTraits {
   };
 }
 
+/**
+ * 점수 스프레딩 함수 - 중간값을 극단으로 분산시킴
+ * 50점 근처의 점수를 더 넓게 분포시켜 편차를 증가시킴
+ */
+function spreadScore(score: number): number {
+  // 50을 기준으로 점수를 더 극단적으로 분산
+  const normalized = (score - 50) / 50; // -1 ~ 1 범위
+  // 시그모이드 유사 함수로 극단값 강조
+  const spread = Math.sign(normalized) * Math.pow(Math.abs(normalized), 0.7);
+  return 50 + spread * 50;
+}
+
 function calculateTraitCompatibility(
   maleTraits: number[],
   femaleTraits: number[],
@@ -254,22 +266,31 @@ function calculateTraitCompatibility(
     const mNorm = maleTraits[i] / maxValues[i];
     const fNorm = femaleTraits[i] / maxValues[i];
 
-    // 유사성 점수 (차이가 적을수록 높음)
-    const similarity = 1 - Math.abs(mNorm - fNorm);
+    // 차이 계산 (0 ~ 1 범위)
+    const diff = Math.abs(mNorm - fNorm);
 
-    // 평균 수준 점수 (둘 다 높을수록 좋음)
-    const level = (mNorm + fNorm) / 2;
+    // 유사성 점수 - 차이에 대한 페널티를 강화 (제곱 적용)
+    const similarity = Math.pow(1 - diff, 1.5);
 
-    // 보완성 점수 (한쪽이 부족해도 다른 쪽이 보완하면 OK)
-    const complement = Math.max(mNorm, fNorm);
+    // 평균 수준 점수 - 둘 다 높을수록 좋음 (제곱으로 극단값 강조)
+    const level = Math.pow((mNorm + fNorm) / 2, 1.3);
 
-    // 가중 평균
-    const score = similarity * 0.4 + level * 0.3 + complement * 0.3;
-    totalScore += score * maxValues[i];
+    // 조화 점수 - 둘의 곱으로 둘 다 높아야 높은 점수
+    const harmony = Math.sqrt(mNorm * fNorm);
+
+    // 차이가 크면 페널티 강화
+    const diffPenalty = diff > 0.4 ? diff * 0.3 : 0;
+
+    // 가중 평균 (유사성과 조화에 더 높은 가중치)
+    const score = similarity * 0.35 + level * 0.25 + harmony * 0.4 - diffPenalty;
+    totalScore += Math.max(0, score) * maxValues[i];
     totalWeight += maxValues[i];
   }
 
-  return (totalScore / totalWeight) * 100;
+  const rawScore = (totalScore / totalWeight) * 100;
+
+  // 점수 스프레딩 적용으로 편차 확대
+  return spreadScore(rawScore);
 }
 
 // === 강점 분석 ===
@@ -283,7 +304,13 @@ function analyzeStrengths(
   const fTraits = female.traits || createDefaultTraits();
 
   // 감정 궁합이 높으면
-  if (categoryScores.emotion >= 70) {
+  if (categoryScores.emotion >= 80) {
+    strengths.push({
+      title: '완벽한 감정적 교감',
+      description: '서로의 마음을 꿰뚫어보는 특별한 능력이 있습니다. 눈빛만으로도 서로의 감정을 읽어내는 깊은 연결을 가지고 있습니다.',
+      emoji: '💕',
+    });
+  } else if (categoryScores.emotion >= 65) {
     strengths.push({
       title: '깊은 감정적 교감',
       description: '서로의 감정을 잘 이해하고 공감하는 능력이 뛰어납니다. 말하지 않아도 서로의 마음을 알아채는 특별한 연결고리가 있습니다.',
@@ -292,7 +319,13 @@ function analyzeStrengths(
   }
 
   // 가치관 궁합이 높으면
-  if (categoryScores.values >= 70) {
+  if (categoryScores.values >= 80) {
+    strengths.push({
+      title: '완벽하게 일치하는 인생관',
+      description: '삶의 방향과 목표가 놀라울 정도로 일치합니다. 중요한 결정에서 갈등 없이 함께 나아갈 수 있는 드문 인연입니다.',
+      emoji: '🎯',
+    });
+  } else if (categoryScores.values >= 65) {
     strengths.push({
       title: '같은 방향을 바라보는 인생관',
       description: '삶에서 중요하게 여기는 것들이 비슷합니다. 인생의 큰 결정을 내릴 때 서로 신뢰하며 함께 갈 수 있습니다.',
@@ -337,7 +370,13 @@ function analyzeStrengths(
   }
 
   // 체력 궁합이 좋으면
-  if (categoryScores.physical >= 70) {
+  if (categoryScores.physical >= 80) {
+    strengths.push({
+      title: '완벽한 활력의 파트너',
+      description: '에너지 레벨이 완벽하게 맞습니다. 함께 도전하고 모험하며 활기찬 인생을 만들어갈 최고의 파트너입니다.',
+      emoji: '🏃',
+    });
+  } else if (categoryScores.physical >= 65) {
     strengths.push({
       title: '활기찬 일상의 동반자',
       description: '비슷한 에너지 레벨로 함께 활동하며 건강한 생활을 유지할 수 있습니다. 여행, 운동 등 함께하는 활동에서 큰 즐거움을 느낍니다.',
@@ -369,7 +408,14 @@ function analyzeChallenges(
   const fTraits = female.traits || createDefaultTraits();
 
   // 감정 궁합이 낮으면
-  if (categoryScores.emotion < 60) {
+  if (categoryScores.emotion < 40) {
+    challenges.push({
+      title: '큰 감정적 장벽',
+      description: '감정을 나누고 이해하는 방식이 크게 다릅니다. 서로의 마음을 읽기 어려워 오해가 쌓일 수 있어요.',
+      emoji: '💬',
+      advice: '감정을 직접적으로 말로 표현하는 연습이 필요합니다. 추측하지 말고 항상 물어보세요.',
+    });
+  } else if (categoryScores.emotion < 55) {
     challenges.push({
       title: '소통의 온도 차이',
       description: '감정을 표현하는 방식이 다를 수 있습니다. 한 분이 적극적으로 표현할 때 다른 분은 조용히 받아들이는 스타일일 수 있어요.',
@@ -411,7 +457,14 @@ function analyzeChallenges(
   }
 
   // 가치관 차이
-  if (categoryScores.values < 60) {
+  if (categoryScores.values < 40) {
+    challenges.push({
+      title: '근본적인 가치관 차이',
+      description: '삶의 우선순위와 중요하게 여기는 것들이 상당히 다릅니다. 큰 결정에서 심각한 갈등이 생길 수 있어요.',
+      emoji: '⚖️',
+      advice: '결혼, 육아, 재정 등 중요한 문제에 대해 미리 깊이 대화하세요. 양보할 수 없는 것과 타협할 수 있는 것을 명확히 구분하는 것이 중요합니다.',
+    });
+  } else if (categoryScores.values < 55) {
     challenges.push({
       title: '삶의 우선순위 조율',
       description: '중요하게 여기는 것들이 조금 다를 수 있습니다. 이것이 갈등의 원인이 될 수 있지만, 서로의 세계를 넓히는 기회가 되기도 합니다.',
@@ -431,8 +484,42 @@ function analyzeChallenges(
     });
   }
 
-  // 최소 2개, 최대 4개 반환
-  return challenges.slice(0, Math.max(2, Math.min(4, challenges.length)));
+  // 생활습관 차이
+  if (categoryScores.lifestyle < 40) {
+    challenges.push({
+      title: '생활 리듬의 큰 차이',
+      description: '일상생활의 패턴과 습관이 크게 다릅니다. 함께 사는 것이 쉽지 않을 수 있어요.',
+      emoji: '🏠',
+      advice: '동거나 결혼 전에 충분한 시간을 함께 보내며 생활 패턴을 맞춰가는 연습이 필요합니다.',
+    });
+  } else if (categoryScores.lifestyle < 50) {
+    challenges.push({
+      title: '생활 습관 조율 필요',
+      description: '일상의 작은 습관들이 다를 수 있습니다. 청소, 정리, 시간 관리 등에서 마찰이 생길 수 있어요.',
+      emoji: '🏠',
+      advice: '서로의 습관을 존중하고, 함께 지킬 수 있는 규칙을 만들어보세요.',
+    });
+  }
+
+  // 미래 비전 차이
+  if (categoryScores.future < 40) {
+    challenges.push({
+      title: '미래에 대한 다른 그림',
+      description: '장기적인 목표와 꿈이 상당히 다릅니다. 각자의 미래 계획이 충돌할 수 있어요.',
+      emoji: '🔮',
+      advice: '5년, 10년 후의 모습을 함께 그려보세요. 서로의 꿈을 응원하면서도 공통의 목표를 찾는 것이 중요합니다.',
+    });
+  } else if (categoryScores.future < 50) {
+    challenges.push({
+      title: '미래 계획의 조율',
+      description: '장기적인 목표에서 약간의 차이가 있을 수 있습니다. 함께 미래를 설계하는 노력이 필요해요.',
+      emoji: '🔮',
+      advice: '정기적으로 미래에 대해 대화하고, 함께 이루고 싶은 목표를 설정해보세요.',
+    });
+  }
+
+  // 최소 2개, 최대 5개 반환 (더 다양한 분석 제공)
+  return challenges.slice(0, Math.max(2, Math.min(5, challenges.length)));
 }
 
 // === 서로 배려해야 할 점 ===
@@ -586,49 +673,69 @@ function generatePeriodForecast(
   const mTraits = male.traits || createDefaultTraits();
   const fTraits = female.traits || createDefaultTraits();
 
-  // 초기 (1-2년): 감정 + 연애운 기반
-  const earlyScore = Math.round(
-    categoryScores.emotion * 0.5 +
-    ((mTraits.연애운 + fTraits.연애운) / 6) * 50
-  );
+  // 연애운 점수 (0-1 정규화)
+  const romanceScore = (mTraits.연애운 + fTraits.연애운) / 6;
+  // 책임감 점수 (0-1 정규화)
+  const responsibilityScore = (mTraits.책임감 + fTraits.책임감) / 8;
+  // 중년운 점수 (0-1 정규화)
+  const middleAgeScore = (mTraits.중년운 + fTraits.중년운) / 8;
 
-  // 안정기 (3-7년): 가치관 + 생활습관 기반
-  const middleScore = Math.round(
-    categoryScores.values * 0.4 +
-    categoryScores.lifestyle * 0.4 +
-    ((mTraits.책임감 + fTraits.책임감) / 8) * 20
-  );
+  // 초기 (1-2년): 감정 + 연애운 기반 - 편차 확대
+  const earlyRaw = categoryScores.emotion * 0.6 + romanceScore * 55;
+  // 연애운이 둘 다 높으면 보너스, 낮으면 페널티
+  const earlyBonus = romanceScore > 0.7 ? 15 : romanceScore < 0.4 ? -15 : 0;
+  const earlyScore = Math.min(100, Math.max(0, Math.round(spreadScore(earlyRaw) + earlyBonus)));
 
-  // 성숙기 (7년+): 모든 요소 + 중년운 기반
-  const matureScore = Math.round(
-    (categoryScores.emotion + categoryScores.values + categoryScores.lifestyle + categoryScores.future) / 4 * 0.7 +
-    ((mTraits.중년운 + fTraits.중년운) / 8) * 30
-  );
+  // 안정기 (3-7년): 가치관 + 생활습관 기반 - 편차 확대
+  const middleRaw = categoryScores.values * 0.45 + categoryScores.lifestyle * 0.45 + responsibilityScore * 15;
+  // 가치관과 생활습관 차이가 크면 페널티
+  const valueLifeDiff = Math.abs(categoryScores.values - categoryScores.lifestyle);
+  const middleBonus = valueLifeDiff > 25 ? -12 : valueLifeDiff < 10 ? 8 : 0;
+  const middleScore = Math.min(100, Math.max(0, Math.round(spreadScore(middleRaw) + middleBonus)));
+
+  // 성숙기 (7년+): 모든 요소 + 중년운 기반 - 편차 확대
+  const avgCategory = (categoryScores.emotion + categoryScores.values + categoryScores.lifestyle + categoryScores.future) / 4;
+  const matureRaw = avgCategory * 0.65 + middleAgeScore * 45;
+  // 중년운이 둘 다 높으면 보너스, 낮으면 페널티
+  const matureBonus = middleAgeScore > 0.7 ? 12 : middleAgeScore < 0.35 ? -15 : 0;
+  const matureScore = Math.min(100, Math.max(0, Math.round(spreadScore(matureRaw) + matureBonus)));
 
   return {
     early: {
       score: earlyScore,
-      description: earlyScore >= 70
+      description: earlyScore >= 85
+        ? '운명적인 첫 만남! 강렬한 끌림과 설렘으로 시작하여 빠르게 깊은 감정으로 발전합니다.'
+        : earlyScore >= 70
         ? '처음부터 강한 끌림을 느끼며 빠르게 가까워질 수 있어요. 설렘이 가득한 시작입니다.'
-        : earlyScore >= 50
+        : earlyScore >= 55
         ? '서로를 알아가는 데 시간이 필요하지만, 천천히 쌓이는 감정이 더 깊고 단단합니다.'
-        : '처음에는 서로를 이해하기 어려울 수 있어요. 하지만 노력한 만큼 더 특별한 인연이 됩니다.',
+        : earlyScore >= 40
+        ? '처음에는 서로를 이해하기 어려울 수 있어요. 하지만 노력한 만큼 더 특별한 인연이 됩니다.'
+        : '첫 만남이 쉽지 않을 수 있습니다. 서로의 다름을 받아들이는 인내가 필요한 시기입니다.',
     },
     middle: {
       score: middleScore,
-      description: middleScore >= 70
+      description: middleScore >= 85
+        ? '황금기입니다! 완벽한 조화 속에서 가장 행복한 시간을 보내며 깊은 신뢰를 쌓아갑니다.'
+        : middleScore >= 70
         ? '안정기에 접어들며 편안함과 신뢰가 깊어집니다. 함께하는 일상이 행복의 원천이 됩니다.'
-        : middleScore >= 50
+        : middleScore >= 55
         ? '현실적인 문제들을 함께 해결해나가며 관계가 성숙해집니다. 대화와 타협이 중요한 시기예요.'
-        : '이 시기에 갈등이 생길 수 있지만, 이를 함께 극복하면 더 단단한 관계가 됩니다.',
+        : middleScore >= 40
+        ? '이 시기에 갈등이 생길 수 있지만, 이를 함께 극복하면 더 단단한 관계가 됩니다.'
+        : '가치관의 차이로 힘든 시기가 올 수 있습니다. 서로의 다름을 존중하는 노력이 특히 필요합니다.',
     },
     mature: {
       score: matureScore,
-      description: matureScore >= 70
+      description: matureScore >= 85
+        ? '평생의 반려자입니다! 오랜 세월이 두 분의 사랑을 더욱 빛나게 만들어 줍니다.'
+        : matureScore >= 70
         ? '오랜 시간 함께하며 쌓인 추억과 신뢰가 빛을 발합니다. 서로 없이는 상상할 수 없는 소울메이트가 됩니다.'
-        : matureScore >= 50
+        : matureScore >= 55
         ? '세월이 흐르며 서로를 더 깊이 이해하게 됩니다. 차분하고 평화로운 동반자 관계로 발전합니다.'
-        : '오랜 시간이 지나면 새로운 형태의 관계로 진화할 수 있어요. 서로에게 여전히 배울 점을 찾아보세요.',
+        : matureScore >= 40
+        ? '오랜 시간이 지나면 새로운 형태의 관계로 진화할 수 있어요. 서로에게 여전히 배울 점을 찾아보세요.'
+        : '관계 유지를 위해 지속적인 노력과 소통이 필요합니다. 함께 성장하려는 의지가 중요합니다.',
     },
   };
 }
@@ -708,14 +815,22 @@ export function analyzeCompatibility(
       categoryScores.future +
       categoryScores.physical) / 5;
 
-  // 오행 관계에 따른 보너스/페널티
+  // 오행 관계에 따른 보너스/페널티 (범위 확대)
   const elementBonus =
-    elementRelation === '상생' ? 8 :
-    elementRelation === '상보' ? 5 :
+    elementRelation === '상생' ? 15 :
+    elementRelation === '상보' ? 10 :
     elementRelation === '비화' ? 3 :
-    -3; // 상극
+    -12; // 상극 (페널티 강화)
 
-  const totalScore = Math.min(100, Math.max(0, Math.round(categoryAvg + elementBonus)));
+  // 카테고리 점수 편차에 따른 추가 조정 (극단값 강조)
+  const scores = [categoryScores.emotion, categoryScores.values, categoryScores.lifestyle, categoryScores.future, categoryScores.physical];
+  const minScore = Math.min(...scores);
+  const maxScore = Math.max(...scores);
+
+  // 가장 낮은 점수에 페널티, 가장 높은 점수에 보너스 (편차 강조)
+  const extremeBonus = (maxScore - 70) * 0.15 - (70 - minScore) * 0.15;
+
+  const totalScore = Math.min(100, Math.max(0, Math.round(categoryAvg + elementBonus + extremeBonus)));
 
   // 5. 등급 결정
   const { label: gradeLabel, emoji: gradeEmoji } = getGradeLabel(totalScore);
