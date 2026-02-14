@@ -28,7 +28,7 @@ export default function Header() {
   const menuItems = [
     { name: '언연이', href: '/test', icon: Heart },
     { name: '관상보기', href: '/face-analysis', icon: Sparkles },
-    { name: '두쫀쿠맵', href: '/dujjonku-map', icon: Cookie },
+    { name: '디저트맵', href: '/dessert-map', icon: Cookie },
   ];
 
   return (

@@ -283,14 +283,14 @@ export default function MyPage() {
           )}
         </section>
 
-        {/* 두쫀쿠맵 등록 관리 */}
+        {/* 디저트맵 등록 관리 */}
         <section className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Cookie className="w-5 h-5 text-orange-500" /> 두쫀쿠맵 등록
+              <Cookie className="w-5 h-5 text-orange-500" /> 디저트맵 등록
             </h2>
             <Link
-              href="/dujjonku-map"
+              href="/dessert-map"
               className="text-sm text-primary-600 hover:text-primary-700"
             >
               매장 등록하기 →
@@ -335,14 +335,14 @@ export default function MyPage() {
             </div>
           ) : (
             <Link
-              href="/dujjonku-map"
+              href="/dessert-map"
               className="block text-center p-6 bg-orange-50 rounded-xl hover:bg-orange-100 transition-colors"
             >
               <p className="text-orange-600 font-medium">
                 등록한 매장이 없어요
               </p>
               <p className="text-sm text-orange-500 mt-1">
-                두쫀쿠 매장 등록하러 가기 →
+                디저트 매장 등록하러 가기 →
               </p>
             </Link>
           )}
