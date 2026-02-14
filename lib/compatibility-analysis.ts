@@ -304,7 +304,13 @@ function analyzeStrengths(
   const fTraits = female.traits || createDefaultTraits();
 
   // 감정 궁합이 높으면
-  if (categoryScores.emotion >= 80) {
+  if (categoryScores.emotion >= 90) {
+    strengths.push({
+      title: '전설의 텔레파시 커플',
+      description: '말이 필요 없는 경지입니다. 서로의 숨결만으로도 감정을 읽어내는, 전생부터 이어진 듯한 영혼의 연결을 가지고 있습니다.',
+      emoji: '👑',
+    });
+  } else if (categoryScores.emotion >= 80) {
     strengths.push({
       title: '완벽한 감정적 교감',
       description: '서로의 마음을 꿰뚫어보는 특별한 능력이 있습니다. 눈빛만으로도 서로의 감정을 읽어내는 깊은 연결을 가지고 있습니다.',
@@ -319,7 +325,13 @@ function analyzeStrengths(
   }
 
   // 가치관 궁합이 높으면
-  if (categoryScores.values >= 80) {
+  if (categoryScores.values >= 90) {
+    strengths.push({
+      title: '운명처럼 일치하는 인생 철학',
+      description: '이토록 같은 가치관을 가진 두 사람이 만나기란 기적에 가깝습니다. 어떤 결정에서도 자연스럽게 같은 답을 선택하게 될 것입니다.',
+      emoji: '👑',
+    });
+  } else if (categoryScores.values >= 80) {
     strengths.push({
       title: '완벽하게 일치하는 인생관',
       description: '삶의 방향과 목표가 놀라울 정도로 일치합니다. 중요한 결정에서 갈등 없이 함께 나아갈 수 있는 드문 인연입니다.',
@@ -370,7 +382,13 @@ function analyzeStrengths(
   }
 
   // 체력 궁합이 좋으면
-  if (categoryScores.physical >= 80) {
+  if (categoryScores.physical >= 90) {
+    strengths.push({
+      title: '전설의 에너지 듀오',
+      description: '마치 한 몸처럼 완벽하게 맞는 에너지 리듬! 어떤 도전도 함께라면 거뜬히 해낼 수 있는 무적의 파트너십입니다.',
+      emoji: '👑',
+    });
+  } else if (categoryScores.physical >= 80) {
     strengths.push({
       title: '완벽한 활력의 파트너',
       description: '에너지 레벨이 완벽하게 맞습니다. 함께 도전하고 모험하며 활기찬 인생을 만들어갈 최고의 파트너입니다.',
@@ -393,8 +411,50 @@ function analyzeStrengths(
     });
   }
 
-  // 최소 3개, 최대 5개 반환
-  return strengths.slice(0, Math.max(3, Math.min(5, strengths.length)));
+  // 생활습관 궁합이 높으면
+  if (categoryScores.lifestyle >= 90) {
+    strengths.push({
+      title: '전설의 라이프 파트너',
+      description: '생활 리듬이 마치 오랜 시간 함께한 것처럼 완벽하게 맞습니다. 동거나 결혼 후에도 갈등 없이 조화로운 일상을 만들어갈 것입니다.',
+      emoji: '👑',
+    });
+  } else if (categoryScores.lifestyle >= 80) {
+    strengths.push({
+      title: '완벽하게 맞는 생활 리듬',
+      description: '일상의 습관과 패턴이 놀랍도록 잘 맞습니다. 함께 사는 것이 자연스럽고 편안한 관계입니다.',
+      emoji: '🏠',
+    });
+  } else if (categoryScores.lifestyle >= 65) {
+    strengths.push({
+      title: '조화로운 일상의 파트너',
+      description: '생활 습관이 비슷해 함께하는 일상이 편안합니다. 서로의 공간을 존중하며 균형 잡힌 생활을 유지할 수 있습니다.',
+      emoji: '🏠',
+    });
+  }
+
+  // 미래비전 궁합이 높으면
+  if (categoryScores.future >= 90) {
+    strengths.push({
+      title: '운명이 약속한 미래',
+      description: '두 분의 꿈과 목표가 하나의 별을 향해 뻗어 있습니다. 함께라면 어떤 미래든 현실로 만들 수 있는 최강의 파트너십입니다.',
+      emoji: '👑',
+    });
+  } else if (categoryScores.future >= 80) {
+    strengths.push({
+      title: '같은 꿈을 꾸는 동반자',
+      description: '미래에 대한 비전이 놀랍도록 일치합니다. 함께 목표를 세우고 이루어가는 과정이 더 즐거운 관계입니다.',
+      emoji: '🌟',
+    });
+  } else if (categoryScores.future >= 65) {
+    strengths.push({
+      title: '함께 성장하는 미래',
+      description: '미래에 대한 생각이 비슷해 장기적인 계획을 함께 세울 수 있습니다. 서로의 꿈을 응원하는 든든한 지지자입니다.',
+      emoji: '🌟',
+    });
+  }
+
+  // 최소 3개, 최대 6개 반환 (더 다양한 강점 제공)
+  return strengths.slice(0, Math.max(3, Math.min(6, strengths.length)));
 }
 
 // === 주의점 분석 ===
