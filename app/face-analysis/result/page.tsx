@@ -446,9 +446,27 @@ export default function FaceAnalysisResultPage() {
     setIsGeneratingCard(false);
   }, [image, landmarks, result, oneLiner]);
 
-  // 카드 다운로드
-  const downloadCard = () => {
+  // 카드 다운로드 (모바일: Web Share API로 갤러리 저장 유도, PC: 파일 다운로드)
+  const downloadCard = async () => {
     if (!shareCardUrl) return;
+
+    try {
+      const response = await fetch(shareCardUrl);
+      const blob = await response.blob();
+      const file = new File([blob], `관상분석_${result?.score}점.png`, { type: 'image/png' });
+
+      // 모바일에서 Web Share API 지원 시 → "사진에 저장" 선택 가능
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+        });
+        return;
+      }
+    } catch (err) {
+      // Web Share 실패 시 폴백
+    }
+
+    // PC 또는 Web Share 미지원 → 파일 다운로드
     const link = document.createElement('a');
     link.download = `관상분석_${result?.score}점.png`;
     link.href = shareCardUrl;
