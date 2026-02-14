@@ -182,78 +182,30 @@ export default function TestListPage() {
                 )}
               </div>
             ) : (
-              <>
-                {/* 비로그인 - 테스트 가능 안내 */}
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Check className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-lg">로그인 없이 테스트 가능!</p>
-                      <p className="text-sm text-white/90">지금 바로 테스트를 시작하세요</p>
-                    </div>
-                  </div>
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+                <p className="text-center text-gray-900 font-semibold mb-1">
+                  로그인 없이 테스트 가능!
+                </p>
+                <p className="text-center text-sm text-gray-500 mb-4">
+                  단, 5개 완료 후 <strong className="text-primary-600">통합 결과 · 사용설명서 카드</strong>는 로그인이 필요해요
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    onClick={() => router.push('/signup')}
+                    variant="primary"
+                    className="px-4 py-2 text-sm"
+                  >
+                    무료 회원가입
+                  </Button>
+                  <Button
+                    onClick={() => router.push('/login')}
+                    variant="outline"
+                    className="px-4 py-2 text-sm"
+                  >
+                    로그인
+                  </Button>
                 </div>
-
-                {/* 로그인 후 혜택 안내 */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-amber-300">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-2xl">🔐</span>
-                    <h3 className="text-lg font-bold text-gray-900">
-                      로그인하면 더 좋은 점
-                    </h3>
-                  </div>
-
-                  <div className="space-y-3 mb-5">
-                    <div className="flex items-start gap-3 bg-amber-50 rounded-lg p-3">
-                      <span className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">진행 상황 자동 저장</p>
-                        <p className="text-xs text-gray-600">완료한 테스트가 계정에 저장됩니다</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3 bg-amber-50 rounded-lg p-3">
-                      <span className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">5개 완료 시 통합 결과</p>
-                        <p className="text-xs text-gray-600">나만의 4글자 성격코드 & 사용설명서 카드</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3 bg-amber-50 rounded-lg p-3">
-                      <span className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">공유 가능한 링크 생성</p>
-                        <p className="text-xs text-gray-600">친구나 파트너와 결과 공유</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-red-700 text-center">
-                      <strong>⚠️ 비로그인 시 진행 상황이 저장되지 않습니다</strong><br />
-                      <span className="text-xs">5개 완료 후 통합 결과를 보려면 로그인이 필요해요</span>
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2 justify-center">
-                    <Button
-                      onClick={() => router.push('/signup')}
-                      variant="primary"
-                      className="flex-1"
-                    >
-                      무료 회원가입
-                    </Button>
-                    <Button
-                      onClick={() => router.push('/login')}
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      로그인
-                    </Button>
-                  </div>
-                </div>
-              </>
+              </div>
             )}
           </div>
         </div>
