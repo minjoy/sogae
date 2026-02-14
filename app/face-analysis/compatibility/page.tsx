@@ -48,6 +48,7 @@ export default function CompatibilityPage() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [showDonationPopup, setShowDonationPopup] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const faceMeshRef = useRef<MediaPipeFaceMesh | null>(null);
 
@@ -215,12 +216,23 @@ export default function CompatibilityPage() {
     }
   };
 
-  // 처음으로 돌아가기
+  // 처음으로 돌아가기 확인
+  const handleResetClick = () => {
+    // 사진이 한 장이라도 첨부되었으면 컨펌 팝업 표시
+    if (maleData.image || femaleData.image) {
+      setShowResetConfirm(true);
+    } else {
+      handleReset();
+    }
+  };
+
+  // 처음으로 돌아가기 실행
   const handleReset = () => {
     setStep('intro');
     setMaleData({ image: null, landmarks: null, imageWidth: 0, imageHeight: 0 });
     setFemaleData({ image: null, landmarks: null, imageWidth: 0, imageHeight: 0 });
     setError(null);
+    setShowResetConfirm(false);
   };
 
   // 분석 단계별 텍스트
@@ -241,6 +253,45 @@ export default function CompatibilityPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900">
+      {/* 처음으로 돌아가기 확인 팝업 */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowResetConfirm(false)}
+          />
+          <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 max-w-sm w-full border border-white/10 shadow-2xl">
+            <div className="text-center space-y-4">
+              <div className="text-4xl">🔄</div>
+              <div>
+                <p className="text-white font-medium text-lg mb-2">
+                  진행 중인 분석이 있어요
+                </p>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  처음으로 돌아가면 지금까지 등록한<br/>
+                  사진이 모두 사라져요.<br/>
+                  정말 처음으로 돌아갈까요?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 py-3 bg-white/10 text-white/70 rounded-xl hover:bg-white/20 transition-colors text-sm font-medium"
+                >
+                  계속 진행
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl hover:from-pink-600 hover:to-purple-600 transition-all text-sm font-medium"
+                >
+                  처음으로
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 후원 팝업 */}
       {showDonationPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -452,7 +503,7 @@ export default function CompatibilityPage() {
             )}
 
             <button
-              onClick={handleReset}
+              onClick={handleResetClick}
               className="w-full py-3 bg-white/10 text-white/70 rounded-xl hover:bg-white/20 transition-colors"
             >
               처음으로
@@ -536,7 +587,7 @@ export default function CompatibilityPage() {
             )}
 
             <button
-              onClick={handleReset}
+              onClick={handleResetClick}
               className="w-full py-3 bg-white/10 text-white/70 rounded-xl hover:bg-white/20 transition-colors"
             >
               처음으로
@@ -544,50 +595,155 @@ export default function CompatibilityPage() {
           </div>
         )}
 
-        {/* 분석 중 */}
+        {/* 분석 중 - 몽환적 애니메이션 */}
         {step === 'analyzing' && (
-          <div className="space-y-8 py-12">
-            <div className="text-center">
-              <div className="text-6xl mb-6 animate-pulse">💕</div>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                궁합을 분석하고 있어요
-              </h2>
-              <p className="text-white/60 text-sm">
-                두 분의 인연을 꼼꼼히 살펴보는 중...
-              </p>
-            </div>
+          <div className="relative min-h-[70vh] flex flex-col items-center justify-center py-8 overflow-hidden">
+            {/* 몽환적 배경 효과 */}
+            <div className="absolute inset-0 overflow-hidden">
+              {/* 오로라 효과 */}
+              <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl animate-[aurora_8s_ease-in-out_infinite]" />
+              <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-pink-500/20 rounded-full blur-3xl animate-[aurora_10s_ease-in-out_infinite_reverse]" />
+              <div className="absolute bottom-1/4 left-1/3 w-56 h-56 bg-purple-500/20 rounded-full blur-3xl animate-[aurora_12s_ease-in-out_infinite]" />
 
-            {/* 두 사람 사진 */}
-            <div className="flex items-center justify-center gap-4">
-              {maleData.image && (
-                <img
-                  src={maleData.image}
-                  alt="남자"
-                  className="w-24 h-24 rounded-full object-cover border-4 border-blue-400 shadow-lg shadow-blue-500/25"
-                />
-              )}
-              <div className="text-3xl animate-pulse">💕</div>
-              {femaleData.image && (
-                <img
-                  src={femaleData.image}
-                  alt="여자"
-                  className="w-24 h-24 rounded-full object-cover border-4 border-pink-400 shadow-lg shadow-pink-500/25"
-                />
-              )}
-            </div>
-
-            {/* 진행률 */}
-            <div className="space-y-4">
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              {/* 파티클 효과 */}
+              {[...Array(12)].map((_, i) => (
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-pink-500 transition-all duration-300"
-                  style={{ width: `${analysisProgress}%` }}
+                  key={i}
+                  className="absolute w-1 h-1 bg-white/40 rounded-full animate-[float-particle_4s_ease-in-out_infinite]"
+                  style={{
+                    left: `${10 + (i * 7)}%`,
+                    top: `${20 + (i % 4) * 20}%`,
+                    animationDelay: `${i * 0.3}s`,
+                  }}
                 />
-              </div>
-              <p className="text-white/70 text-sm text-center animate-pulse">
-                {analysisSteps[currentAnalysisStep]}
-              </p>
+              ))}
             </div>
+
+            {/* 메인 콘텐츠 */}
+            <div className="relative z-10 text-center space-y-8">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2 animate-pulse">
+                  두 분의 인연을 살펴보고 있어요
+                </h2>
+                <p className="text-white/60 text-sm">
+                  서로의 기운이 어우러지는 중...
+                </p>
+              </div>
+
+              {/* 두 사람 사진 - 겹쳐지는 애니메이션 */}
+              <div className="relative h-48 w-64 mx-auto">
+                {/* 남자 사진 */}
+                {maleData.image && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 animate-[merge-left_3s_ease-in-out_infinite]">
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-full bg-blue-400/30 blur-xl animate-pulse" />
+                      <img
+                        src={maleData.image}
+                        alt="남자"
+                        className="relative w-28 h-28 rounded-full object-cover border-4 border-blue-400/80 shadow-lg shadow-blue-500/40"
+                      />
+                      {/* 에너지 링 */}
+                      <div className="absolute inset-0 rounded-full border-2 border-blue-300/50 animate-[energy-ring_2s_ease-out_infinite]" />
+                    </div>
+                  </div>
+                )}
+
+                {/* 중앙 하트 - 합쳐지는 에너지 */}
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                  <div className="relative">
+                    <div className="absolute inset-0 w-16 h-16 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-blue-500/30 via-purple-500/30 to-pink-500/30 rounded-full blur-xl animate-[heartbeat_1.5s_ease-in-out_infinite]" />
+                    <div className="text-4xl animate-[heartbeat_1.5s_ease-in-out_infinite]">💕</div>
+                  </div>
+                </div>
+
+                {/* 여자 사진 */}
+                {femaleData.image && (
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 animate-[merge-right_3s_ease-in-out_infinite]">
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-full bg-pink-400/30 blur-xl animate-pulse" />
+                      <img
+                        src={femaleData.image}
+                        alt="여자"
+                        className="relative w-28 h-28 rounded-full object-cover border-4 border-pink-400/80 shadow-lg shadow-pink-500/40"
+                      />
+                      {/* 에너지 링 */}
+                      <div className="absolute inset-0 rounded-full border-2 border-pink-300/50 animate-[energy-ring_2s_ease-out_infinite_0.5s]" />
+                    </div>
+                  </div>
+                )}
+
+                {/* 연결선 효과 */}
+                <svg className="absolute inset-0 w-full h-full" style={{ overflow: 'visible' }}>
+                  <defs>
+                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.6" />
+                      <stop offset="50%" stopColor="#A855F7" stopOpacity="0.8" />
+                      <stop offset="100%" stopColor="#EC4899" stopOpacity="0.6" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M 56 96 Q 128 60 200 96"
+                    fill="none"
+                    stroke="url(#lineGradient)"
+                    strokeWidth="2"
+                    className="animate-[dash_2s_linear_infinite]"
+                    strokeDasharray="8 4"
+                  />
+                  <path
+                    d="M 56 96 Q 128 132 200 96"
+                    fill="none"
+                    stroke="url(#lineGradient)"
+                    strokeWidth="2"
+                    className="animate-[dash_2s_linear_infinite_reverse]"
+                    strokeDasharray="8 4"
+                  />
+                </svg>
+              </div>
+
+              {/* 진행률 */}
+              <div className="w-full max-w-xs mx-auto space-y-4">
+                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-pink-400 transition-all duration-500 shadow-lg shadow-purple-500/50"
+                    style={{ width: `${analysisProgress}%` }}
+                  />
+                </div>
+                <p className="text-white/80 text-sm text-center font-medium">
+                  {analysisSteps[currentAnalysisStep]}
+                </p>
+              </div>
+            </div>
+
+            {/* 커스텀 애니메이션 스타일 */}
+            <style jsx>{`
+              @keyframes aurora {
+                0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+                50% { transform: translate(30px, -30px) scale(1.2); opacity: 0.5; }
+              }
+              @keyframes float-particle {
+                0%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
+                50% { transform: translateY(-20px) scale(1.5); opacity: 0.8; }
+              }
+              @keyframes merge-left {
+                0%, 100% { transform: translateX(0) translateY(-50%); }
+                50% { transform: translateX(20px) translateY(-50%); }
+              }
+              @keyframes merge-right {
+                0%, 100% { transform: translateX(0) translateY(-50%); }
+                50% { transform: translateX(-20px) translateY(-50%); }
+              }
+              @keyframes heartbeat {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.2); }
+              }
+              @keyframes energy-ring {
+                0% { transform: scale(1); opacity: 0.8; }
+                100% { transform: scale(1.8); opacity: 0; }
+              }
+              @keyframes dash {
+                to { stroke-dashoffset: -24; }
+              }
+            `}</style>
           </div>
         )}
       </div>

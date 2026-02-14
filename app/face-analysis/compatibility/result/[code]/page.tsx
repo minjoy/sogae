@@ -238,15 +238,25 @@ export default function CompatibilityResultPage({
             <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 backdrop-blur rounded-2xl p-5 border border-pink-500/20">
               <h3 className="text-pink-300 font-semibold mb-4">💕 잘 맞는 부분</h3>
               <div className="space-y-4">
-                {result.strengths.map((strength, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <span className="text-2xl">{strength.emoji}</span>
-                    <div>
-                      <p className="text-white font-medium">{strength.title}</p>
-                      <p className="text-white/60 text-sm leading-relaxed">{strength.description}</p>
+                {result.strengths && result.strengths.length > 0 ? (
+                  result.strengths.map((strength, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <span className="text-2xl">{strength.emoji}</span>
+                      <div>
+                        <p className="text-white font-medium">{strength.title}</p>
+                        <p className="text-white/60 text-sm leading-relaxed">{strength.description}</p>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-4xl mb-3">🔍</div>
+                    <p className="text-white/70 text-sm">
+                      아직 발견되지 않은 매력이 숨어있을 수 있어요!<br/>
+                      <span className="text-pink-300">함께 시간을 보내며 찾아보세요 💕</span>
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -254,22 +264,32 @@ export default function CompatibilityResultPage({
             <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur rounded-2xl p-5 border border-amber-500/20">
               <h3 className="text-amber-300 font-semibold mb-4">⚠️ 주의할 점</h3>
               <div className="space-y-4">
-                {result.challenges.map((challenge, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">{challenge.emoji}</span>
-                      <div>
-                        <p className="text-white font-medium">{challenge.title}</p>
-                        <p className="text-white/60 text-sm leading-relaxed">{challenge.description}</p>
+                {result.challenges && result.challenges.length > 0 ? (
+                  result.challenges.map((challenge, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">{challenge.emoji}</span>
+                        <div>
+                          <p className="text-white font-medium">{challenge.title}</p>
+                          <p className="text-white/60 text-sm leading-relaxed">{challenge.description}</p>
+                        </div>
+                      </div>
+                      <div className="ml-10 bg-white/5 rounded-xl p-3">
+                        <p className="text-amber-200 text-sm">
+                          💡 {challenge.advice}
+                        </p>
                       </div>
                     </div>
-                    <div className="ml-10 bg-white/5 rounded-xl p-3">
-                      <p className="text-amber-200 text-sm">
-                        💡 {challenge.advice}
-                      </p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-4xl mb-3">✨</div>
+                    <p className="text-white/70 text-sm">
+                      주의할 점이 없어요!<br/>
+                      <span className="text-green-300">두 분은 자연스럽게 잘 어울리는 사이예요 🌟</span>
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -331,24 +351,42 @@ export default function CompatibilityResultPage({
             <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur rounded-2xl p-5 border border-blue-500/20">
               <h3 className="text-blue-300 font-semibold mb-4">👨 남자분이 배려해야 할 점</h3>
               <div className="space-y-3">
-                {result.mutualCare.forMale.map((care, i) => (
-                  <div key={i} className="bg-white/5 rounded-xl p-4">
-                    <p className="text-white font-medium text-sm mb-1">{care.point}</p>
-                    <p className="text-white/50 text-xs">{care.reason}</p>
+                {result.mutualCare?.forMale && result.mutualCare.forMale.length > 0 ? (
+                  result.mutualCare.forMale.map((care, i) => (
+                    <div key={i} className="bg-white/5 rounded-xl p-4">
+                      <p className="text-white font-medium text-sm mb-1">{care.point}</p>
+                      <p className="text-white/50 text-xs">{care.reason}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-3">
+                    <p className="text-white/70 text-sm">
+                      특별히 더 신경 쓸 부분이 없어요! 😊<br/>
+                      <span className="text-blue-300">지금처럼 편안하게 대해주세요</span>
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
             <div className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 backdrop-blur rounded-2xl p-5 border border-pink-500/20">
               <h3 className="text-pink-300 font-semibold mb-4">👩 여자분이 배려해야 할 점</h3>
               <div className="space-y-3">
-                {result.mutualCare.forFemale.map((care, i) => (
-                  <div key={i} className="bg-white/5 rounded-xl p-4">
-                    <p className="text-white font-medium text-sm mb-1">{care.point}</p>
-                    <p className="text-white/50 text-xs">{care.reason}</p>
+                {result.mutualCare?.forFemale && result.mutualCare.forFemale.length > 0 ? (
+                  result.mutualCare.forFemale.map((care, i) => (
+                    <div key={i} className="bg-white/5 rounded-xl p-4">
+                      <p className="text-white font-medium text-sm mb-1">{care.point}</p>
+                      <p className="text-white/50 text-xs">{care.reason}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-3">
+                    <p className="text-white/70 text-sm">
+                      특별히 더 신경 쓸 부분이 없어요! 😊<br/>
+                      <span className="text-pink-300">지금처럼 자연스럽게 대해주세요</span>
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -356,15 +394,25 @@ export default function CompatibilityResultPage({
             <div className="bg-white/5 backdrop-blur rounded-2xl p-5 border border-white/10">
               <h3 className="text-white font-semibold mb-4">🚀 관계 발전 조언</h3>
               <div className="space-y-4">
-                {result.developmentAdvice.map((advice, i) => (
-                  <div key={i} className="border-l-2 border-purple-500 pl-4">
-                    <p className="text-purple-300 text-sm font-medium mb-1">{advice.phase}</p>
-                    <p className="text-white/80 text-sm leading-relaxed mb-2">{advice.advice}</p>
-                    <p className="text-white/50 text-xs">
-                      💡 핵심: {advice.keyPoint}
+                {result.developmentAdvice && result.developmentAdvice.length > 0 ? (
+                  result.developmentAdvice.map((advice, i) => (
+                    <div key={i} className="border-l-2 border-purple-500 pl-4">
+                      <p className="text-purple-300 text-sm font-medium mb-1">{advice.phase}</p>
+                      <p className="text-white/80 text-sm leading-relaxed mb-2">{advice.advice}</p>
+                      <p className="text-white/50 text-xs">
+                        💡 핵심: {advice.keyPoint}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="text-3xl mb-2">💫</div>
+                    <p className="text-white/70 text-sm">
+                      두 분의 관계는 자연스럽게 발전할 거예요!<br/>
+                      <span className="text-purple-300">서로를 믿고 함께 해주세요</span>
                     </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
