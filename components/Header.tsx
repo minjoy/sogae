@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Heart, Sparkles, Cookie, User } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
@@ -25,9 +26,9 @@ export default function Header() {
 
   // 메뉴 항목
   const menuItems = [
-    { name: '언연이', href: '/test', emoji: '💕' },
-    { name: '관상보기', href: '/face-analysis', emoji: '🔮' },
-    { name: '두쫀쿠맵', href: '/dujjonku-map', emoji: '🍪' },
+    { name: '언연이', href: '/test', icon: Heart },
+    { name: '관상보기', href: '/face-analysis', icon: Sparkles },
+    { name: '두쫀쿠맵', href: '/dujjonku-map', icon: Cookie },
   ];
 
   return (
@@ -52,7 +53,7 @@ export default function Header() {
               onClick={() => router.push('/my')}
               className="flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-primary-50 text-primary-600 rounded-lg font-medium hover:bg-primary-100 transition-colors"
             >
-              <span className="text-lg">👤</span>
+              <User className="w-5 h-5" />
               <span className="hidden sm:inline text-sm">MY</span>
             </button>
           ) : (
@@ -70,6 +71,7 @@ export default function Header() {
           <nav className="flex items-center gap-1">
             {menuItems.map((item) => {
               const isActive = pathname?.startsWith(item.href);
+              const IconComponent = item.icon;
               return (
                 <Link
                   key={item.href}
@@ -80,7 +82,7 @@ export default function Header() {
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   } text-sm sm:text-base`}
                 >
-                  <span className="text-base sm:text-lg">{item.emoji}</span>
+                  <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span>{item.name}</span>
                 </Link>
               );

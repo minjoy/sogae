@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ALL_TESTS } from '@/lib/tests/test-data';
 import Button from '@/components/Button';
+import { Lightbulb, MessageCircle, Wallet, Zap, MessageSquare, Battery } from 'lucide-react';
+
+const TEST_ICONS: Record<number, React.ComponentType<{ className?: string }>> = {
+  1: MessageCircle,
+  2: Wallet,
+  3: Zap,
+  4: MessageSquare,
+  5: Battery,
+};
 
 export default function TestPage() {
   const router = useRouter();
@@ -154,7 +163,12 @@ export default function TestPage() {
 
         {/* 테스트 정보 */}
         <div className="text-center mb-4">
-          <div className="text-4xl md:text-5xl mb-2">{testDef.emoji}</div>
+          <div className="w-14 h-14 mx-auto mb-2 bg-blue-100 rounded-xl flex items-center justify-center">
+            {(() => {
+              const IconComponent = TEST_ICONS[testId];
+              return IconComponent ? <IconComponent className="w-7 h-7 text-blue-600" /> : null;
+            })()}
+          </div>
           <h1 className="text-lg md:text-xl font-bold text-gray-900 mb-1">
             {testDef.title}
           </h1>
@@ -234,8 +248,9 @@ export default function TestPage() {
         </div>
 
         {/* 안내 문구 */}
-        <p className="text-center text-xs md:text-sm text-gray-500">
-          💡 지난 3개월을 기준으로 솔직하게 답변해주세요
+        <p className="text-center text-xs md:text-sm text-gray-500 flex items-center justify-center gap-1.5">
+          <Lightbulb className="w-4 h-4 text-primary-500" />
+          지난 3개월을 기준으로 솔직하게 답변해주세요
         </p>
       </div>
     </div>

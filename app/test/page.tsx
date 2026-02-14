@@ -3,40 +3,55 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Button from '@/components/Button';
+import {
+  MessageCircle,
+  Wallet,
+  Zap,
+  MessageSquare,
+  Battery,
+  Target,
+  PartyPopper,
+  Gift,
+  Heart,
+  Link2,
+  Lightbulb,
+  AlertTriangle,
+  Check,
+} from 'lucide-react';
 
 const tests = [
   {
     id: 1,
     title: '감정 타입',
-    emoji: '💭',
+    icon: MessageCircle,
     desc: '불안/회피/몰입/완벽주의 패턴 파악',
     duration: '2분'
   },
   {
     id: 2,
     title: '소비 성향',
-    emoji: '💰',
+    icon: Wallet,
     desc: '위로/인정/통제/충동 소비 이해',
     duration: '2분'
   },
   {
     id: 3,
     title: '일 처리 방식',
-    emoji: '⚡',
+    icon: Zap,
     desc: '계획/탐색/즉흥/마감 성향 분석',
     duration: '2분'
   },
   {
     id: 4,
     title: '갈등 스타일',
-    emoji: '💬',
+    icon: MessageSquare,
     desc: '회피/공격/설득/수용 대화법 확인',
     duration: '2분'
   },
   {
     id: 5,
     title: '번아웃 위험도',
-    emoji: '🔋',
+    icon: Battery,
     desc: '현재 에너지 상태 측정',
     duration: '1분'
   },
@@ -144,8 +159,9 @@ export default function TestListPage() {
 
                 {completedCount === 5 ? (
                   <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                    <p className="text-green-800 font-semibold">
-                      🎉 모든 테스트 완료! 이제 통합 카드를 만들 수 있어요
+                    <p className="text-green-800 font-semibold flex items-center justify-center gap-2">
+                      <PartyPopper className="w-5 h-5" />
+                      모든 테스트 완료! 이제 통합 카드를 만들 수 있어요
                     </p>
                   </div>
                 ) : (
@@ -167,7 +183,9 @@ export default function TestListPage() {
               </>
             ) : (
               <div className="text-center">
-                <div className="text-4xl mb-3">🎯</div>
+                <div className="w-12 h-12 mx-auto mb-3 bg-primary-100 rounded-full flex items-center justify-center">
+                  <Target className="w-6 h-6 text-primary-600" />
+                </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2">
                   회원가입하고 나만의 사용설명서를 저장하세요
                 </h3>
@@ -211,11 +229,13 @@ export default function TestListPage() {
                 {/* Desktop Layout */}
                 <div className="hidden md:flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="text-5xl relative">
-                      {test.emoji}
+                    <div className="relative">
+                      <div className="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center">
+                        <test.icon className="w-7 h-7 text-primary-600" />
+                      </div>
                       {isCompleted && (
                         <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs">✓</span>
+                          <Check className="w-3 h-3 text-white" />
                         </div>
                       )}
                     </div>
@@ -244,11 +264,13 @@ export default function TestListPage() {
                 {/* Mobile Layout */}
                 <div className="md:hidden">
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="text-5xl relative flex-shrink-0">
-                      {test.emoji}
+                    <div className="relative flex-shrink-0">
+                      <div className="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center">
+                        <test.icon className="w-7 h-7 text-primary-600" />
+                      </div>
                       {isCompleted && (
                         <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs">✓</span>
+                          <Check className="w-3 h-3 text-white" />
                         </div>
                       )}
                     </div>
@@ -281,23 +303,31 @@ export default function TestListPage() {
 
         {/* 완료 혜택 안내 */}
         <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center text-white shadow-xl mb-6">
-          <div className="text-5xl mb-4">🎁</div>
+          <div className="w-14 h-14 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center">
+            <Gift className="w-7 h-7 text-white" />
+          </div>
           <h3 className="text-2xl font-bold mb-3">
             5개 테스트 완료 시 받는 혜택
           </h3>
           <div className="grid md:grid-cols-3 gap-4 mb-6">
             <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-              <div className="text-3xl mb-2">💝</div>
+              <div className="w-10 h-10 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
+                <Heart className="w-5 h-5 text-white" />
+              </div>
               <p className="font-semibold mb-1">나 사용설명서 카드</p>
               <p className="text-sm opacity-90">5가지 테스트 통합 분석</p>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-              <div className="text-3xl mb-2">🔗</div>
+              <div className="w-10 h-10 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
+                <Link2 className="w-5 h-5 text-white" />
+              </div>
               <p className="font-semibold mb-1">공유 가능한 링크</p>
               <p className="text-sm opacity-90">친구나 파트너와 공유</p>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-              <div className="text-3xl mb-2">💡</div>
+              <div className="w-10 h-10 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
+                <Lightbulb className="w-5 h-5 text-white" />
+              </div>
               <p className="font-semibold mb-1">맞춤 관계 조언</p>
               <p className="text-sm opacity-90">성향 기반 실천 가이드</p>
             </div>
@@ -313,8 +343,9 @@ export default function TestListPage() {
 
         {/* 안내 */}
         <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-          <p className="text-sm text-gray-600">
-            💡 모든 테스트는 무료이며, 언제든지 다시 할 수 있어요
+          <p className="text-sm text-gray-600 flex items-center justify-center gap-1.5">
+            <Lightbulb className="w-4 h-4 text-primary-500" />
+            모든 테스트는 무료이며, 언제든지 다시 할 수 있어요
           </p>
         </div>
       </div>
@@ -324,7 +355,9 @@ export default function TestListPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <div className="text-center mb-6">
-              <div className="text-5xl mb-4">⚠️</div>
+              <div className="w-14 h-14 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-7 h-7 text-amber-600" />
+              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 전체 테스트를 삭제할까요?
               </h3>

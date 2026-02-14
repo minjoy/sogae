@@ -4,6 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
+import {
+  User,
+  Heart,
+  Sparkles,
+  Cookie,
+  Loader2,
+  MessageCircle,
+  Wallet,
+  Zap,
+  MessageSquare,
+  Battery,
+  ArrowRight,
+} from 'lucide-react';
 
 interface TestResult {
   testType: number;
@@ -26,12 +39,12 @@ interface Store {
   createdAt: string;
 }
 
-const TEST_INFO: Record<number, { title: string; emoji: string }> = {
-  1: { title: '감정 반응 패턴', emoji: '💭' },
-  2: { title: '소비 심리', emoji: '💰' },
-  3: { title: '일 처리 방식', emoji: '⚡' },
-  4: { title: '갈등 대처법', emoji: '💬' },
-  5: { title: '번아웃 체크', emoji: '🔋' },
+const TEST_INFO: Record<number, { title: string; icon: React.ComponentType<{ className?: string }> }> = {
+  1: { title: '감정 반응 패턴', icon: MessageCircle },
+  2: { title: '소비 심리', icon: Wallet },
+  3: { title: '일 처리 방식', icon: Zap },
+  4: { title: '갈등 대처법', icon: MessageSquare },
+  5: { title: '번아웃 체크', icon: Battery },
 };
 
 export default function MyPage() {
@@ -116,7 +129,7 @@ export default function MyPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="text-4xl mb-4 animate-bounce">⏳</div>
+          <Loader2 className="w-10 h-10 text-primary-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -144,7 +157,7 @@ export default function MyPage() {
                     className="w-16 h-16 rounded-full object-cover"
                   />
                 ) : (
-                  <span className="text-3xl">👤</span>
+                  <User className="w-8 h-8 text-primary-600" />
                 )}
               </div>
               <div>
@@ -169,7 +182,7 @@ export default function MyPage() {
         <section className="bg-white rounded-2xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <span>💕</span> 언연이 기록
+              <Heart className="w-5 h-5 text-primary-500" /> 언연이 기록
             </h2>
             <span className="text-sm text-primary-600 font-medium">
               {completedTests}/5 완료
@@ -185,9 +198,12 @@ export default function MyPage() {
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">
-                      {TEST_INFO[result.testType]?.emoji}
-                    </span>
+                    <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                      {(() => {
+                        const IconComponent = TEST_INFO[result.testType]?.icon;
+                        return IconComponent ? <IconComponent className="w-5 h-5 text-primary-600" /> : null;
+                      })()}
+                    </div>
                     <div>
                       <p className="font-medium text-gray-900">
                         {TEST_INFO[result.testType]?.title}
@@ -195,7 +211,7 @@ export default function MyPage() {
                       <p className="text-sm text-gray-500">{result.label}</p>
                     </div>
                   </div>
-                  <span className="text-gray-400">→</span>
+                  <ArrowRight className="w-4 h-4 text-gray-400" />
                 </Link>
               ))}
 
@@ -228,7 +244,7 @@ export default function MyPage() {
         <section className="bg-white rounded-2xl shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <span>🔮</span> 최근 관상
+              <Sparkles className="w-5 h-5 text-purple-500" /> 최근 관상
             </h2>
           </div>
 
@@ -239,9 +255,7 @@ export default function MyPage() {
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
-                  <span className="text-2xl">
-                    {faceResult.gender === 'male' ? '👨' : '👩'}
-                  </span>
+                  <User className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
                   <p className="font-medium text-gray-900">
@@ -252,7 +266,7 @@ export default function MyPage() {
                   </p>
                 </div>
               </div>
-              <span className="text-gray-400">→</span>
+              <ArrowRight className="w-4 h-4 text-gray-400" />
             </Link>
           ) : (
             <Link
@@ -273,7 +287,7 @@ export default function MyPage() {
         <section className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <span>🍪</span> 두쫀쿠맵 등록
+              <Cookie className="w-5 h-5 text-orange-500" /> 두쫀쿠맵 등록
             </h2>
             <Link
               href="/dujjonku-map"

@@ -3,6 +3,21 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Button from '@/components/Button';
+import {
+  Sparkles,
+  Clock,
+  Heart,
+  Search,
+  Mail,
+  Gift,
+  MessageCircle,
+  Wallet,
+  Zap,
+  MessageSquare,
+  Battery,
+  Cookie,
+  ArrowRight,
+} from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
@@ -35,8 +50,9 @@ export default function Home() {
       {/* 히어로 섹션 */}
       <main className="container mx-auto px-4 py-12 md:py-20 max-w-5xl">
         <div className="text-center mb-16">
-          <div className="inline-block bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            ✨ 이미 {participantCount.toLocaleString()}명이 자신의 마음을 발견했어요
+          <div className="inline-flex items-center gap-1.5 bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <Sparkles className="w-4 h-4" />
+            이미 {participantCount.toLocaleString()}명이 자신의 마음을 발견했어요
           </div>
 
           <h1 className="font-display text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
@@ -60,21 +76,23 @@ export default function Home() {
             >
               무료로 시작하기 →
             </Button>
-            <p className="text-sm text-gray-500">
-              ⏱️ 5분이면 완성되는 나만의 연애 타이밍 분석
+            <p className="text-sm text-gray-500 flex items-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              5분이면 완성되는 나만의 연애 타이밍 분석
             </p>
           </div>
 
-          <p className="text-sm text-primary-600 font-medium">
-            💝 회원가입 없이도 바로 시작할 수 있어요
+          <p className="text-sm text-primary-600 font-medium flex items-center justify-center gap-1.5">
+            <Heart className="w-4 h-4" />
+            회원가입 없이도 바로 시작할 수 있어요
           </p>
         </div>
 
         {/* 주요 가치 제안 */}
         <div className="grid md:grid-cols-3 gap-8 mb-20">
           <div className="text-center p-6">
-            <div className="w-14 h-14 bg-gradient-to-br from-pink-100 to-primary-100 rounded-full flex items-center justify-center text-2xl mb-4 mx-auto">
-              🔍
+            <div className="w-14 h-14 bg-gradient-to-br from-pink-100 to-primary-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Search className="w-6 h-6 text-primary-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               나를 정확하게
@@ -86,8 +104,8 @@ export default function Home() {
           </div>
 
           <div className="text-center p-6">
-            <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-primary-100 rounded-full flex items-center justify-center text-2xl mb-4 mx-auto">
-              💌
+            <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-primary-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Mail className="w-6 h-6 text-primary-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               솔직하게
@@ -99,8 +117,8 @@ export default function Home() {
           </div>
 
           <div className="text-center p-6">
-            <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-primary-100 rounded-full flex items-center justify-center text-2xl mb-4 mx-auto">
-              🎁
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-primary-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <Gift className="w-6 h-6 text-primary-600" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               따뜻하게
@@ -128,49 +146,54 @@ export default function Home() {
             {[
               {
                 title: "감정 반응 패턴",
-                emoji: "💭",
+                icon: MessageCircle,
                 desc: "불안할 때, 피하고 싶을 때, 과몰입할 때... 나의 감정 패턴은?",
               },
               {
                 title: "소비 심리",
-                emoji: "💰",
+                icon: Wallet,
                 desc: "스트레스받을 때 쇼핑하나요? 인정받고 싶어서 사나요?",
               },
               {
                 title: "일 처리 방식",
-                emoji: "⚡",
+                icon: Zap,
                 desc: "계획형? 즉흥형? 마감 직전형? 일할 때의 나는",
               },
               {
                 title: "갈등 대처법",
-                emoji: "💬",
+                icon: MessageSquare,
                 desc: "싸울 때 나는 회피? 공격? 설득? 수용?",
               },
               {
                 title: "번아웃 체크",
-                emoji: "🔋",
+                icon: Battery,
                 desc: "마음의 에너지, 지금 충분한가요?",
               },
-            ].map((test, idx) => (
-              <div
-                key={idx}
-                className="bg-gray-50 rounded-2xl p-6 cursor-pointer transition-all duration-200
-                  border border-gray-200
-                  shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff]
-                  hover:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]
-                  active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
-                onClick={() => router.push(`/test/${idx + 1}`)}
-              >
-                <div className="text-5xl mb-4">{test.emoji}</div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  {test.title}
-                </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{test.desc}</p>
-                <div className="mt-4 text-primary-600 font-semibold text-sm flex items-center gap-1">
-                  테스트 시작 <span className="text-lg">→</span>
+            ].map((test, idx) => {
+              const IconComponent = test.icon;
+              return (
+                <div
+                  key={idx}
+                  className="bg-gray-50 rounded-2xl p-6 cursor-pointer transition-all duration-200
+                    border border-gray-200
+                    shadow-[6px_6px_12px_#d1d5db,-6px_-6px_12px_#ffffff]
+                    hover:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]
+                    active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]"
+                  onClick={() => router.push(`/test/${idx + 1}`)}
+                >
+                  <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center mb-4">
+                    <IconComponent className="w-6 h-6 text-primary-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    {test.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{test.desc}</p>
+                  <div className="mt-4 text-primary-600 font-semibold text-sm flex items-center gap-1">
+                    테스트 시작 <ArrowRight className="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -198,7 +221,7 @@ export default function Home() {
         className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-pink-400 to-primary-500 rounded-full shadow-lg flex items-center justify-center z-40 hover:scale-110 transition-transform"
         title="두쫀쿠맵"
       >
-        <span className="text-2xl">🍪</span>
+        <Cookie className="w-6 h-6 text-white" />
       </button>
     </div>
   );
