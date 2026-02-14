@@ -1474,23 +1474,22 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     setIsGeneratingCard(false);
   }, [data, oneLiner]);
 
-  // 카드 다운로드 (모바일: Web Share API로 갤러리 저장 유도, PC: 파일 다운로드)
+  // 카드 다운로드 (모바일: Web Share API만, PC: 파일 다운로드)
   const downloadCard = async () => {
     if (!shareCardUrl) return;
 
-    try {
-      const response = await fetch(shareCardUrl);
-      const blob = await response.blob();
-      const file = new File([blob], `관상분석_${data?.score}점.png`, { type: 'image/png' });
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-        });
-        return;
+    if (isMobile) {
+      try {
+        const response = await fetch(shareCardUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `관상분석_${data?.score}점.png`, { type: 'image/png' });
+        await navigator.share({ files: [file] });
+      } catch {
+        // 사용자가 취소한 경우 무시
       }
-    } catch (err) {
-      // Web Share 실패 시 폴백
+      return;
     }
 
     const link = document.createElement('a');
