@@ -580,6 +580,69 @@ export default function CardPage() {
           </Button>
         </div>
 
+        {/* 광고 영역 - 서비스 후원 */}
+        <div className="bg-white rounded-2xl shadow-lg p-5 mb-6">
+          <div className="text-center mb-4">
+            <p className="text-gray-700 text-sm font-medium mb-1">
+              🙏 사용설명서가 도움이 되셨다면 광고 한 번 부탁드려요
+            </p>
+            <p className="text-gray-400 text-xs">
+              광고 클릭이 더 좋은 서비스를 만드는 데 큰 힘이 됩니다
+            </p>
+          </div>
+
+          <div className="rounded-xl overflow-hidden mb-3">
+            <iframe
+              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=&width=684&height=100&tsource="
+              width="684"
+              height="100"
+              frameBorder="0"
+              scrolling="no"
+              referrerPolicy="unsafe-url"
+              className="w-full"
+            />
+          </div>
+
+          <div className="rounded-xl overflow-hidden">
+            <iframe
+              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=Card&width=684&height=140&tsource="
+              width="684"
+              height="140"
+              frameBorder="0"
+              scrolling="no"
+              referrerPolicy="unsafe-url"
+              className="w-full"
+            />
+          </div>
+          <p className="text-gray-300 text-[10px] mt-1 text-center">파트너스 수수료를 받을 수 있습니다</p>
+        </div>
+
+        {/* 후원 안내 */}
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 mb-6 border border-amber-200">
+          <div className="text-center space-y-3">
+            <div className="text-3xl">💝</div>
+            <div>
+              <p className="text-gray-800 font-medium text-sm leading-relaxed">
+                사용설명서가 재미있으셨나요?
+              </p>
+              <p className="text-gray-500 text-xs mt-2 leading-relaxed">
+                이 서비스는 한 사람이 정성껏 만들어<br/>
+                무료로 운영하고 있습니다.<br/>
+                작은 후원이 큰 힘이 됩니다 🙏
+              </p>
+            </div>
+            <a
+              href="https://litt.ly/miniface"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/20"
+            >
+              <span>☕</span>
+              <span>개발자에게 믹스커피 사주기</span>
+            </a>
+          </div>
+        </div>
+
         {/* 안내 */}
         <div className="bg-white rounded-xl p-6 text-center shadow-sm mb-8">
           <p className="text-sm text-gray-600 mb-2">
