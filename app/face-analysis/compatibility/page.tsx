@@ -172,30 +172,39 @@ export default function CompatibilityPage() {
     setStep('analyzing');
     setAnalysisProgress(0);
 
-    // 분석 진행 애니메이션
+    const MIN_ANIMATION_TIME = 5000; // 최소 5초 애니메이션
+    const startTime = Date.now();
+
+    // 분석 진행 애니메이션 (5초 동안 부드럽게 진행)
     const progressInterval = setInterval(() => {
-      setAnalysisProgress(prev => Math.min(prev + 10, 90));
-    }, 300);
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min((elapsed / MIN_ANIMATION_TIME) * 95, 95);
+      setAnalysisProgress(progress);
+    }, 100);
 
     try {
-      const response = await fetch('/api/face/compatibility/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          male: {
-            landmarks: male.landmarks,
-            imageWidth: male.imageWidth,
-            imageHeight: male.imageHeight,
-            imageData: male.image,
-          },
-          female: {
-            landmarks: female.landmarks,
-            imageWidth: female.imageWidth,
-            imageHeight: female.imageHeight,
-            imageData: female.image,
-          },
+      // API 호출과 최소 대기 시간을 동시에 처리
+      const [response] = await Promise.all([
+        fetch('/api/face/compatibility/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            male: {
+              landmarks: male.landmarks,
+              imageWidth: male.imageWidth,
+              imageHeight: male.imageHeight,
+              imageData: male.image,
+            },
+            female: {
+              landmarks: female.landmarks,
+              imageWidth: female.imageWidth,
+              imageHeight: female.imageHeight,
+              imageData: female.image,
+            },
+          }),
         }),
-      });
+        new Promise(resolve => setTimeout(resolve, MIN_ANIMATION_TIME)), // 최소 5초 대기
+      ]);
 
       clearInterval(progressInterval);
       setAnalysisProgress(100);
@@ -206,8 +215,8 @@ export default function CompatibilityPage() {
 
       const result = await response.json();
 
-      // 결과 페이지로 이동
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 결과 페이지로 이동 (짧은 딜레이 후)
+      await new Promise(resolve => setTimeout(resolve, 300));
       router.push(`/face-analysis/compatibility/result/${result.shareCode}`);
     } catch (err) {
       clearInterval(progressInterval);
