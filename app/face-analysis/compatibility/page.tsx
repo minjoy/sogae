@@ -98,19 +98,34 @@ export default function CompatibilityPage() {
     reader.onload = async (e) => {
       const img = new Image();
       img.onload = async () => {
-        // 얼굴 인식
+        // 얼굴 인식 (최대 2회 시도)
         let detectedLandmarks: FaceLandmark[] | null = null;
 
-        faceMeshRef.current!.onResults((results: MediaPipeResults) => {
-          if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-            detectedLandmarks = results.multiFaceLandmarks[0];
+        for (let attempt = 0; attempt < 2; attempt++) {
+          detectedLandmarks = null;
+
+          faceMeshRef.current!.onResults((results: MediaPipeResults) => {
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+              detectedLandmarks = results.multiFaceLandmarks[0];
+            }
+          });
+
+          await faceMeshRef.current!.send({ image: img });
+
+          // 짧은 대기
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          // 얼굴을 찾았으면 반복 종료
+          if (detectedLandmarks) {
+            break;
           }
-        });
 
-        await faceMeshRef.current!.send({ image: img });
-
-        // 짧은 대기
-        await new Promise(resolve => setTimeout(resolve, 300));
+          // 첫 번째 시도 실패 시 재시도 전 약간 대기
+          if (attempt === 0) {
+            console.log('얼굴 인식 1차 시도 실패, 재시도 중...');
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
 
         if (!detectedLandmarks) {
           setError('얼굴을 인식하지 못했습니다. 얼굴이 잘 보이는 정면 사진을 사용해주세요.');

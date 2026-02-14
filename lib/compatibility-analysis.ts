@@ -243,15 +243,21 @@ function createDefaultTraits(): PhysiognomyTraits {
 }
 
 /**
- * 점수 스프레딩 함수 - 중간값을 극단으로 분산시킴
- * 50점 근처의 점수를 더 넓게 분포시켜 편차를 증가시킴
+ * 점수 스프레딩 함수 - 중간값을 극단으로 분산시키되 평균을 상향
+ * 기본 점수에 상향 보정을 적용하여 전체적으로 높은 점수 분포를 만듦
  */
 function spreadScore(score: number): number {
-  // 50을 기준으로 점수를 더 극단적으로 분산
-  const normalized = (score - 50) / 50; // -1 ~ 1 범위
-  // 시그모이드 유사 함수로 극단값 강조
-  const spread = Math.sign(normalized) * Math.pow(Math.abs(normalized), 0.7);
-  return 50 + spread * 50;
+  // 기본 점수를 상향 조정 (평균 +12점)
+  const boostedScore = Math.min(100, score + 12);
+
+  // 60을 기준으로 점수를 분산 (더 높은 기준점)
+  const normalized = (boostedScore - 60) / 40; // -1.5 ~ 1 범위
+  // 시그모이드 유사 함수로 극단값 강조하되 상향 편향
+  const spread = Math.sign(normalized) * Math.pow(Math.abs(normalized), 0.65);
+  const result = 60 + spread * 35;
+
+  // 최소 35점, 최대 100점 보장
+  return Math.min(100, Math.max(35, result));
 }
 
 function calculateTraitCompatibility(
@@ -269,27 +275,28 @@ function calculateTraitCompatibility(
     // 차이 계산 (0 ~ 1 범위)
     const diff = Math.abs(mNorm - fNorm);
 
-    // 유사성 점수 - 차이에 대한 페널티를 강화 (제곱 적용)
-    const similarity = Math.pow(1 - diff, 1.5);
+    // 유사성 점수 - 차이에 대한 페널티를 완화 (부드러운 곡선)
+    const similarity = Math.pow(1 - diff, 1.2);
 
-    // 평균 수준 점수 - 둘 다 높을수록 좋음 (제곱으로 극단값 강조)
-    const level = Math.pow((mNorm + fNorm) / 2, 1.3);
+    // 평균 수준 점수 - 둘 다 높을수록 좋음 (약간의 상향 보정)
+    const level = Math.pow((mNorm + fNorm) / 2 + 0.1, 1.1);
 
-    // 조화 점수 - 둘의 곱으로 둘 다 높아야 높은 점수
-    const harmony = Math.sqrt(mNorm * fNorm);
+    // 조화 점수 - 둘의 곱으로 둘 다 높아야 높은 점수 (기본 보너스 추가)
+    const harmony = Math.sqrt(mNorm * fNorm) + 0.15;
 
-    // 차이가 크면 페널티 강화
-    const diffPenalty = diff > 0.4 ? diff * 0.3 : 0;
+    // 차이가 크면 페널티 (완화)
+    const diffPenalty = diff > 0.5 ? diff * 0.15 : 0;
 
-    // 가중 평균 (유사성과 조화에 더 높은 가중치)
-    const score = similarity * 0.35 + level * 0.25 + harmony * 0.4 - diffPenalty;
-    totalScore += Math.max(0, score) * maxValues[i];
+    // 가중 평균 (조화와 유사성에 높은 가중치, 기본 보너스 추가)
+    const baseBonus = 0.2; // 기본 점수 상향
+    const score = baseBonus + similarity * 0.3 + level * 0.25 + harmony * 0.35 - diffPenalty;
+    totalScore += Math.max(0.1, score) * maxValues[i];
     totalWeight += maxValues[i];
   }
 
   const rawScore = (totalScore / totalWeight) * 100;
 
-  // 점수 스프레딩 적용으로 편차 확대
+  // 점수 스프레딩 적용으로 편차 확대 (상향 보정된 점수)
   return spreadScore(rawScore);
 }
 
@@ -875,22 +882,24 @@ export function analyzeCompatibility(
       categoryScores.future +
       categoryScores.physical) / 5;
 
-  // 오행 관계에 따른 보너스/페널티 (범위 확대)
+  // 오행 관계에 따른 보너스/페널티 (상향 조정)
   const elementBonus =
-    elementRelation === '상생' ? 15 :
-    elementRelation === '상보' ? 10 :
-    elementRelation === '비화' ? 3 :
-    -12; // 상극 (페널티 강화)
+    elementRelation === '상생' ? 18 :
+    elementRelation === '상보' ? 14 :
+    elementRelation === '비화' ? 8 :
+    -5; // 상극 (페널티 완화 - 상극도 좋은 궁합일 수 있음)
 
-  // 카테고리 점수 편차에 따른 추가 조정 (극단값 강조)
+  // 카테고리 점수 편차에 따른 추가 조정 (상향 편향)
   const scores = [categoryScores.emotion, categoryScores.values, categoryScores.lifestyle, categoryScores.future, categoryScores.physical];
   const minScore = Math.min(...scores);
   const maxScore = Math.max(...scores);
 
-  // 가장 낮은 점수에 페널티, 가장 높은 점수에 보너스 (편차 강조)
-  const extremeBonus = (maxScore - 70) * 0.15 - (70 - minScore) * 0.15;
+  // 높은 점수에 보너스, 낮은 점수에 약한 페널티 (상향 편향)
+  const extremeBonus = (maxScore - 65) * 0.2 - Math.max(0, 55 - minScore) * 0.1;
 
-  const totalScore = Math.min(100, Math.max(0, Math.round(categoryAvg + elementBonus + extremeBonus)));
+  // 기본 상향 보정 (+5점) 추가
+  const baseBoost = 5;
+  const totalScore = Math.min(100, Math.max(30, Math.round(categoryAvg + elementBonus + extremeBonus + baseBoost)));
 
   // 5. 등급 결정
   const { label: gradeLabel, emoji: gradeEmoji } = getGradeLabel(totalScore);
