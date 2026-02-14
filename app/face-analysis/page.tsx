@@ -263,6 +263,7 @@ export default function FaceAnalysisPage() {
     } catch (err) {
       console.error('Camera error:', err);
       setError('카메라 접근 권한이 필요합니다.');
+      setMode('select');
     }
   }, [faceMeshLoaded, initFaceMesh]);
 
