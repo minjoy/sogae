@@ -526,6 +526,7 @@ export default function FaceAnalysisPage() {
         // analysis에 debug 정보도 포함 (각도, 얼굴크기 추가)
         const analysisWithDebug = {
           ...data.result.analysis,
+          goldenMatch: data.result.goldenMatch,
           debug: {
             ...data.result.debug,
             // 얼굴 각도 정보

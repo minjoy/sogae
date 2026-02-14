@@ -1452,6 +1452,18 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       ctx.fillText(l, 540, startY + i * lineHeight);
     });
 
+    // 황금궁합
+    const goldenMatch = (data.analysis as Record<string, unknown>)?.goldenMatch as string | undefined;
+    if (goldenMatch) {
+      const goldenY = startY + lines.length * lineHeight + 40;
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText('💛 황금궁합', 540, goldenY);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.font = '34px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(goldenMatch, 540, goldenY + 48);
+    }
+
     // 하단 장식
     ctx.strokeStyle = tierBg.accent;
     ctx.lineWidth = 2;

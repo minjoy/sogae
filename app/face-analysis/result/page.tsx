@@ -36,6 +36,7 @@ interface FaceAnalysisResult {
   summary: string;
   recommendations: string[];
   gender: 'male' | 'female';
+  goldenMatch?: string;
 }
 
 // 자극적이고 유쾌한 한줄평 생성
@@ -434,6 +435,17 @@ export default function FaceAnalysisResultPage() {
     lines.forEach((l, i) => {
       ctx.fillText(l, 540, startY + i * lineHeight);
     });
+
+    // 황금궁합
+    if (result.goldenMatch) {
+      const goldenY = startY + lines.length * lineHeight + 50;
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText('💛 황금궁합', 540, goldenY);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.font = '30px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(result.goldenMatch, 540, goldenY + 42);
+    }
 
     // 하단: 워터마크
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';

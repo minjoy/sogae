@@ -90,6 +90,9 @@ export interface FaceAnalysisResult {
   summary: string;
   recommendations: string[];
 
+  // 황금궁합 (나에게 어울리는 상대 한줄 요약)
+  goldenMatch?: string;
+
   // 성별 (분석에 사용)
   gender: 'male' | 'female';
 
@@ -1019,6 +1022,25 @@ export function analyzeFace(
   const topCategory = categoryScores.reduce((max, curr) => curr.score > max.score ? curr : max, categoryScores[0]);
   const summary = topCategory.whytext;
 
+  // === 황금궁합 (draw.py text3 매핑) ===
+  const goldenMatchMap: Record<string, string> = {
+    'r1_power_sum': '내 넘치는 체력을 받아줄 강철체력',
+    'r1_old_sum': '나와 함께 장수의 기운이 있는 자',
+    'r2_spirit_sum': '애교살 만큼은 풍성하게 많은 자',
+    'r2_adult_sum': '입술이 붉으며 윤곽이 뚜렷한 자',
+    'r2_love_sum': '항상 다정하고 소통이 잘 되는 자',
+    'r2_jeal_sum': '외모를 떠나서 정말 일편단심인 자',
+    'r3_work_sum': '본인보다 상대방을 잘 인정하는 자',
+    'r3_social_sum': '내 바깥활동에 이해심이 넓은 자',
+    'r3_someone_sum': '천상세상만상 자신감이 넘치는 자',
+    'r3_money_sum': '돈은 내가 벌 테니 잘 관리하는 자',
+    'r4_kind_sum': '강단지며 나의 순수함 보완하는 자',
+    'r4_wind_sum': '기가세고 나를 휙휙휙 휘어잡는 자',
+    'r4_respon_sum': '성실하며 문제에 대해 이성적인 자',
+    'r4_since_sum': '끝까지 깊은 신뢰를 지킬수 있는 자',
+  };
+  const goldenMatch = goldenMatchMap[topCategory.name] || '나와 균형 잡힌 상대';
+
   // === 추천사항 생성 ===
   const recommendations: string[] = [];
 
@@ -1061,6 +1083,7 @@ export function analyzeFace(
       eyeSize: eyeSizeAnalysis,
     },
     summary,
+    goldenMatch,
     recommendations,
     gender,
     traits,
