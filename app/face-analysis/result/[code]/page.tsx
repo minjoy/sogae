@@ -24,15 +24,17 @@ interface OverallFaceReading {
     late: { score: number; description: string };
   };
   personality: {
-    traits: string[];
+    mainType: string;
     description: string;
+    strengths: string[];
+    weaknesses: string[];
   };
-  fortuneAreas: {
-    wealth: { score: number; description: string };
-    career: { score: number; description: string };
-    love: { score: number; description: string };
-    health: { score: number; description: string };
-    social: { score: number; description: string };
+  fortune: {
+    wealth: string;
+    career: string;
+    love: string;
+    health: string;
+    social: string;
   };
   advice: string[];
   oneLiner: string;
@@ -2067,21 +2069,41 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
                 {/* 성격 특성 */}
                 <div className="bg-white/5 rounded-xl p-4">
                   <div className="text-white/70 text-sm mb-2">💎 성격 특성</div>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {data.overallReading.personality.traits.map((trait, i) => (
-                      <span key={i} className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm">
-                        {trait}
-                      </span>
-                    ))}
+                  <div className="bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-full text-sm inline-block mb-2">
+                    {data.overallReading.personality.mainType}
                   </div>
-                  <div className="text-white/60 text-sm">{data.overallReading.personality.description}</div>
+                  <div className="text-white/60 text-sm mb-3">{data.overallReading.personality.description}</div>
+                  {data.overallReading.personality.strengths.length > 0 && (
+                    <div className="mb-2">
+                      <div className="text-green-400 text-xs mb-1">장점</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {data.overallReading.personality.strengths.map((s, i) => (
+                          <span key={i} className="bg-green-500/15 text-green-300 px-2.5 py-0.5 rounded-full text-xs">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {data.overallReading.personality.weaknesses.length > 0 && (
+                    <div>
+                      <div className="text-orange-400 text-xs mb-1">단점</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {data.overallReading.personality.weaknesses.map((w, i) => (
+                          <span key={i} className="bg-orange-500/15 text-orange-300 px-2.5 py-0.5 rounded-full text-xs">
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 운세 영역 */}
                 <div className="bg-white/5 rounded-xl p-4">
                   <div className="text-white/70 text-sm mb-3">🌟 운세 영역</div>
-                  <div className="space-y-2">
-                    {Object.entries(data.overallReading.fortuneAreas).map(([key, value]) => {
+                  <div className="space-y-3">
+                    {Object.entries(data.overallReading.fortune).map(([key, value]) => {
                       const labels: Record<string, { icon: string; name: string }> = {
                         wealth: { icon: '💰', name: '재물운' },
                         career: { icon: '💼', name: '직업운' },
@@ -2091,16 +2113,12 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
                       };
                       const label = labels[key] || { icon: '⭐', name: key };
                       return (
-                        <div key={key} className="flex items-center gap-3">
-                          <span className="text-lg">{label.icon}</span>
-                          <span className="text-white/70 text-sm w-16">{label.name}</span>
-                          <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"
-                              style={{ width: `${value.score}%` }}
-                            />
+                        <div key={key} className="flex items-start gap-2.5">
+                          <span className="text-base mt-0.5">{label.icon}</span>
+                          <div>
+                            <div className="text-white/80 text-sm font-medium">{label.name}</div>
+                            <div className="text-white/55 text-xs mt-0.5">{value}</div>
                           </div>
-                          <span className="text-white font-medium text-sm w-10 text-right">{value.score}점</span>
                         </div>
                       );
                     })}
