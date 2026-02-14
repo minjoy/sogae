@@ -205,7 +205,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <div
                 className="bg-gray-800 rounded-xl p-6 cursor-pointer hover:bg-gray-700 transition-colors"
-                onClick={() => router.push('/xq9k2m-admin-panel/dujjonku')}
+                onClick={() => router.push('/xq9k2m-admin-panel/dessert')}
               >
                 <div className="flex items-center gap-4">
                   <div className="text-3xl">🍪</div>
