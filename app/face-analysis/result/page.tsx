@@ -398,15 +398,30 @@ export default function FaceAnalysisResultPage() {
     ctx.fillStyle = scoreGradient;
     ctx.fill();
 
+    // 점수 + 점 + 등급을 한 줄로
+    const scoreText = result.score.toString();
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(result.score.toString(), 540, badgeY + 55);
-    ctx.font = '20px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('점', 540, badgeY + 80);
+    const scoreW = ctx.measureText(scoreText).width;
+    ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
+    const jeomW = ctx.measureText('점').width;
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+    const gradeText = `${emoji} ${grade}`;
+    const gradeW = ctx.measureText(gradeText).width;
+    const totalW = scoreW + 6 + jeomW + 16 + gradeW;
+    const sX = 540 - totalW / 2;
 
-    // 등급
-    ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(`${emoji} ${grade}`, 540, badgeY + 130);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(scoreText, sX, badgeY + 55);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '22px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('점', sX + scoreW + 6, badgeY + 55);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(gradeText, sX + scoreW + 6 + jeomW + 16, badgeY + 55);
+    ctx.textAlign = 'center';
 
     // 한줄평 (핵심!)
     ctx.fillStyle = '#ffffff';
@@ -431,20 +446,20 @@ export default function FaceAnalysisResultPage() {
     }
     lines.push(line.trim());
 
-    const startY = badgeY + 200;
+    const startY = badgeY + 140;
     lines.forEach((l, i) => {
       ctx.fillText(l, 540, startY + i * lineHeight);
     });
 
     // 황금궁합
     if (result.goldenMatch) {
-      const goldenY = startY + lines.length * lineHeight + 50;
+      const goldenY = startY + lines.length * lineHeight + 35;
       ctx.fillStyle = '#FFD700';
       ctx.font = 'bold 28px -apple-system, BlinkMacSystemFont, sans-serif';
       ctx.fillText('💛 황금궁합', 540, goldenY);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
       ctx.font = '30px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(result.goldenMatch, 540, goldenY + 42);
+      ctx.fillText(result.goldenMatch, 540, goldenY + 40);
     }
 
     // 하단: 워터마크

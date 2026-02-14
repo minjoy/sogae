@@ -1392,20 +1392,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     ctx.font = '36px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.fillText('얼굴력', 540, scoreY);
 
-    // 큰 점수 (티어 색상)
-    ctx.shadowColor = tierBg.glow;
-    ctx.shadowBlur = 15;
-    ctx.fillStyle = tierColor;
-    ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(data.score.toString(), 540, scoreY + 110);
-    ctx.shadowBlur = 0;
-
-    // 점 단위
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.font = '32px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText('점', 540, scoreY + 150);
-
-    // 티어 배지
+    // 큰 점수 + 점 + 티어를 한 줄로
     const tierLabels: { [key: string]: string } = {
       'legendary': '✨ LEGENDARY',
       'epic': '🔥 EPIC',
@@ -1413,16 +1400,43 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       'uncommon': '🌿 UNCOMMON',
       'common': '⚪ COMMON'
     };
+    const scoreText = data.score.toString();
+    ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, sans-serif';
+    const scoreWidth = ctx.measureText(scoreText).width;
+    ctx.font = '36px -apple-system, BlinkMacSystemFont, sans-serif';
+    const jeomWidth = ctx.measureText('점').width;
+    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
+    const tierText = tierLabels[tier] || '';
+    const tierWidth = ctx.measureText(tierText).width;
+    const totalWidth = scoreWidth + 8 + jeomWidth + 20 + tierWidth;
+    const startX = 540 - totalWidth / 2;
+
+    // 점수
+    ctx.shadowColor = tierBg.glow;
+    ctx.shadowBlur = 15;
     ctx.fillStyle = tierColor;
-    ctx.font = 'bold 40px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.fillText(tierLabels[tier] || '', 540, scoreY + 200);
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(scoreText, startX, scoreY + 110);
+    ctx.shadowBlur = 0;
+
+    // 점
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '36px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('점', startX + scoreWidth + 8, scoreY + 110);
+
+    // 티어 배지
+    ctx.fillStyle = tierColor;
+    ctx.font = 'bold 36px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText(tierText, startX + scoreWidth + 8 + jeomWidth + 20, scoreY + 110);
+    ctx.textAlign = 'center';
 
     // 구분선
     ctx.strokeStyle = `${tierBg.accent}66`;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(250, scoreY + 230);
-    ctx.lineTo(830, scoreY + 230);
+    ctx.moveTo(250, scoreY + 140);
+    ctx.lineTo(830, scoreY + 140);
     ctx.stroke();
 
     // 한줄평 (더 큰 폰트)
@@ -1447,7 +1461,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     }
     lines.push(line.trim());
 
-    const startY = scoreY + 290;
+    const startY = scoreY + 195;
     lines.forEach((l, i) => {
       ctx.fillText(l, 540, startY + i * lineHeight);
     });
@@ -1455,7 +1469,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     // 황금궁합
     const goldenMatch = (data.analysis as Record<string, unknown>)?.goldenMatch as string | undefined;
     if (goldenMatch) {
-      const goldenY = startY + lines.length * lineHeight + 40;
+      const goldenY = startY + lines.length * lineHeight + 30;
       ctx.fillStyle = '#FFD700';
       ctx.font = 'bold 32px -apple-system, BlinkMacSystemFont, sans-serif';
       ctx.fillText('💛 황금궁합', 540, goldenY);
