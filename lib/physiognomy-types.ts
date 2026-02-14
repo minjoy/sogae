@@ -604,6 +604,18 @@ export interface OverallFaceReading {
 
   // 한줄 총평
   oneLiner: string;
+
+  // 나이대별 특이사항 (백세류년도 기반)
+  ageFortuneDetails?: AgeFortuneDetail[];
+}
+
+// === 나이대별 특이사항 (百歲流年圖 기반) ===
+export interface AgeFortuneDetail {
+  ageRange: string;       // "10대", "20대", "30대" 등
+  label: string;          // 핵심 키워드 (예: "학업 두각")
+  fortune: 'great' | 'good' | 'normal' | 'caution';  // 운세 등급
+  description: string;    // 상세 설명
+  relatedFeature: string; // 관련 얼굴 부위
 }
 
 // === 삼정 비율 계산 ===
@@ -1036,6 +1048,13 @@ export function generateOverallReading(
   // 한줄 총평
   const oneLiner = generateOneLiner(totalScore, traits, faceShape, lifePeriodFortune);
 
+  // 나이대별 특이사항
+  const ageFortuneDetails = calculateAgeFortuneDetails(
+    threeSections,
+    traits,
+    faceShape
+  );
+
   return {
     threeSections,
     faceShape,
@@ -1044,5 +1063,217 @@ export function generateOverallReading(
     fortune,
     advice,
     oneLiner,
+    ageFortuneDetails,
+  };
+}
+
+// === 나이대별 특이사항 계산 (百歲流年圖 기반) ===
+// 관상학에서 얼굴의 각 부위는 특정 나이대의 운세를 나타냄:
+// - 이마(상정): 15~30세 → 10대, 20대
+// - 눈썹/눈(중정 상부): 31~40세 → 30대
+// - 코(중정 하부): 41~50세 → 40대
+// - 입/인중(하정 상부): 51~60세 → 50대
+// - 턱/하관(하정 하부): 61세~ → 60대 이후
+export function calculateAgeFortuneDetails(
+  threeSections: ThreeSections,
+  traits: PhysiognomyTraits,
+  faceShape: FaceShape
+): AgeFortuneDetail[] {
+  const details: AgeFortuneDetail[] = [];
+
+  // --- 10대 (이마 = 상정, 정신력/호기심) ---
+  const teens = calculateTeensFortune(threeSections, traits);
+  details.push(teens);
+
+  // --- 20대 (이마 + 눈썹 경계, 정신력/긍정/호기심) ---
+  const twenties = calculateTwentiesFortune(threeSections, traits);
+  details.push(twenties);
+
+  // --- 30대 (눈썹/눈 = 중정 상부, 연애운/사교력) ---
+  const thirties = calculateThirtiesFortune(threeSections, traits);
+  details.push(thirties);
+
+  // --- 40대 (코 = 중정 하부, 재물/업무/중년운) ---
+  const forties = calculateFortiesFortune(threeSections, traits);
+  details.push(forties);
+
+  // --- 50대 (입/인중 = 하정 상부, 장수/체력/책임감) ---
+  const fifties = calculateFiftiesFortune(threeSections, traits);
+  details.push(fifties);
+
+  // --- 60대 이후 (턱/하관 = 하정 하부, 장수/사교력) ---
+  const sixties = calculateSixtiesFortune(threeSections, traits, faceShape);
+  details.push(sixties);
+
+  return details;
+}
+
+function getFortuneTier(score: number): 'great' | 'good' | 'normal' | 'caution' {
+  if (score >= 75) return 'great';
+  if (score >= 55) return 'good';
+  if (score >= 35) return 'normal';
+  return 'caution';
+}
+
+// 10대: 이마(상정) + 정신력, 호기심
+function calculateTeensFortune(ts: ThreeSections, traits: PhysiognomyTraits): AgeFortuneDetail {
+  const score = Math.round(
+    (ts.upper * 100 * 0.5) +
+    (traits.호기심 / TRAIT_MAX_SCORES.호기심 * 30) +
+    (traits.정신력 / TRAIT_MAX_SCORES.정신력 * 20)
+  );
+  const tier = getFortuneTier(score);
+
+  const descMap = {
+    great: '넓고 맑은 이마상으로, 학업에서 두각을 나타내며 부모의 든든한 지원 아래 순탄한 성장기를 보냅니다. 총명함이 빛을 발하는 시기입니다.',
+    good: '안정된 이마상으로, 학업과 성장이 고르게 이루어지는 시기입니다. 좋은 스승이나 멘토를 만날 가능성이 높습니다.',
+    normal: '평범한 성장기이나, 꾸준한 노력이 뒷받침되면 기반을 다질 수 있는 시기입니다.',
+    caution: '이마가 좁은 편으로, 어린 시절 고생이 있을 수 있으나 이것이 오히려 강한 독립심과 인내력을 길러줍니다.',
+  };
+  const labelMap = { great: '학업 두각', good: '안정 성장', normal: '꾸준한 노력기', caution: '조기 자립' };
+
+  return {
+    ageRange: '10대',
+    label: labelMap[tier],
+    fortune: tier,
+    description: descMap[tier],
+    relatedFeature: '이마(상정)',
+  };
+}
+
+// 20대: 이마~눈썹 경계 + 정신력, 긍정, 호기심
+function calculateTwentiesFortune(ts: ThreeSections, traits: PhysiognomyTraits): AgeFortuneDetail {
+  const score = Math.round(
+    (ts.upper * 100 * 0.35) +
+    (traits.정신력 / TRAIT_MAX_SCORES.정신력 * 25) +
+    (traits.긍정 / TRAIT_MAX_SCORES.긍정 * 20) +
+    (traits.호기심 / TRAIT_MAX_SCORES.호기심 * 20)
+  );
+  const tier = getFortuneTier(score);
+
+  const descMap = {
+    great: '이마에서 눈썹으로 이어지는 기운이 활발하여, 사회에 첫 발을 내딛으며 빠른 성과를 이룹니다. 귀인을 만나 도움을 받는 운이 강합니다.',
+    good: '안정적인 사회 진출기로, 자신만의 영역을 착실히 구축해 나갑니다. 초반의 노력이 30대에 결실을 맺습니다.',
+    normal: '시행착오를 거치며 성장하는 시기입니다. 다양한 경험이 인생의 자산이 됩니다.',
+    caution: '사회 진출 초기 어려움이 있을 수 있으나, 이 시기의 고생이 중년 이후 큰 성공의 밑거름이 됩니다.',
+  };
+  const labelMap = { great: '귀인 출현', good: '착실한 기반', normal: '시행착오 성장', caution: '고진감래' };
+
+  return {
+    ageRange: '20대',
+    label: labelMap[tier],
+    fortune: tier,
+    description: descMap[tier],
+    relatedFeature: '이마~눈썹(상정 하부)',
+  };
+}
+
+// 30대: 눈썹/눈 = 중정 상부, 연애운/사교력/정신력
+function calculateThirtiesFortune(ts: ThreeSections, traits: PhysiognomyTraits): AgeFortuneDetail {
+  const score = Math.round(
+    (ts.middle * 100 * 0.35) +
+    (traits.연애운 / TRAIT_MAX_SCORES.연애운 * 25) +
+    (traits.사교력 / TRAIT_MAX_SCORES.사교력 * 20) +
+    (traits.정신력 / TRAIT_MAX_SCORES.정신력 * 20)
+  );
+  const tier = getFortuneTier(score);
+
+  const descMap = {
+    great: '눈과 눈썹의 기운이 왕성하여, 대인관계와 연애/결혼에서 큰 행운이 찾아옵니다. 인생의 동반자를 만나고 사회적으로도 인정받는 전성기입니다.',
+    good: '안정적인 대인관계를 바탕으로 결혼과 가정을 이루기 좋은 시기입니다. 직장에서도 신뢰를 쌓아갑니다.',
+    normal: '인간관계에서 선택과 집중이 필요한 시기입니다. 진정한 인연을 알아보는 눈이 중요합니다.',
+    caution: '대인관계에서 시련이 있을 수 있으나, 진심을 다하면 늦더라도 좋은 인연이 찾아옵니다.',
+  };
+  const labelMap = { great: '연애 전성기', good: '안정 결실', normal: '선택과 집중', caution: '늦깎이 인연' };
+
+  return {
+    ageRange: '30대',
+    label: labelMap[tier],
+    fortune: tier,
+    description: descMap[tier],
+    relatedFeature: '눈썹·눈(중정 상부)',
+  };
+}
+
+// 40대: 코 = 중정 하부, 재물/업무/중년운
+function calculateFortiesFortune(ts: ThreeSections, traits: PhysiognomyTraits): AgeFortuneDetail {
+  const score = Math.round(
+    (ts.middle * 100 * 0.3) +
+    (traits.재물 / TRAIT_MAX_SCORES.재물 * 25) +
+    (traits.업무 / TRAIT_MAX_SCORES.업무 * 20) +
+    (traits.중년운 / TRAIT_MAX_SCORES.중년운 * 25)
+  );
+  const tier = getFortuneTier(score);
+
+  const descMap = {
+    great: '코의 기운이 풍성하여, 재물운과 직업운이 절정에 달합니다. 사업이나 투자에서 큰 성과를 거두며 경제적 풍요를 누립니다.',
+    good: '꾸준히 쌓아온 실력이 빛을 발하는 시기로, 재물이 안정적으로 들어옵니다. 승진이나 사업 확장의 기회가 있습니다.',
+    normal: '경제적으로 균형을 맞추는 시기입니다. 무리한 투자보다 안정적인 재테크가 유리합니다.',
+    caution: '재물의 출입이 불안정할 수 있으니, 절약과 저축을 통해 미래를 대비하세요. 본업에 충실하면 위기를 넘깁니다.',
+  };
+  const labelMap = { great: '재물 전성기', good: '안정 수입', normal: '균형 재정', caution: '절약 필요' };
+
+  return {
+    ageRange: '40대',
+    label: labelMap[tier],
+    fortune: tier,
+    description: descMap[tier],
+    relatedFeature: '코(중정 하부)',
+  };
+}
+
+// 50대: 입/인중 = 하정 상부, 장수/체력/책임감
+function calculateFiftiesFortune(ts: ThreeSections, traits: PhysiognomyTraits): AgeFortuneDetail {
+  const score = Math.round(
+    (ts.lower * 100 * 0.3) +
+    (traits.장수 / TRAIT_MAX_SCORES.장수 * 25) +
+    (traits.체력 / TRAIT_MAX_SCORES.체력 * 20) +
+    (traits.책임감 / TRAIT_MAX_SCORES.책임감 * 25)
+  );
+  const tier = getFortuneTier(score);
+
+  const descMap = {
+    great: '인중과 입의 기운이 좋아, 건강하고 활력 넘치는 50대를 보냅니다. 자녀로부터 효도를 받으며 사회적 지위도 유지됩니다.',
+    good: '건강 관리에 신경 쓰면 활기찬 중년을 보낼 수 있습니다. 가정에서 안정과 행복을 찾는 시기입니다.',
+    normal: '체력 관리가 핵심인 시기입니다. 규칙적인 생활과 운동이 남은 인생의 질을 좌우합니다.',
+    caution: '건강에 특별히 유의해야 하는 시기입니다. 정기적인 건강검진과 체력 관리가 반드시 필요합니다.',
+  };
+  const labelMap = { great: '건강 장수', good: '안정 가정', normal: '체력 관리기', caution: '건강 주의' };
+
+  return {
+    ageRange: '50대',
+    label: labelMap[tier],
+    fortune: tier,
+    description: descMap[tier],
+    relatedFeature: '인중·입(하정 상부)',
+  };
+}
+
+// 60대 이후: 턱/하관 = 하정 하부, 장수/사교력 + 얼굴형
+function calculateSixtiesFortune(ts: ThreeSections, traits: PhysiognomyTraits, faceShape: FaceShape): AgeFortuneDetail {
+  const faceShapeBonus = (faceShape.type === '원형' || faceShape.type === '방형') ? 10 : 0;
+  const score = Math.round(
+    (ts.lower * 100 * 0.35) +
+    (traits.장수 / TRAIT_MAX_SCORES.장수 * 25) +
+    (traits.사교력 / TRAIT_MAX_SCORES.사교력 * 20) +
+    faceShapeBonus +
+    (traits.성실함 / TRAIT_MAX_SCORES.성실함 * 10)
+  );
+  const tier = getFortuneTier(score);
+
+  const descMap = {
+    great: '턱과 하관의 기운이 풍성하여, 자녀복과 부동산복이 넘치는 말년입니다. 주변 사람들의 존경과 사랑을 받으며 풍요로운 노후를 보냅니다.',
+    good: '안정적인 하관으로, 편안하고 여유로운 말년을 보냅니다. 자녀와의 관계도 원만하며 소소한 행복이 가득합니다.',
+    normal: '노후 준비를 착실히 하면 안정적인 말년을 보낼 수 있습니다. 취미 활동과 사회적 교류가 삶의 질을 높입니다.',
+    caution: '턱이 가늘어 말년에 외로울 수 있으나, 젊은 시절부터 인간관계와 재산을 잘 관리하면 충분히 극복됩니다.',
+  };
+  const labelMap = { great: '풍요로운 노후', good: '편안한 말년', normal: '준비된 노후', caution: '노후 대비 필요' };
+
+  return {
+    ageRange: '60대 이후',
+    label: labelMap[tier],
+    fortune: tier,
+    description: descMap[tier],
+    relatedFeature: '턱·하관(하정 하부)',
   };
 }
