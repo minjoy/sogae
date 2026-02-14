@@ -243,23 +243,23 @@ function createDefaultTraits(): PhysiognomyTraits {
 }
 
 /**
- * 점수 스프레딩 함수 - 점수대별 가중치를 적용하여 평균 상향
- * 낮은 점수는 더 많이 올리고, 높은 점수는 덜 올리는 방식
+ * 점수 스프레딩 함수 - 점수대별 가중치를 적용하여 점수 차이 확대
+ * 높은 점수는 더 많이 올리고, 낮은 점수는 조금만 올리는 방식
  */
 function spreadScore(score: number): number {
-  // 점수대별 가중치 적용 (낮을수록 더 많이 상향)
-  // 0~30점: +15~20점, 30~50점: +10~15점, 50~70점: +5~10점, 70~90점: +0~5점, 90+: 0점
+  // 점수대별 가중치 적용 (높을수록 더 많이 상향 → 점수 차이 확대)
+  // 0~30점: +0~3점, 30~50점: +3~6점, 50~70점: +6~10점, 70~90점: +10~15점, 90+: +5점
   let boost: number;
   if (score < 30) {
-    boost = 15 + (30 - score) / 6; // 15~20점 상향
+    boost = score / 10; // 0~3점 상향 (낮은 점수는 조금만)
   } else if (score < 50) {
-    boost = 10 + (50 - score) / 4; // 10~15점 상향
+    boost = 3 + (score - 30) / 6.67; // 3~6점 상향
   } else if (score < 70) {
-    boost = 5 + (70 - score) / 4; // 5~10점 상향
+    boost = 6 + (score - 50) / 5; // 6~10점 상향
   } else if (score < 90) {
-    boost = (90 - score) / 4; // 0~5점 상향
+    boost = 10 + (score - 70) / 4; // 10~15점 상향 (높은 점수는 더 많이)
   } else {
-    boost = 0; // 90점 이상은 상향 없음
+    boost = 5; // 90점 이상은 적당히 상향 (100점 초과 방지)
   }
 
   const boostedScore = score + boost;
