@@ -371,6 +371,7 @@ export default function CompatibilityPage() {
                   setError(null);
                   setStep('male');
                   setShowDonationPopup(true);
+                  window.scrollTo(0, 0);
                 } else {
                   setError('개인정보 수집에 동의해주세요.');
                 }
