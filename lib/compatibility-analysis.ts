@@ -243,21 +243,34 @@ function createDefaultTraits(): PhysiognomyTraits {
 }
 
 /**
- * 점수 스프레딩 함수 - 중간값을 극단으로 분산시키되 평균을 상향
- * 기본 점수에 상향 보정을 적용하여 전체적으로 높은 점수 분포를 만듦
+ * 점수 스프레딩 함수 - 점수대별 가중치를 적용하여 평균 상향
+ * 낮은 점수는 더 많이 올리고, 높은 점수는 덜 올리는 방식
  */
 function spreadScore(score: number): number {
-  // 기본 점수를 상향 조정 (평균 +12점)
-  const boostedScore = Math.min(100, score + 12);
+  // 점수대별 가중치 적용 (낮을수록 더 많이 상향)
+  // 0~30점: +15~20점, 30~50점: +10~15점, 50~70점: +5~10점, 70~90점: +0~5점, 90+: 0점
+  let boost: number;
+  if (score < 30) {
+    boost = 15 + (30 - score) / 6; // 15~20점 상향
+  } else if (score < 50) {
+    boost = 10 + (50 - score) / 4; // 10~15점 상향
+  } else if (score < 70) {
+    boost = 5 + (70 - score) / 4; // 5~10점 상향
+  } else if (score < 90) {
+    boost = (90 - score) / 4; // 0~5점 상향
+  } else {
+    boost = 0; // 90점 이상은 상향 없음
+  }
 
-  // 60을 기준으로 점수를 분산 (더 높은 기준점)
-  const normalized = (boostedScore - 60) / 40; // -1.5 ~ 1 범위
-  // 시그모이드 유사 함수로 극단값 강조하되 상향 편향
-  const spread = Math.sign(normalized) * Math.pow(Math.abs(normalized), 0.65);
-  const result = 60 + spread * 35;
+  const boostedScore = score + boost;
 
-  // 최소 35점, 최대 100점 보장
-  return Math.min(100, Math.max(35, result));
+  // 55를 기준으로 점수를 분산 (편차 확대)
+  const normalized = (boostedScore - 55) / 45;
+  const spread = Math.sign(normalized) * Math.pow(Math.abs(normalized), 0.7);
+  const result = 55 + spread * 40;
+
+  // 최소 0점, 최대 100점
+  return Math.min(100, Math.max(0, result));
 }
 
 function calculateTraitCompatibility(
@@ -899,7 +912,7 @@ export function analyzeCompatibility(
 
   // 기본 상향 보정 (+5점) 추가
   const baseBoost = 5;
-  const totalScore = Math.min(100, Math.max(30, Math.round(categoryAvg + elementBonus + extremeBonus + baseBoost)));
+  const totalScore = Math.min(100, Math.max(0, Math.round(categoryAvg + elementBonus + extremeBonus + baseBoost)));
 
   // 5. 등급 결정
   const { label: gradeLabel, emoji: gradeEmoji } = getGradeLabel(totalScore);
