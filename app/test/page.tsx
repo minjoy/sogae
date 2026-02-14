@@ -139,9 +139,9 @@ export default function TestListPage() {
           </p>
 
           {/* 진행 상황 or 회원가입 유도 */}
-          <div className="max-w-xl mx-auto bg-white rounded-2xl p-6 shadow-sm mb-8">
+          <div className="max-w-xl mx-auto mb-8">
             {isLoggedIn ? (
-              <>
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-semibold text-gray-700">
                     진행 상황
@@ -180,33 +180,80 @@ export default function TestListPage() {
                     전체 테스트 삭제하기
                   </button>
                 )}
-              </>
-            ) : (
-              <div className="text-center">
-                <div className="w-12 h-12 mx-auto mb-3 bg-primary-100 rounded-full flex items-center justify-center">
-                  <Target className="w-6 h-6 text-primary-600" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  회원가입하고 나만의 사용설명서를 저장하세요
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  무료 회원가입 시 진행 상황 저장, 히스토리 관리, 영구 보관이 가능합니다
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    onClick={() => router.push('/signup')}
-                    variant="primary"
-                  >
-                    무료 회원가입
-                  </Button>
-                  <Button
-                    onClick={() => router.push('/login')}
-                    variant="outline"
-                  >
-                    로그인
-                  </Button>
-                </div>
               </div>
+            ) : (
+              <>
+                {/* 비로그인 - 테스트 가능 안내 */}
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg">로그인 없이 테스트 가능!</p>
+                      <p className="text-sm text-white/90">지금 바로 테스트를 시작하세요</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 로그인 후 혜택 안내 */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border-2 border-amber-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-2xl">🔐</span>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      로그인하면 더 좋은 점
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3 mb-5">
+                    <div className="flex items-start gap-3 bg-amber-50 rounded-lg p-3">
+                      <span className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">진행 상황 자동 저장</p>
+                        <p className="text-xs text-gray-600">완료한 테스트가 계정에 저장됩니다</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 bg-amber-50 rounded-lg p-3">
+                      <span className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">5개 완료 시 통합 결과</p>
+                        <p className="text-xs text-gray-600">나만의 4글자 성격코드 & 사용설명서 카드</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 bg-amber-50 rounded-lg p-3">
+                      <span className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">공유 가능한 링크 생성</p>
+                        <p className="text-xs text-gray-600">친구나 파트너와 결과 공유</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-red-700 text-center">
+                      <strong>⚠️ 비로그인 시 진행 상황이 저장되지 않습니다</strong><br />
+                      <span className="text-xs">5개 완료 후 통합 결과를 보려면 로그인이 필요해요</span>
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      onClick={() => router.push('/signup')}
+                      variant="primary"
+                      className="flex-1"
+                    >
+                      무료 회원가입
+                    </Button>
+                    <Button
+                      onClick={() => router.push('/login')}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      로그인
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -302,43 +349,83 @@ export default function TestListPage() {
         </div>
 
         {/* 완료 혜택 안내 */}
-        <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 text-center text-white shadow-xl mb-6">
-          <div className="w-14 h-14 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center">
-            <Gift className="w-7 h-7 text-white" />
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl p-8 text-center text-white shadow-2xl mb-6 border-4 border-yellow-300">
+          {/* 반짝이는 효과 */}
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+            <div className="absolute top-2 left-4 text-2xl animate-pulse">✨</div>
+            <div className="absolute top-4 right-6 text-xl animate-pulse delay-100">⭐</div>
+            <div className="absolute bottom-8 left-8 text-lg animate-pulse delay-200">✨</div>
+            <div className="absolute bottom-4 right-4 text-2xl animate-pulse delay-300">🌟</div>
           </div>
-          <h3 className="text-2xl font-bold mb-3">
-            5개 테스트 완료 시 받는 혜택
-          </h3>
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-              <div className="w-10 h-10 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
-                <Heart className="w-5 h-5 text-white" />
+
+          <div className="relative z-10">
+            <div className="text-5xl mb-3 animate-bounce">🎁</div>
+            <h3 className="text-2xl font-black mb-4 drop-shadow-lg">
+              5개 테스트 완료 시 특별 혜택!
+            </h3>
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-black/20 backdrop-blur rounded-xl p-4">
+                <div className="w-10 h-10 mx-auto mb-2 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-amber-900" />
+                </div>
+                <p className="font-bold mb-1">나 사용설명서 카드</p>
+                <p className="text-sm opacity-90">5가지 테스트 통합 분석</p>
               </div>
-              <p className="font-semibold mb-1">나 사용설명서 카드</p>
-              <p className="text-sm opacity-90">5가지 테스트 통합 분석</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-              <div className="w-10 h-10 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
-                <Link2 className="w-5 h-5 text-white" />
+              <div className="bg-black/20 backdrop-blur rounded-xl p-4">
+                <div className="w-10 h-10 mx-auto mb-2 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Link2 className="w-5 h-5 text-amber-900" />
+                </div>
+                <p className="font-bold mb-1">4글자 성격코드</p>
+                <p className="text-sm opacity-90">MBTI처럼 공유 가능!</p>
               </div>
-              <p className="font-semibold mb-1">공유 가능한 링크</p>
-              <p className="text-sm opacity-90">친구나 파트너와 공유</p>
-            </div>
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-              <div className="w-10 h-10 mx-auto mb-2 bg-white/20 rounded-full flex items-center justify-center">
-                <Lightbulb className="w-5 h-5 text-white" />
+              <div className="bg-black/20 backdrop-blur rounded-xl p-4">
+                <div className="w-10 h-10 mx-auto mb-2 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Lightbulb className="w-5 h-5 text-amber-900" />
+                </div>
+                <p className="font-bold mb-1">맞춤 상대 분석</p>
+                <p className="text-sm opacity-90">나와 딱 맞는 유형 추천</p>
               </div>
-              <p className="font-semibold mb-1">맞춤 관계 조언</p>
-              <p className="text-sm opacity-90">성향 기반 실천 가이드</p>
             </div>
+
+            {!isLoggedIn && (
+              <div className="bg-red-600/80 border-2 border-white/50 rounded-xl p-4 mb-4">
+                <p className="font-bold text-base flex items-center justify-center gap-2">
+                  <span className="text-xl">🔐</span>
+                  이 혜택은 로그인 후에만 받을 수 있어요!
+                </p>
+                <p className="text-xs mt-1 opacity-90">
+                  로그인하면 진행 상황이 저장되고, 5개 완료 시 통합 결과를 확인할 수 있습니다
+                </p>
+              </div>
+            )}
+
+            {isLoggedIn ? (
+              <Button
+                variant="secondary"
+                className="bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-lg"
+                onClick={() => router.push('/my')}
+              >
+                내 진행 상황 보기
+              </Button>
+            ) : (
+              <div className="flex gap-3 justify-center">
+                <Button
+                  variant="secondary"
+                  className="bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-lg"
+                  onClick={() => router.push('/signup')}
+                >
+                  무료 회원가입
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white/20 font-semibold"
+                  onClick={() => router.push('/login')}
+                >
+                  로그인
+                </Button>
+              </div>
+            )}
           </div>
-          <Button
-            variant="secondary"
-            className="bg-white text-primary-600 hover:bg-gray-50"
-            onClick={() => router.push('/my')}
-          >
-            내 진행 상황 보기
-          </Button>
         </div>
 
         {/* 안내 */}

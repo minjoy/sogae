@@ -537,65 +537,98 @@ export default function TestResultPage() {
           </button>
         </div>
 
-        {/* 비회원 가입 유도 */}
-        {!isLoggedIn && (
-          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white shadow-xl mb-4">
-            <div className="text-4xl mb-3 text-center">🎯</div>
-            <h3 className="text-xl font-bold mb-2 text-center">
-              더 정확한 연애 상대를 알고 싶다면?
-            </h3>
-            <p className="text-sm text-white/90 mb-4 text-center">
-              5가지 테스트를 모두 완료하면<br />
-              <strong>나와 딱 맞는 상대 성격 유형</strong>을 정확하게 알려드려요!
-            </p>
+        {/* 5개 완료 CTA 강조 영역 */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl p-6 text-white shadow-2xl mb-4 border-4 border-yellow-300">
+          {/* 반짝이는 효과 */}
+          <div className="absolute top-0 left-0 w-full h-full">
+            <div className="absolute top-2 left-4 text-2xl animate-pulse">✨</div>
+            <div className="absolute top-4 right-6 text-xl animate-pulse delay-100">⭐</div>
+            <div className="absolute bottom-4 left-8 text-lg animate-pulse delay-200">✨</div>
+            <div className="absolute bottom-2 right-4 text-2xl animate-pulse delay-300">🌟</div>
+          </div>
 
-            <div className="bg-white/10 backdrop-blur rounded-xl p-4 mb-4">
-              <p className="text-sm mb-3 font-semibold">🔮 5개 테스트 완료 시 받을 수 있는 것</p>
-              <ul className="space-y-2 text-xs">
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-300">✓</span>
-                  <span>나만의 4글자 성격코드 (MBTI처럼!)</span>
+          <div className="relative z-10">
+            <div className="text-5xl mb-3 text-center animate-bounce">🎁</div>
+            <h3 className="text-2xl font-black mb-2 text-center drop-shadow-lg">
+              5개 테스트 모두 완료하세요!
+            </h3>
+
+            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 mb-4">
+              <p className="text-center text-sm font-semibold mb-3">
+                🔮 5개 완료 시 특별 혜택
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <span className="w-6 h-6 bg-yellow-400 text-amber-900 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                  <span>나만의 <strong>4글자 성격코드</strong> (MBTI처럼!)</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-300">✓</span>
-                  <span>5가지 영역을 종합한 <strong>정확한 상대 궁합</strong></span>
+                <li className="flex items-center gap-2">
+                  <span className="w-6 h-6 bg-yellow-400 text-amber-900 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                  <span>5가지 영역 종합 <strong>완벽한 상대 분석</strong></span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-300">✓</span>
-                  <span>연애 준비 상태 & 맞춤 연애 조언</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-300">✓</span>
-                  <span>공유 가능한 나만의 사용설명서 카드</span>
+                <li className="flex items-center gap-2">
+                  <span className="w-6 h-6 bg-yellow-400 text-amber-900 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                  <span><strong>공유 가능한 사용설명서 카드</strong></span>
                 </li>
               </ul>
             </div>
 
+            {!isLoggedIn && (
+              <div className="bg-red-600/80 border-2 border-white/50 rounded-xl p-4 mb-4">
+                <p className="text-center font-bold text-base flex items-center justify-center gap-2">
+                  <span className="text-xl">🔐</span>
+                  로그인하면 진행 상황이 저장돼요!
+                </p>
+                <p className="text-center text-xs mt-1 opacity-90">
+                  5개 완료 후 통합 결과를 보려면 로그인이 필요합니다
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-3 justify-center">
-              <Button
-                variant="secondary"
-                className="bg-white text-primary-600 hover:bg-gray-50 font-semibold"
-                onClick={() => router.push('/signup')}
-              >
-                무료 회원가입
-              </Button>
-              <Button
-                variant="outline"
-                className="border-white text-white hover:bg-white/10"
-                onClick={() => router.push('/login')}
-              >
-                로그인
-              </Button>
+              {!isLoggedIn ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    className="bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-lg"
+                    onClick={() => router.push('/signup')}
+                  >
+                    무료 회원가입
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-2 border-white text-white hover:bg-white/20 font-semibold"
+                    onClick={() => router.push('/login')}
+                  >
+                    로그인
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="secondary"
+                  className="bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-lg px-8"
+                  onClick={() => router.push('/test')}
+                >
+                  다른 테스트 하러가기 →
+                </Button>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* 안내 */}
-        <div className="bg-white/80 backdrop-blur rounded-xl p-5 text-center">
-          <p className="text-sm text-gray-600">
-            💡 지금은 1가지 테스트 결과만 본 거예요.<br />
-            <strong className="text-gray-800">5개 모두 완료하면 더 정확한 상대 성격</strong>을 알 수 있어요!
+        {/* 진행 상황 안내 */}
+        <div className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-5 text-center text-white">
+          <p className="text-sm mb-2">
+            💡 지금은 <strong>1가지 테스트 결과</strong>만 본 거예요
           </p>
+          <p className="text-base font-bold text-yellow-400">
+            5개 모두 완료 → 진짜 나와 맞는 상대를 알 수 있어요!
+          </p>
+          {!isLoggedIn && (
+            <p className="text-xs text-gray-400 mt-2">
+              ※ 로그인 없이도 테스트는 가능하지만, 진행 상황 저장 및 통합 결과는 로그인 후 이용 가능합니다
+            </p>
+          )}
         </div>
       </div>
     </div>
