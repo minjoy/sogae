@@ -2213,7 +2213,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           {expandedItem === 'detail' && (
             <div className="px-6 pb-6 space-y-3">
               <div className="space-y-3">
-                {Object.entries(data.analysis).map(([key, value]) => {
+                {Object.entries(data.analysis)
+                  .filter(([key]) => key !== 'goldenMatch')
+                  .map(([key, value]) => {
                   const analysisValue = value as { label?: string; description?: string } | number;
                   const isObject = typeof analysisValue === 'object' && analysisValue !== null;
 
@@ -2242,6 +2244,18 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
                   );
                 })}
               </div>
+
+              {/* 황금궁합 */}
+              {Boolean((data.analysis as Record<string, unknown>)?.goldenMatch) && (
+                <div className="bg-gradient-to-r from-yellow-500/10 to-amber-500/10 rounded-xl p-4 border border-yellow-500/20">
+                  <div className="text-yellow-400 text-sm font-medium mb-2 flex items-center gap-2">
+                    <span>💛</span> 황금궁합
+                  </div>
+                  <div className="text-white font-medium">
+                    {String((data.analysis as Record<string, unknown>).goldenMatch)}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
