@@ -528,6 +528,7 @@ export default function FaceAnalysisPage() {
         const analysisWithDebug = {
           ...data.result.analysis,
           goldenMatch: data.result.goldenMatch,
+          overallReading: data.result.overallReading || undefined,
           debug: {
             ...data.result.debug,
             // 얼굴 각도 정보

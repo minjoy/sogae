@@ -2083,6 +2083,49 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
                 </div>
               )}
 
+              {/* 나이대별 특이사항 (백세류년도 기반) */}
+              {(() => {
+                const overallReading = (data.analysis as Record<string, unknown>)?.overallReading as { ageFortuneDetails?: Array<{ ageRange: string; label: string; fortune: 'great' | 'good' | 'normal' | 'caution'; description: string; relatedFeature: string }> } | undefined;
+                const details = overallReading?.ageFortuneDetails;
+                if (!details || details.length === 0) return null;
+                return (
+                  <div className="bg-gradient-to-b from-indigo-500/10 to-purple-500/10 rounded-xl p-4 border border-indigo-500/20">
+                    <div className="text-indigo-300 text-sm font-medium mb-4 flex items-center gap-2">
+                      <span>🔮</span> 나이대별 인생 특이사항
+                    </div>
+                    <div className="relative">
+                      <div className="absolute left-[22px] top-2 bottom-2 w-px bg-gradient-to-b from-cyan-500/40 via-green-500/40 via-yellow-500/40 via-orange-500/40 to-red-500/40" />
+                      <div className="space-y-4">
+                        {details.map((item, i) => {
+                          const fortuneConfig = {
+                            great:   { color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', dot: 'bg-yellow-400', icon: '★' },
+                            good:    { color: 'text-green-400',  bg: 'bg-green-500/20',  border: 'border-green-500/30',  dot: 'bg-green-400',  icon: '●' },
+                            normal:  { color: 'text-blue-400',   bg: 'bg-blue-500/20',   border: 'border-blue-500/30',   dot: 'bg-blue-400',   icon: '○' },
+                            caution: { color: 'text-orange-400', bg: 'bg-orange-500/20',  border: 'border-orange-500/30', dot: 'bg-orange-400', icon: '△' },
+                          };
+                          const config = fortuneConfig[item.fortune];
+                          return (
+                            <div key={i} className="flex items-start gap-3 relative">
+                              <div className={`w-[11px] h-[11px] rounded-full ${config.dot} mt-1.5 ring-2 ring-black/50 z-10 flex-shrink-0 ml-[17px]`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <span className="text-white font-bold text-sm">{item.ageRange}</span>
+                                  <span className={`${config.bg} ${config.color} ${config.border} border px-2 py-0.5 rounded-full text-xs font-medium`}>
+                                    {config.icon} {item.label}
+                                  </span>
+                                  <span className="text-white/30 text-xs">{item.relatedFeature}</span>
+                                </div>
+                                <div className="text-white/60 text-xs leading-relaxed">{item.description}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
             </div>
           )}
         </div>
