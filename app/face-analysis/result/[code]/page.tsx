@@ -4,49 +4,6 @@ import { useState, useEffect, useRef, useCallback, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 
-// 전체 관상 해석 타입
-interface OverallFaceReading {
-  threeSections: {
-    upper: number;
-    middle: number;
-    lower: number;
-    balance: string;
-    interpretation: string;
-  };
-  faceShape: {
-    type: string;
-    name: string;
-    description: string;
-  };
-  lifePeriodFortune: {
-    early: { score: number; description: string };
-    middle: { score: number; description: string };
-    late: { score: number; description: string };
-  };
-  personality: {
-    mainType: string;
-    description: string;
-    strengths: string[];
-    weaknesses: string[];
-  };
-  fortune: {
-    wealth: string;
-    career: string;
-    love: string;
-    health: string;
-    social: string;
-  };
-  advice: string[];
-  oneLiner: string;
-  ageFortuneDetails?: Array<{
-    ageRange: string;
-    label: string;
-    fortune: 'great' | 'good' | 'normal' | 'caution';
-    description: string;
-    relatedFeature: string;
-  }>;
-}
-
 // 분석 결과로부터 조언/주의사항/궁합 생성 (얼굴 특징 기반)
 function generateDetailedAdvice(
   score: number,
@@ -203,8 +160,6 @@ interface FaceAnalysisData {
   viewCount: number;
   createdAt: string;
   isImageExpired: boolean;
-  // 전체 관상 해석
-  overallReading?: OverallFaceReading;
   // 디버그 정보
   debug?: {
     noseWidth: number;
@@ -992,12 +947,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           return;
         }
 
-        // analysis 안의 overallReading을 top-level로 추출
-        const rawData = json.data;
-        if (!rawData.overallReading && rawData.analysis?.overallReading) {
-          rawData.overallReading = rawData.analysis.overallReading;
-        }
-        setData(rawData);
+        setData(json.data);
 
         // 결정적 한줄평 생성
         const liner = generateDeterministicOneLiner(
@@ -1987,160 +1937,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </div>
         </div>
 
-        {/* 전체 관상 해석 */}
-        {data.overallReading && (
-          <div className="bg-white/5 backdrop-blur rounded-2xl overflow-hidden mb-6 border border-white/10">
-            <button
-              onClick={() => setExpandedItem(expandedItem === 'overall' ? null : 'overall')}
-              className="w-full px-6 py-4 flex items-center justify-between text-white"
-            >
-              <span className="font-bold flex items-center gap-2">
-                <span>🔮</span> 전체 관상 해석
-              </span>
-              <span className={`transform transition-transform ${expandedItem === 'overall' ? 'rotate-180' : ''}`}>
-                ▼
-              </span>
-            </button>
-
-            {expandedItem === 'overall' && (
-              <div className="px-6 pb-6 space-y-4">
-                {/* 한마디 */}
-                <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl p-4 border border-yellow-500/30">
-                  <p className="text-yellow-300 text-lg font-bold text-center">
-                    &ldquo;{data.overallReading.oneLiner}&rdquo;
-                  </p>
-                </div>
-
-                {/* 얼굴형 */}
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/70 text-sm mb-1">😊 얼굴형</div>
-                  <div className="text-white font-medium text-lg">{data.overallReading.faceShape.name}</div>
-                  <div className="text-white/60 text-sm mt-1">{data.overallReading.faceShape.description}</div>
-                </div>
-
-                {/* 삼정 비율 */}
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/70 text-sm mb-2">📐 삼정(三停) 비율</div>
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    <div className="text-center">
-                      <div className="text-cyan-400 font-bold text-lg">{data.overallReading.threeSections.upper}%</div>
-                      <div className="text-white/50 text-xs">상정(이마)</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-green-400 font-bold text-lg">{data.overallReading.threeSections.middle}%</div>
-                      <div className="text-white/50 text-xs">중정(코)</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-orange-400 font-bold text-lg">{data.overallReading.threeSections.lower}%</div>
-                      <div className="text-white/50 text-xs">하정(턱)</div>
-                    </div>
-                  </div>
-                  <div className="text-white/60 text-sm">{data.overallReading.threeSections.interpretation}</div>
-                </div>
-
-                {/* 시기별 운세 */}
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/70 text-sm mb-3">⏰ 시기별 운세</div>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-cyan-500/20 rounded-lg px-3 py-1 text-cyan-400 text-sm font-medium min-w-[60px] text-center">초년운</div>
-                      <div>
-                        <div className="text-white font-medium">{data.overallReading.lifePeriodFortune.early.score}점</div>
-                        <div className="text-white/60 text-sm">{data.overallReading.lifePeriodFortune.early.description}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="bg-green-500/20 rounded-lg px-3 py-1 text-green-400 text-sm font-medium min-w-[60px] text-center">중년운</div>
-                      <div>
-                        <div className="text-white font-medium">{data.overallReading.lifePeriodFortune.middle.score}점</div>
-                        <div className="text-white/60 text-sm">{data.overallReading.lifePeriodFortune.middle.description}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="bg-orange-500/20 rounded-lg px-3 py-1 text-orange-400 text-sm font-medium min-w-[60px] text-center">말년운</div>
-                      <div>
-                        <div className="text-white font-medium">{data.overallReading.lifePeriodFortune.late.score}점</div>
-                        <div className="text-white/60 text-sm">{data.overallReading.lifePeriodFortune.late.description}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 성격 특성 */}
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/70 text-sm mb-2">💎 성격 특성</div>
-                  <div className="bg-purple-500/20 text-purple-300 px-3 py-1.5 rounded-full text-sm inline-block mb-2">
-                    {data.overallReading.personality.mainType}
-                  </div>
-                  <div className="text-white/60 text-sm mb-3">{data.overallReading.personality.description}</div>
-                  {data.overallReading.personality.strengths.length > 0 && (
-                    <div className="mb-2">
-                      <div className="text-green-400 text-xs mb-1">장점</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {data.overallReading.personality.strengths.map((s, i) => (
-                          <span key={i} className="bg-green-500/15 text-green-300 px-2.5 py-0.5 rounded-full text-xs">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {data.overallReading.personality.weaknesses.length > 0 && (
-                    <div>
-                      <div className="text-orange-400 text-xs mb-1">단점</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {data.overallReading.personality.weaknesses.map((w, i) => (
-                          <span key={i} className="bg-orange-500/15 text-orange-300 px-2.5 py-0.5 rounded-full text-xs">
-                            {w}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 운세 영역 */}
-                <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/70 text-sm mb-3">🌟 운세 영역</div>
-                  <div className="space-y-3">
-                    {Object.entries(data.overallReading.fortune).map(([key, value]) => {
-                      const labels: Record<string, { icon: string; name: string }> = {
-                        wealth: { icon: '💰', name: '재물운' },
-                        career: { icon: '💼', name: '직업운' },
-                        love: { icon: '💕', name: '연애운' },
-                        health: { icon: '💪', name: '건강운' },
-                        social: { icon: '🤝', name: '사회운' },
-                      };
-                      const label = labels[key] || { icon: '⭐', name: key };
-                      return (
-                        <div key={key} className="flex items-start gap-2.5">
-                          <span className="text-base mt-0.5">{label.icon}</span>
-                          <div>
-                            <div className="text-white/80 text-sm font-medium">{label.name}</div>
-                            <div className="text-white/55 text-xs mt-0.5">{value}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 조언 */}
-                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-4 border border-blue-500/20">
-                  <div className="text-blue-400 text-sm font-medium mb-2">💡 조언</div>
-                  <ul className="space-y-1">
-                    {data.overallReading.advice.map((item, i) => (
-                      <li key={i} className="text-white/80 text-sm flex items-start gap-2">
-                        <span className="text-blue-400">•</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* 조언 및 궁합 정보 */}
         {(() => {
@@ -2287,48 +2083,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
                 </div>
               )}
 
-              {/* 나이대별 특이사항 (백세류년도 기반) */}
-              {data.overallReading?.ageFortuneDetails && data.overallReading.ageFortuneDetails.length > 0 && (
-                <div className="bg-gradient-to-b from-indigo-500/10 to-purple-500/10 rounded-xl p-4 border border-indigo-500/20">
-                  <div className="text-indigo-300 text-sm font-medium mb-4 flex items-center gap-2">
-                    <span>🔮</span> 나이대별 인생 특이사항
-                  </div>
-                  <div className="relative">
-                    {/* 타임라인 세로선 */}
-                    <div className="absolute left-[22px] top-2 bottom-2 w-px bg-gradient-to-b from-cyan-500/40 via-green-500/40 via-yellow-500/40 via-orange-500/40 to-red-500/40" />
-
-                    <div className="space-y-4">
-                      {data.overallReading.ageFortuneDetails.map((item, i) => {
-                        const fortuneConfig = {
-                          great:   { color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', dot: 'bg-yellow-400', icon: '★' },
-                          good:    { color: 'text-green-400',  bg: 'bg-green-500/20',  border: 'border-green-500/30',  dot: 'bg-green-400',  icon: '●' },
-                          normal:  { color: 'text-blue-400',   bg: 'bg-blue-500/20',   border: 'border-blue-500/30',   dot: 'bg-blue-400',   icon: '○' },
-                          caution: { color: 'text-orange-400', bg: 'bg-orange-500/20',  border: 'border-orange-500/30', dot: 'bg-orange-400', icon: '△' },
-                        };
-                        const config = fortuneConfig[item.fortune];
-
-                        return (
-                          <div key={i} className="flex items-start gap-3 relative">
-                            {/* 타임라인 점 */}
-                            <div className={`w-[11px] h-[11px] rounded-full ${config.dot} mt-1.5 ring-2 ring-black/50 z-10 flex-shrink-0 ml-[17px]`} />
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <span className="text-white font-bold text-sm">{item.ageRange}</span>
-                                <span className={`${config.bg} ${config.color} ${config.border} border px-2 py-0.5 rounded-full text-xs font-medium`}>
-                                  {config.icon} {item.label}
-                                </span>
-                                <span className="text-white/30 text-xs">{item.relatedFeature}</span>
-                              </div>
-                              <div className="text-white/60 text-xs leading-relaxed">{item.description}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
