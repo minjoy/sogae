@@ -40,12 +40,12 @@ const isPassOrderUrl = (url: string | null | undefined): boolean => {
   return PASS_ORDER_DOMAINS.some(domain => url.includes(domain));
 };
 
-// 카테고리 정보 (색상 업데이트)
+// 카테고리 정보 (더 넓은 디저트 범위)
 const CATEGORIES = [
   { key: 'all', label: '전체', emoji: '', color: '#FF6B6B' },
-  { key: 'dujjonku', label: '두쫀쿠', emoji: '🍪', color: '#FF6B6B' },
-  { key: 'dubai', label: '두바이파생', emoji: '🍫', color: '#8B4513' },
-  { key: 'signature', label: '시그니처간식', emoji: '🎂', color: '#9B59B6' },
+  { key: 'cookie', label: '쿠키', emoji: '🍪', color: '#FF6B6B' },
+  { key: 'chocolate', label: '초콜릿', emoji: '🍫', color: '#8B4513' },
+  { key: 'dessert', label: '디저트', emoji: '🎂', color: '#9B59B6' },
 ] as const;
 
 // 마커 이미지 캐시 (성능 최적화)
@@ -208,7 +208,7 @@ interface StoreDetail {
   createdAt: string;
 }
 
-export default function DujjonkuMapPage() {
+export default function DessertMapPage() {
   const router = useRouter();
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -242,9 +242,9 @@ export default function DujjonkuMapPage() {
   // 매장 등록 폼
   const [registerForm, setRegisterForm] = useState({
     name: '',
-    categories: ['dujjonku'] as string[],
-    dubaiDessertName: '',
-    signatureDessertName: '',
+    categories: ['cookie'] as string[],
+    chocolateDessertName: '',
+    otherDessertName: '',
     price: '',
     address: '',
     lat: 0,
@@ -263,8 +263,8 @@ export default function DujjonkuMapPage() {
   const [editForm, setEditForm] = useState({
     name: '',
     category: '',
-    dubaiDessertName: '',
-    signatureDessertName: '',
+    chocolateDessertName: '',
+    otherDessertName: '',
     price: '',
     address: '',
     lat: 0,
@@ -276,9 +276,9 @@ export default function DujjonkuMapPage() {
     passOrderUrl: '',
   });
 
-  // 두바이파생/시그니처간식 선택 여부 확인
-  const needsDubaiDessert = registerForm.categories.includes('dubai');
-  const needsSignatureDessert = registerForm.categories.includes('signature');
+  // 초콜릿/디저트 카테고리 선택 여부 확인
+  const needsChocolateDessert = registerForm.categories.includes('chocolate');
+  const needsOtherDessert = registerForm.categories.includes('dessert');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -371,7 +371,7 @@ export default function DujjonkuMapPage() {
 
     let url = `/api/stores?swLat=${sw.getLat()}&swLng=${sw.getLng()}&neLat=${ne.getLat()}&neLng=${ne.getLng()}&level=${level}&category=${categoryParam}`;
 
-    // 가격 필터 추가 (두쫀쿠 카테고리인 경우만)
+    // 가격 필터 추가 (쿠키 카테고리인 경우만)
     if (priceParams.min) url += `&minPrice=${extractNumber(priceParams.min)}`;
     if (priceParams.max) url += `&maxPrice=${extractNumber(priceParams.max)}`;
 
@@ -430,9 +430,9 @@ export default function DujjonkuMapPage() {
 
     // 새 마커 생성
     const markers = storeList.map((store) => {
-      // 가격 필터가 적용되고 두쫀쿠 카테고리이며 가격 정보가 있는 경우 가격 마커 사용
+      // 가격 필터가 적용되고 쿠키 카테고리이며 가격 정보가 있는 경우 가격 마커 사용
       const usePriceMarker = showPriceMarker &&
-        store.category.includes('dujjonku') &&
+        store.category.includes('cookie') &&
         store.price !== null &&
         store.price > 0;
 
@@ -529,9 +529,9 @@ export default function DujjonkuMapPage() {
     // 폼 초기화
     setRegisterForm({
       name: '',
-      categories: ['dujjonku'],
-      dubaiDessertName: '',
-      signatureDessertName: '',
+      categories: ['cookie'],
+      chocolateDessertName: '',
+      otherDessertName: '',
       price: '',
       address: '',
       lat: 0,
@@ -553,22 +553,22 @@ export default function DujjonkuMapPage() {
 
     if (!selectedStore) return;
 
-    // 기존 디저트명 파싱 (형식: "[두바이파생] xxx | [시그니처간식] yyy")
-    let dubaiDessert = '';
-    let signatureDessert = '';
+    // 기존 디저트명 파싱 (형식: "[초콜릿] xxx | [디저트] yyy")
+    let chocolateDessert = '';
+    let otherDessert = '';
     if (selectedStore.dessertName) {
-      const dubaiMatch = selectedStore.dessertName.match(/\[두바이파생\]\s*([^|]*)/);
-      const signatureMatch = selectedStore.dessertName.match(/\[시그니처간식\]\s*([^|]*)/);
-      if (dubaiMatch) dubaiDessert = dubaiMatch[1].trim();
-      if (signatureMatch) signatureDessert = signatureMatch[1].trim();
+      const chocolateMatch = selectedStore.dessertName.match(/\[초콜릿\]\s*([^|]*)/);
+      const dessertMatch = selectedStore.dessertName.match(/\[디저트\]\s*([^|]*)/);
+      if (chocolateMatch) chocolateDessert = chocolateMatch[1].trim();
+      if (dessertMatch) otherDessert = dessertMatch[1].trim();
     }
 
     // 현재 매장 정보로 폼 초기화
     setEditForm({
       name: selectedStore.name,
       category: selectedStore.category,
-      dubaiDessertName: dubaiDessert,
-      signatureDessertName: signatureDessert,
+      chocolateDessertName: chocolateDessert,
+      otherDessertName: otherDessert,
       price: selectedStore.price ? formatPrice(selectedStore.price) : '',
       address: selectedStore.address,
       lat: selectedStore.lat,
@@ -589,11 +589,11 @@ export default function DujjonkuMapPage() {
 
     // 디저트명 조합
     const dessertParts: string[] = [];
-    if (editForm.dubaiDessertName.trim()) {
-      dessertParts.push(`[두바이파생] ${editForm.dubaiDessertName.trim()}`);
+    if (editForm.chocolateDessertName.trim()) {
+      dessertParts.push(`[초콜릿] ${editForm.chocolateDessertName.trim()}`);
     }
-    if (editForm.signatureDessertName.trim()) {
-      dessertParts.push(`[시그니처간식] ${editForm.signatureDessertName.trim()}`);
+    if (editForm.otherDessertName.trim()) {
+      dessertParts.push(`[디저트] ${editForm.otherDessertName.trim()}`);
     }
     const combinedDessertName = dessertParts.join(' | ');
 
@@ -710,22 +710,22 @@ export default function DujjonkuMapPage() {
     }
 
     // 카테고리별 디저트명 필수 체크
-    if (registerForm.categories.includes('dubai') && !registerForm.dubaiDessertName.trim()) {
-      alert('두바이파생 카테고리 선택 시 디저트명을 입력해주세요');
+    if (registerForm.categories.includes('chocolate') && !registerForm.chocolateDessertName.trim()) {
+      alert('초콜릿 카테고리 선택 시 디저트명을 입력해주세요');
       return;
     }
-    if (registerForm.categories.includes('signature') && !registerForm.signatureDessertName.trim()) {
-      alert('시그니처간식 카테고리 선택 시 디저트명을 입력해주세요');
+    if (registerForm.categories.includes('dessert') && !registerForm.otherDessertName.trim()) {
+      alert('디저트 카테고리 선택 시 디저트명을 입력해주세요');
       return;
     }
 
     // 디저트명 조합 (카테고리별로 구분)
     const dessertParts: string[] = [];
-    if (registerForm.dubaiDessertName.trim()) {
-      dessertParts.push(`[두바이파생] ${registerForm.dubaiDessertName.trim()}`);
+    if (registerForm.chocolateDessertName.trim()) {
+      dessertParts.push(`[초콜릿] ${registerForm.chocolateDessertName.trim()}`);
     }
-    if (registerForm.signatureDessertName.trim()) {
-      dessertParts.push(`[시그니처간식] ${registerForm.signatureDessertName.trim()}`);
+    if (registerForm.otherDessertName.trim()) {
+      dessertParts.push(`[디저트] ${registerForm.otherDessertName.trim()}`);
     }
     const combinedDessertName = dessertParts.join(' | ');
 
@@ -830,7 +830,7 @@ export default function DujjonkuMapPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-900">두쫀쿠맵</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-bold text-gray-900">디저트맵</h1>
           <button
             onClick={() => router.push('/test')}
             className="px-3 py-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 z-10"
@@ -904,8 +904,8 @@ export default function DujjonkuMapPage() {
             <div className="px-3 py-1.5 bg-white/90 backdrop-blur rounded-full shadow text-sm text-gray-700">
               현재 지역 <span className="font-bold text-primary-600">{stores.length}</span>개
             </div>
-            {/* 가격 필터 버튼 (두쫀쿠 관련 카테고리 선택시만 표시) */}
-            {(selectedCategory === 'all' || selectedCategory === 'dujjonku') && (
+            {/* 가격 필터 버튼 (쿠키 관련 카테고리 선택시만 표시) */}
+            {(selectedCategory === 'all' || selectedCategory === 'cookie') && (
               <button
                 onClick={() => setIsPriceFilterOpen(true)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shadow ${
@@ -980,19 +980,19 @@ export default function DujjonkuMapPage() {
 
             {/* 카테고리 뱃지 (복수 카테고리 지원) */}
             <div className="mb-2 flex flex-wrap gap-1">
-              {(selectedStore.category?.split(',') || ['dujjonku']).map((cat) => {
+              {(selectedStore.category?.split(',') || ['cookie']).map((cat) => {
                 const categoryInfo = CATEGORIES.find((c) => c.key === cat.trim());
                 return (
                   <span
                     key={cat}
                     className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                      cat.trim() === 'dujjonku' ? 'bg-yellow-100 text-yellow-800' :
-                      cat.trim() === 'dubai' ? 'bg-amber-100 text-amber-800' :
+                      cat.trim() === 'cookie' ? 'bg-yellow-100 text-yellow-800' :
+                      cat.trim() === 'chocolate' ? 'bg-amber-100 text-amber-800' :
                       'bg-purple-100 text-purple-800'
                     }`}
                   >
                     {categoryInfo?.emoji}{' '}
-                    {categoryInfo?.label || '두쫀쿠'}
+                    {categoryInfo?.label || '쿠키'}
                   </span>
                 );
               })}
@@ -1019,10 +1019,10 @@ export default function DujjonkuMapPage() {
               </p>
             )}
 
-            {/* 두쫀쿠 가격 표시 */}
-            {selectedStore.price && selectedStore.category?.includes('dujjonku') && (
+            {/* 쿠키 가격 표시 */}
+            {selectedStore.price && selectedStore.category?.includes('cookie') && (
               <p className="text-yellow-600 text-sm font-bold mb-2">
-                🍪 두쫀쿠 {formatPrice(selectedStore.price)}원
+                🍪 쿠키 {formatPrice(selectedStore.price)}원
               </p>
             )}
 
@@ -1156,14 +1156,14 @@ export default function DujjonkuMapPage() {
                 </div>
               </div>
 
-              {/* 두바이파생 디저트명 */}
-              {needsDubaiDessert && (
+              {/* 초콜릿 디저트명 */}
+              {needsChocolateDessert && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    🍫 두바이파생 디저트명 <span className="text-red-500">*</span>
+                    🍫 초콜릿 디저트명 <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {registerForm.dubaiDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                    {registerForm.chocolateDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
                       <span
                         key={index}
                         className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm"
@@ -1172,9 +1172,9 @@ export default function DujjonkuMapPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            const tags = registerForm.dubaiDessertName.split(',').filter(t => t.trim());
+                            const tags = registerForm.chocolateDessertName.split(',').filter(t => t.trim());
                             tags.splice(index, 1);
-                            setRegisterForm(prev => ({ ...prev, dubaiDessertName: tags.join(',') }));
+                            setRegisterForm(prev => ({ ...prev, chocolateDessertName: tags.join(',') }));
                           }}
                           className="ml-1 text-amber-500 hover:text-amber-700"
                         >
@@ -1187,7 +1187,7 @@ export default function DujjonkuMapPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="디저트명 입력 후 Enter (예: 두바이초콜릿)"
+                    placeholder="디저트명 입력 후 Enter (예: 생초콜릿, 트러플)"
                     className="w-full px-4 py-3 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-900 bg-amber-50"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ',') {
@@ -1195,11 +1195,11 @@ export default function DujjonkuMapPage() {
                         const input = e.currentTarget;
                         const value = input.value.trim().replace(/,/g, '');
                         if (value) {
-                          const currentTags = registerForm.dubaiDessertName.split(',').filter(t => t.trim());
+                          const currentTags = registerForm.chocolateDessertName.split(',').filter(t => t.trim());
                           if (!currentTags.includes(value)) {
                             setRegisterForm(prev => ({
                               ...prev,
-                              dubaiDessertName: [...currentTags, value].join(',')
+                              chocolateDessertName: [...currentTags, value].join(',')
                             }));
                           }
                           input.value = '';
@@ -1209,11 +1209,11 @@ export default function DujjonkuMapPage() {
                     onBlur={(e) => {
                       const value = e.currentTarget.value.trim().replace(/,/g, '');
                       if (value) {
-                        const currentTags = registerForm.dubaiDessertName.split(',').filter(t => t.trim());
+                        const currentTags = registerForm.chocolateDessertName.split(',').filter(t => t.trim());
                         if (!currentTags.includes(value)) {
                           setRegisterForm(prev => ({
                             ...prev,
-                            dubaiDessertName: [...currentTags, value].join(',')
+                            chocolateDessertName: [...currentTags, value].join(',')
                           }));
                         }
                         e.currentTarget.value = '';
@@ -1223,14 +1223,14 @@ export default function DujjonkuMapPage() {
                 </div>
               )}
 
-              {/* 시그니처간식 디저트명 */}
-              {needsSignatureDessert && (
+              {/* 디저트 메뉴명 */}
+              {needsOtherDessert && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    🎂 시그니처간식 디저트명 <span className="text-red-500">*</span>
+                    🎂 디저트 메뉴명 <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {registerForm.signatureDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                    {registerForm.otherDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
                       <span
                         key={index}
                         className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
@@ -1239,9 +1239,9 @@ export default function DujjonkuMapPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            const tags = registerForm.signatureDessertName.split(',').filter(t => t.trim());
+                            const tags = registerForm.otherDessertName.split(',').filter(t => t.trim());
                             tags.splice(index, 1);
-                            setRegisterForm(prev => ({ ...prev, signatureDessertName: tags.join(',') }));
+                            setRegisterForm(prev => ({ ...prev, otherDessertName: tags.join(',') }));
                           }}
                           className="ml-1 text-purple-500 hover:text-purple-700"
                         >
@@ -1262,11 +1262,11 @@ export default function DujjonkuMapPage() {
                         const input = e.currentTarget;
                         const value = input.value.trim().replace(/,/g, '');
                         if (value) {
-                          const currentTags = registerForm.signatureDessertName.split(',').filter(t => t.trim());
+                          const currentTags = registerForm.otherDessertName.split(',').filter(t => t.trim());
                           if (!currentTags.includes(value)) {
                             setRegisterForm(prev => ({
                               ...prev,
-                              signatureDessertName: [...currentTags, value].join(',')
+                              otherDessertName: [...currentTags, value].join(',')
                             }));
                           }
                           input.value = '';
@@ -1276,11 +1276,11 @@ export default function DujjonkuMapPage() {
                     onBlur={(e) => {
                       const value = e.currentTarget.value.trim().replace(/,/g, '');
                       if (value) {
-                        const currentTags = registerForm.signatureDessertName.split(',').filter(t => t.trim());
+                        const currentTags = registerForm.otherDessertName.split(',').filter(t => t.trim());
                         if (!currentTags.includes(value)) {
                           setRegisterForm(prev => ({
                             ...prev,
-                            signatureDessertName: [...currentTags, value].join(',')
+                            otherDessertName: [...currentTags, value].join(',')
                           }));
                         }
                         e.currentTarget.value = '';
@@ -1290,11 +1290,11 @@ export default function DujjonkuMapPage() {
                 </div>
               )}
 
-              {/* 두쫀쿠 가격 */}
-              {registerForm.categories.includes('dujjonku') && (
+              {/* 쿠키 가격 */}
+              {registerForm.categories.includes('cookie') && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    🍪 두쫀쿠 가격
+                    🍪 쿠키 가격
                   </label>
                   <div className="relative">
                     <input
@@ -1310,7 +1310,7 @@ export default function DujjonkuMapPage() {
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">원</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">두쫀쿠 1개 가격을 입력해주세요</p>
+                  <p className="text-xs text-gray-500 mt-1">쿠키 1개 가격을 입력해주세요</p>
                 </div>
               )}
 
@@ -1528,7 +1528,7 @@ export default function DujjonkuMapPage() {
               </svg>
             </button>
 
-            <h2 className="text-xl font-bold text-gray-900 mb-4">🍪 두쫀쿠 가격 필터</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">🍪 쿠키 가격 필터</h2>
 
             <div className="space-y-4">
               {/* 빠른 선택 버튼 */}
@@ -1651,7 +1651,7 @@ export default function DujjonkuMapPage() {
 
             <div className="p-4 border-b">
               <h2 className="text-xl font-bold text-gray-900">🛒 온라인상점</h2>
-              <p className="text-sm text-gray-600">두바이초콜릿, 두쫀쿠 관련 상품을 온라인에서 구매해보세요!</p>
+              <p className="text-sm text-gray-600">쿠키, 초콜릿 등 디저트 관련 상품을 온라인에서 구매해보세요!</p>
             </div>
 
             <iframe
@@ -1702,45 +1702,45 @@ export default function DujjonkuMapPage() {
                   onChange={(e) => setEditForm((prev) => ({ ...prev, category: e.target.value }))}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
-                  <option value="dujjonku">두쫀쿠</option>
-                  <option value="dubai">두바이파생</option>
-                  <option value="signature">시그니처간식</option>
-                  <option value="dujjonku,dubai">두쫀쿠 + 두바이파생</option>
-                  <option value="dujjonku,signature">두쫀쿠 + 시그니처간식</option>
-                  <option value="dubai,signature">두바이파생 + 시그니처간식</option>
-                  <option value="dujjonku,dubai,signature">전체</option>
+                  <option value="cookie">쿠키</option>
+                  <option value="chocolate">초콜릿</option>
+                  <option value="dessert">디저트</option>
+                  <option value="cookie,chocolate">쿠키 + 초콜릿</option>
+                  <option value="cookie,dessert">쿠키 + 디저트</option>
+                  <option value="chocolate,dessert">초콜릿 + 디저트</option>
+                  <option value="cookie,chocolate,dessert">전체</option>
                 </select>
               </div>
 
-              {editForm.category.includes('dubai') && (
+              {editForm.category.includes('chocolate') && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">🍫 두바이파생 디저트명</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">🍫 초콜릿 디저트명</label>
                   <input
                     type="text"
-                    value={editForm.dubaiDessertName}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, dubaiDessertName: e.target.value }))}
+                    value={editForm.chocolateDessertName}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, chocolateDessertName: e.target.value }))}
                     className="w-full px-4 py-3 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-amber-50 text-gray-900"
-                    placeholder="예: 두바이초콜릿, 피스타치오"
+                    placeholder="예: 생초콜릿, 트러플"
                   />
                 </div>
               )}
 
-              {editForm.category.includes('signature') && (
+              {editForm.category.includes('dessert') && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">🎂 시그니처간식 디저트명</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">🎂 디저트 메뉴명</label>
                   <input
                     type="text"
-                    value={editForm.signatureDessertName}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, signatureDessertName: e.target.value }))}
+                    value={editForm.otherDessertName}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, otherDessertName: e.target.value }))}
                     className="w-full px-4 py-3 border border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-purple-50 text-gray-900"
                     placeholder="예: 크로플, 마카롱"
                   />
                 </div>
               )}
 
-              {editForm.category.includes('dujjonku') && (
+              {editForm.category.includes('cookie') && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">🍪 두쫀쿠 가격</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">🍪 쿠키 가격</label>
                   <div className="relative">
                     <input
                       type="text"

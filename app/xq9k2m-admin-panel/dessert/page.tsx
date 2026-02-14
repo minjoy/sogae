@@ -82,11 +82,11 @@ interface EditRequest {
   };
 }
 
-// 카테고리 정보
+// 카테고리 정보 (디저트맵)
 const CATEGORIES = [
-  { key: 'dujjonku', label: '두쫀쿠', emoji: '🍪' },
-  { key: 'dubai', label: '두바이파생', emoji: '🍫' },
-  { key: 'signature', label: '시그니처간식', emoji: '🎂' },
+  { key: 'cookie', label: '쿠키', emoji: '🍪' },
+  { key: 'chocolate', label: '초콜릿', emoji: '🍫' },
+  { key: 'dessert', label: '디저트', emoji: '🎂' },
 ] as const;
 
 interface Pagination {
@@ -112,9 +112,9 @@ export default function AdminDujjonkuPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     name: '',
-    categories: ['dujjonku'] as string[],
-    dubaiDessertName: '',
-    signatureDessertName: '',
+    categories: ['cookie'] as string[],
+    chocolateDessertName: '',
+    otherDessertName: '',
     price: '',
     address: '',
     lat: '',
@@ -126,9 +126,9 @@ export default function AdminDujjonkuPage() {
     passOrderUrl: '',
   });
 
-  // 두바이파생/시그니처간식 선택 여부 확인
-  const needsDubaiDessert = createForm.categories.includes('dubai');
-  const needsSignatureDessert = createForm.categories.includes('signature');
+  // 초콜릿/디저트 카테고리 선택 여부 확인
+  const needsChocolateDessert = createForm.categories.includes('chocolate');
+  const needsOtherDessert = createForm.categories.includes('dessert');
 
   // 수정 요청 관련 상태
   const [editRequests, setEditRequests] = useState<EditRequest[]>([]);
@@ -318,25 +318,25 @@ export default function AdminDujjonkuPage() {
       return;
     }
 
-    // 두바이파생 선택 시 디저트명 필수
-    if (createForm.categories.includes('dubai') && !createForm.dubaiDessertName.trim()) {
-      alert('두바이파생 디저트명을 입력해주세요');
+    // 초콜릿 선택 시 디저트명 필수
+    if (createForm.categories.includes('chocolate') && !createForm.chocolateDessertName.trim()) {
+      alert('초콜릿 디저트명을 입력해주세요');
       return;
     }
 
-    // 시그니처간식 선택 시 디저트명 필수
-    if (createForm.categories.includes('signature') && !createForm.signatureDessertName.trim()) {
-      alert('시그니처간식 디저트명을 입력해주세요');
+    // 디저트 선택 시 메뉴명 필수
+    if (createForm.categories.includes('dessert') && !createForm.otherDessertName.trim()) {
+      alert('디저트 메뉴명을 입력해주세요');
       return;
     }
 
     // 디저트명 조합
     const dessertParts: string[] = [];
-    if (createForm.dubaiDessertName.trim()) {
-      dessertParts.push(`[두바이파생] ${createForm.dubaiDessertName.trim()}`);
+    if (createForm.chocolateDessertName.trim()) {
+      dessertParts.push(`[초콜릿] ${createForm.chocolateDessertName.trim()}`);
     }
-    if (createForm.signatureDessertName.trim()) {
-      dessertParts.push(`[시그니처간식] ${createForm.signatureDessertName.trim()}`);
+    if (createForm.otherDessertName.trim()) {
+      dessertParts.push(`[디저트] ${createForm.otherDessertName.trim()}`);
     }
     const combinedDessertName = dessertParts.join(' | ');
 
@@ -370,9 +370,9 @@ export default function AdminDujjonkuPage() {
         setIsCreateOpen(false);
         setCreateForm({
           name: '',
-          categories: ['dujjonku'],
-          dubaiDessertName: '',
-          signatureDessertName: '',
+          categories: ['cookie'],
+          chocolateDessertName: '',
+          otherDessertName: '',
           price: '',
           address: '',
           lat: '',
@@ -438,11 +438,11 @@ export default function AdminDujjonkuPage() {
             <Link href="/xq9k2m-admin-panel" className="text-sm text-gray-500 hover:text-gray-700">
               ← 관리자 홈
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900 mt-1">두쫀쿠맵 관리</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mt-1">디저트맵 관리</h1>
           </div>
           <div className="flex gap-2">
             <Link
-              href="/xq9k2m-admin-panel/dujjonku/naver-search"
+              href="/xq9k2m-admin-panel/dessert/naver-search"
               className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600"
             >
               네이버 검색 결과
@@ -608,12 +608,12 @@ export default function AdminDujjonkuPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        store.category === 'dujjonku' ? 'bg-yellow-100 text-yellow-800' :
-                        store.category === 'dubai' ? 'bg-amber-100 text-amber-800' :
+                        store.category === 'cookie' ? 'bg-yellow-100 text-yellow-800' :
+                        store.category === 'chocolate' ? 'bg-amber-100 text-amber-800' :
                         'bg-purple-100 text-purple-800'
                       }`}>
                         {CATEGORIES.find((c) => c.key === store.category)?.emoji}{' '}
-                        {CATEGORIES.find((c) => c.key === store.category)?.label || '두쫀쿠'}
+                        {CATEGORIES.find((c) => c.key === store.category)?.label || '쿠키'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
@@ -812,12 +812,12 @@ export default function AdminDujjonkuPage() {
               <p>
                 <span className="font-semibold">카테고리:</span>{' '}
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  selectedStore.category === 'dujjonku' ? 'bg-yellow-100 text-yellow-800' :
-                  selectedStore.category === 'dubai' ? 'bg-amber-100 text-amber-800' :
+                  selectedStore.category === 'cookie' ? 'bg-yellow-100 text-yellow-800' :
+                  selectedStore.category === 'chocolate' ? 'bg-amber-100 text-amber-800' :
                   'bg-purple-100 text-purple-800'
                 }`}>
                   {CATEGORIES.find((c) => c.key === selectedStore.category)?.emoji}{' '}
-                  {CATEGORIES.find((c) => c.key === selectedStore.category)?.label || '두쫀쿠'}
+                  {CATEGORIES.find((c) => c.key === selectedStore.category)?.label || '쿠키'}
                 </span>
               </p>
               <p><span className="font-semibold">주소:</span> {selectedStore.address}</p>
@@ -910,8 +910,8 @@ export default function AdminDujjonkuPage() {
                               ...prev,
                               categories: newCategories.length > 0 ? newCategories : [cat.key],
                               // 카테고리 해제 시 해당 디저트명도 초기화
-                              dubaiDessertName: cat.key === 'dubai' && isSelected ? '' : prev.dubaiDessertName,
-                              signatureDessertName: cat.key === 'signature' && isSelected ? '' : prev.signatureDessertName,
+                              chocolateDessertName: cat.key === 'chocolate' && isSelected ? '' : prev.chocolateDessertName,
+                              otherDessertName: cat.key === 'dessert' && isSelected ? '' : prev.otherDessertName,
                             };
                           });
                         }}
@@ -937,14 +937,14 @@ export default function AdminDujjonkuPage() {
                 </div>
               </div>
 
-              {/* 두바이파생 디저트명 */}
-              {needsDubaiDessert && (
+              {/* 초콜릿 디저트명 */}
+              {needsChocolateDessert && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    🍫 두바이파생 디저트명 <span className="text-red-500">*</span>
+                    🍫 초콜릿 디저트명 <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {createForm.dubaiDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                    {createForm.chocolateDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
                       <span
                         key={index}
                         className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm"
@@ -953,9 +953,9 @@ export default function AdminDujjonkuPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            const tags = createForm.dubaiDessertName.split(',').filter(t => t.trim());
+                            const tags = createForm.chocolateDessertName.split(',').filter(t => t.trim());
                             tags.splice(index, 1);
-                            setCreateForm(prev => ({ ...prev, dubaiDessertName: tags.join(',') }));
+                            setCreateForm(prev => ({ ...prev, chocolateDessertName: tags.join(',') }));
                           }}
                           className="ml-1 text-amber-500 hover:text-amber-700"
                         >
@@ -968,7 +968,7 @@ export default function AdminDujjonkuPage() {
                   </div>
                   <input
                     type="text"
-                    placeholder="디저트명 입력 후 Enter (예: 두바이초콜릿)"
+                    placeholder="디저트명 입력 후 Enter (예: 생초콜릿, 트러플)"
                     className="w-full px-4 py-3 border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent text-gray-900 bg-amber-50"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ',') {
@@ -976,11 +976,11 @@ export default function AdminDujjonkuPage() {
                         const input = e.currentTarget;
                         const value = input.value.trim().replace(/,/g, '');
                         if (value) {
-                          const currentTags = createForm.dubaiDessertName.split(',').filter(t => t.trim());
+                          const currentTags = createForm.chocolateDessertName.split(',').filter(t => t.trim());
                           if (!currentTags.includes(value)) {
                             setCreateForm(prev => ({
                               ...prev,
-                              dubaiDessertName: [...currentTags, value].join(',')
+                              chocolateDessertName: [...currentTags, value].join(',')
                             }));
                           }
                           input.value = '';
@@ -990,11 +990,11 @@ export default function AdminDujjonkuPage() {
                     onBlur={(e) => {
                       const value = e.currentTarget.value.trim().replace(/,/g, '');
                       if (value) {
-                        const currentTags = createForm.dubaiDessertName.split(',').filter(t => t.trim());
+                        const currentTags = createForm.chocolateDessertName.split(',').filter(t => t.trim());
                         if (!currentTags.includes(value)) {
                           setCreateForm(prev => ({
                             ...prev,
-                            dubaiDessertName: [...currentTags, value].join(',')
+                            chocolateDessertName: [...currentTags, value].join(',')
                           }));
                         }
                         e.currentTarget.value = '';
@@ -1004,14 +1004,14 @@ export default function AdminDujjonkuPage() {
                 </div>
               )}
 
-              {/* 시그니처간식 디저트명 */}
-              {needsSignatureDessert && (
+              {/* 디저트 메뉴명 */}
+              {needsOtherDessert && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    🎂 시그니처간식 디저트명 <span className="text-red-500">*</span>
+                    🎂 디저트 메뉴명 <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {createForm.signatureDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
+                    {createForm.otherDessertName.split(',').filter(tag => tag.trim()).map((tag, index) => (
                       <span
                         key={index}
                         className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
@@ -1020,9 +1020,9 @@ export default function AdminDujjonkuPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            const tags = createForm.signatureDessertName.split(',').filter(t => t.trim());
+                            const tags = createForm.otherDessertName.split(',').filter(t => t.trim());
                             tags.splice(index, 1);
-                            setCreateForm(prev => ({ ...prev, signatureDessertName: tags.join(',') }));
+                            setCreateForm(prev => ({ ...prev, otherDessertName: tags.join(',') }));
                           }}
                           className="ml-1 text-purple-500 hover:text-purple-700"
                         >
@@ -1043,11 +1043,11 @@ export default function AdminDujjonkuPage() {
                         const input = e.currentTarget;
                         const value = input.value.trim().replace(/,/g, '');
                         if (value) {
-                          const currentTags = createForm.signatureDessertName.split(',').filter(t => t.trim());
+                          const currentTags = createForm.otherDessertName.split(',').filter(t => t.trim());
                           if (!currentTags.includes(value)) {
                             setCreateForm(prev => ({
                               ...prev,
-                              signatureDessertName: [...currentTags, value].join(',')
+                              otherDessertName: [...currentTags, value].join(',')
                             }));
                           }
                           input.value = '';
@@ -1057,11 +1057,11 @@ export default function AdminDujjonkuPage() {
                     onBlur={(e) => {
                       const value = e.currentTarget.value.trim().replace(/,/g, '');
                       if (value) {
-                        const currentTags = createForm.signatureDessertName.split(',').filter(t => t.trim());
+                        const currentTags = createForm.otherDessertName.split(',').filter(t => t.trim());
                         if (!currentTags.includes(value)) {
                           setCreateForm(prev => ({
                             ...prev,
-                            signatureDessertName: [...currentTags, value].join(',')
+                            otherDessertName: [...currentTags, value].join(',')
                           }));
                         }
                         e.currentTarget.value = '';
@@ -1071,11 +1071,11 @@ export default function AdminDujjonkuPage() {
                 </div>
               )}
 
-              {/* 두쫀쿠 가격 */}
-              {createForm.categories.includes('dujjonku') && (
+              {/* 쿠키 가격 */}
+              {createForm.categories.includes('cookie') && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    🍪 두쫀쿠 가격
+                    🍪 쿠키 가격
                   </label>
                   <div className="relative">
                     <input
@@ -1091,7 +1091,7 @@ export default function AdminDujjonkuPage() {
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">원</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">두쫀쿠 1개 가격을 입력해주세요</p>
+                  <p className="text-xs text-gray-500 mt-1">쿠키 1개 가격을 입력해주세요</p>
                 </div>
               )}
 
@@ -1491,7 +1491,7 @@ export default function AdminDujjonkuPage() {
                       disabled={selectedEditRequest.status !== 'pending'}
                     />
                     <div>
-                      <p className="font-medium text-gray-700">🍪 두쫀쿠 가격</p>
+                      <p className="font-medium text-gray-700">🍪 쿠키 가격</p>
                       <p className="text-sm text-gray-500">현재: {selectedEditRequest.store.price ? `${formatPrice(selectedEditRequest.store.price)}원` : '없음'}</p>
                       <p className="text-sm text-primary-600">변경: {selectedEditRequest.price ? `${formatPrice(selectedEditRequest.price)}원` : '없음'}</p>
                     </div>

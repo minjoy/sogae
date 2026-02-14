@@ -23,7 +23,7 @@ interface NaverStoreWithState extends NaverStore {
   isRegistered?: boolean;
 }
 
-const SEARCH_KEYWORDS = ['두바이', '두바이 쫀득 쿠키', '두쫀쿠'];
+const SEARCH_KEYWORDS = ['디저트', '쿠키', '초콜릿', '마카롱', '케이크'];
 const ADMIN_KEY = 'sogae-admin-2024';
 
 // 지역 그룹별 목록 (동 단위)
@@ -520,7 +520,7 @@ export default function NaverSearchPage() {
   const handleRegisterStore = async (store: NaverStoreWithState, index: number) => {
     const priceValue = store.price ? extractNumber(store.price) : null;
 
-    if (!confirm(`"${store.name}"을(를) 두쫀쿠맵에 등록하시겠습니까?${priceValue ? `\n가격: ${store.price}원` : ''}`)) {
+    if (!confirm(`"${store.name}"을(를) 디저트맵에 등록하시겠습니까?${priceValue ? `\n가격: ${store.price}원` : ''}`)) {
       return;
     }
 
@@ -539,7 +539,7 @@ export default function NaverSearchPage() {
         },
         body: JSON.stringify({
           name: store.name,
-          category: 'dujjonku',
+          category: 'cookie',
           address: store.address,
           lat: store.lat,
           lng: store.lng,
@@ -599,8 +599,8 @@ export default function NaverSearchPage() {
       <div className="max-w-4xl mx-auto">
         {/* 헤더 */}
         <div className="mb-6">
-          <Link href="/xq9k2m-admin-panel/dujjonku" className="text-sm text-gray-500 hover:text-gray-700">
-            ← 두쫀쿠맵 관리
+          <Link href="/xq9k2m-admin-panel/dessert" className="text-sm text-gray-500 hover:text-gray-700">
+            ← 디저트맵 관리
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">네이버 검색 결과</h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -684,7 +684,7 @@ export default function NaverSearchPage() {
                   }
                 }}
                 className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder={selectedRegion ? `검색어 입력 (지역: ${selectedRegion})` : '검색어 입력 (예: 두바이 쿠키)'}
+                placeholder={selectedRegion ? `검색어 입력 (지역: ${selectedRegion})` : '검색어 입력 (예: 마카롱, 쿠키)'}
               />
               <button
                 onClick={() => handleSearch()}
