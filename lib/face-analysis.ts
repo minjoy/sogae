@@ -413,7 +413,8 @@ export function analyzeFace(
   // - "좁음/좁은편": 2.13~2.46 → 좁은 편 또는 매우 좁음
   // - "넓은편": 3.07~3.09 → 넓은 편
   // - "많이넓음": 2.88~3.64 → 매우 넓음 또는 넓은 편
-  if (eyebrowRatio > 3.2) {
+  // 2024-02: 좁은 편이 넓은 편으로 나오는 문제 수정 - 임계값 0.05씩 상향
+  if (eyebrowRatio > 3.25) {
     eyebrowDistanceAnalysis = {
       label: "눈과 눈썹 사이가 매우 넓음",
       description: "타고난 복을 지니고 있어, 부모나 조상으로부터 유산을 물려받거나 조상의 덕을 보는 일이 자주 발생합니다. 낙천적이고 개방적인 성격입니다."
@@ -422,7 +423,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 5; r1_old_sum += WEIGHTS.r1_old * 5;
     r2 += WEIGHTS.r2_spirit * 2; r2_spirit_sum += WEIGHTS.r2_spirit * 2;
     r3 += WEIGHTS.r3_money * 5; r3_money_sum += WEIGHTS.r3_money * 5;
-  } else if (eyebrowRatio > 2.7) {
+  } else if (eyebrowRatio > 2.75) {
     eyebrowDistanceAnalysis = {
       label: "눈과 눈썹 사이가 넓은 편",
       description: "자연스럽게 복이 많은 삶을 살고 있으며, 낙천적인 성향을 가지고 있습니다. 온순하고 착한 면모로 주변 사람들에게 큰 호감을 줍니다."
@@ -431,7 +432,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 4; r1_old_sum += WEIGHTS.r1_old * 4;
     r2 += WEIGHTS.r2_spirit * 2; r2_spirit_sum += WEIGHTS.r2_spirit * 2;
     r3 += WEIGHTS.r3_money * 4; r3_money_sum += WEIGHTS.r3_money * 4;
-  } else if (eyebrowRatio > 2.5) {
+  } else if (eyebrowRatio > 2.55) {
     eyebrowDistanceAnalysis = {
       label: "눈과 눈썹 사이가 이상적",
       description: "눈두덩이의 비율이 이상적으로 조화롭습니다. 미적인 측면에서 많은 이점을 가져다주며, 자연스럽게 사람들의 호감을 얻습니다."
@@ -440,7 +441,7 @@ export function analyzeFace(
     r1 += WEIGHTS.r1_old * 3; r1_old_sum += WEIGHTS.r1_old * 3;
     r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
     r3 += WEIGHTS.r3_money * 3; r3_money_sum += WEIGHTS.r3_money * 3;
-  } else if (eyebrowRatio > 2.2) {
+  } else if (eyebrowRatio > 2.25) {
     eyebrowDistanceAnalysis = {
       label: "눈과 눈썹 사이가 좁은 편",
       description: "자신의 능력과 노력으로 성공을 이뤄내는 자수성가의 길이 열려 있습니다. 일 처리 방식이 섬세하고 꼼꼼합니다."
