@@ -239,31 +239,44 @@ export default function TestResultPage() {
 
   const fetchResult = async () => {
     try {
-      const token = localStorage.getItem('token');
-
-      if (token) {
-        // 로그인된 사용자: API에서 가져오기
-        const response = await fetch('/api/test/results', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
+      // 1. 먼저 방금 테스트한 결과가 있는지 확인 (localStorage)
+      const recentResult = localStorage.getItem(`testResult_${testId}`);
+      if (recentResult) {
+        const parsedResult = JSON.parse(recentResult);
+        setResult({
+          testType: testId,
+          label: parsedResult.label,
+          scores: {
+            primaryLabel: parsedResult.label,
+            secondaryLabel: parsedResult.secondaryLabel,
+            subscales: parsedResult.subscales,
           },
+          comment: parsedResult.comment,
+          recommendations: parsedResult.recommendations,
+          isGuest: parsedResult.isGuest,
         });
+        // 사용 후 삭제 (재방문 시 API에서 가져오도록)
+        localStorage.removeItem(`testResult_${testId}`);
+        setIsLoading(false);
+        return;
+      }
 
-        const data = await response.json();
+      // 2. 로그인된 사용자: API에서 기존 결과 가져오기
+      const response = await fetch('/api/test/results');
+      const data = await response.json();
 
-        if (data.success) {
-          const testResult = data.results.find((r: Record<string, any>) => r.testType === testId);
-          // 로그인 사용자도 compatibility 정보를 위해 점수 재계산
-          if (testResult && testResult.rawAnswers) {
-            const calculatedScore = scoreTest(testId, testResult.rawAnswers);
-            testResult.compatibility = calculatedScore.compatibility;
-          }
-          setResult(testResult);
-          // 로그인 사용자만 5개 테스트 완료 확인
-          setAllTestsCompleted(data.results.length >= 5);
+      if (data.success && data.results) {
+        const testResult = data.results.find((r: Record<string, any>) => r.testType === testId);
+        // 로그인 사용자도 compatibility 정보를 위해 점수 재계산
+        if (testResult && testResult.rawAnswers) {
+          const calculatedScore = scoreTest(testId, testResult.rawAnswers);
+          testResult.compatibility = calculatedScore.compatibility;
         }
+        setResult(testResult);
+        // 로그인 사용자만 5개 테스트 완료 확인
+        setAllTestsCompleted(data.results.length >= 5);
       } else {
-        // 비회원: localStorage에서 가져오기 및 점수 계산
+        // 3. 비회원: guestResults에서 가져오기 (이전 방식 호환)
         const guestResults = JSON.parse(localStorage.getItem('guestResults') || '[]');
         const guestResult = guestResults.find((r: Record<string, any>) => r.testType === testId);
 
