@@ -924,60 +924,81 @@ export default function FaceAnalysisPage() {
 
         {/* 분석 애니메이션 오버레이 */}
         {showAnalysisAnimation && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-            <div className="text-center px-8 max-w-sm">
-              {/* 얼굴 아이콘과 스캔 효과 */}
-              <div className="relative w-40 h-40 mx-auto mb-8">
-                <div className="absolute inset-0 rounded-full border-4 border-amber-500/30 animate-pulse"></div>
-                <div className="absolute inset-2 rounded-full border-2 border-amber-400/50 animate-ping"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-7xl animate-bounce">{analysisSteps[Math.min(analysisStep, 5)]?.icon || '🔮'}</span>
+          <div
+            className="fixed inset-0 z-50 flex flex-col min-h-screen"
+            style={{
+              background: 'linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%)',
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+              height: '100dvh',
+            }}
+          >
+            {/* 배경 장식 - 몽환적인 빛 */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute top-1/3 left-1/3 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+              <div className="absolute top-1/3 right-1/3 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+            </div>
+
+            {/* 상단 영역 - 로딩 인디케이터 (고정 위치) */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center px-8">
+                {/* 얼굴 아이콘과 스캔 효과 */}
+                <div className="relative w-36 h-36 mx-auto mb-6">
+                  {/* 외부 링 - 회전 */}
+                  <div className="absolute inset-0 rounded-full border-2 border-amber-500/20 animate-spin-slow" />
+                  {/* 중간 링 - 펄스 */}
+                  <div className="absolute inset-3 rounded-full border-2 border-amber-400/30 animate-pulse" />
+                  {/* 내부 글로우 */}
+                  <div className="absolute inset-6 rounded-full bg-amber-500/10 blur-xl animate-pulse" />
+                  {/* 중앙 아이콘 */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-6xl">{analysisSteps[Math.min(analysisStep, 5)]?.icon || '🔮'}</span>
+                  </div>
+                  {/* 스캔 라인 - 고정 위치에서 반복 */}
+                  <div className="absolute inset-0 overflow-hidden rounded-full">
+                    <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-scan-fixed" />
+                  </div>
                 </div>
-                {/* 스캔 라인 */}
-                <div
-                  className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent animate-scan"
-                  style={{
-                    top: `${20 + (analysisStep * 10)}%`,
-                    animation: 'scan 1s ease-in-out infinite'
-                  }}
-                ></div>
-              </div>
 
-              {/* 현재 분석 단계 */}
-              <div className="space-y-3 mb-6">
-                <h2 className="text-2xl font-bold text-amber-400">
-                  {analysisSteps[Math.min(analysisStep, 5)]?.label || '분석 완료!'}
-                </h2>
-                <p className="text-white/70 text-sm">
-                  {analysisSteps[Math.min(analysisStep, 5)]?.detail || '결과 페이지로 이동합니다...'}
-                </p>
-              </div>
+                {/* 현재 분석 단계 */}
+                <div className="space-y-2 mb-4">
+                  <h2 className="text-xl font-bold text-amber-400">
+                    {analysisSteps[Math.min(analysisStep, 5)]?.label || '분석 완료!'}
+                  </h2>
+                  <p className="text-white/50 text-sm">
+                    {analysisSteps[Math.min(analysisStep, 5)]?.detail || '결과 페이지로 이동합니다...'}
+                  </p>
+                </div>
 
-              {/* 진행 단계 표시 */}
-              <div className="flex justify-center gap-2 mb-6">
-                {analysisSteps.map((step, i) => (
-                  <div
-                    key={i}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      i < analysisStep
-                        ? 'bg-amber-400 scale-100'
-                        : i === analysisStep
-                          ? 'bg-amber-400 scale-125 animate-pulse'
-                          : 'bg-white/20'
-                    }`}
-                  />
-                ))}
+                {/* 진행 단계 표시 */}
+                <div className="flex justify-center gap-2">
+                  {analysisSteps.map((step, i) => (
+                    <div
+                      key={i}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                        i < analysisStep
+                          ? 'bg-amber-400'
+                          : i === analysisStep
+                            ? 'bg-amber-400 animate-pulse'
+                            : 'bg-white/20'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
+            </div>
 
-              {/* 완료된 분석 항목 */}
-              <div className="space-y-2">
+            {/* 하단 영역 - 완료된 분석 항목 (고정 높이) */}
+            <div className="h-48 px-8 pb-8">
+              <div className="max-w-xs mx-auto space-y-2">
                 {analysisSteps.slice(0, analysisStep).map((step, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2 text-sm text-green-400 animate-fadeIn"
+                    className="flex items-center gap-2 text-sm text-green-400/80 animate-fadeIn"
                     style={{ animationDelay: `${i * 0.1}s` }}
                   >
-                    <span>✓</span>
+                    <span className="text-green-400">✓</span>
                     <span>{step.icon} {step.label.replace(' 중...', ' 완료')}</span>
                   </div>
                 ))}
@@ -985,16 +1006,25 @@ export default function FaceAnalysisPage() {
             </div>
 
             <style jsx>{`
-              @keyframes scan {
-                0%, 100% { opacity: 0.3; transform: scaleX(0.8); }
-                50% { opacity: 1; transform: scaleX(1); }
+              @keyframes spin-slow {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+              }
+              @keyframes scan-fixed {
+                0% { top: 10%; opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { top: 90%; opacity: 0; }
               }
               @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-5px); }
-                to { opacity: 1; transform: translateY(0); }
+                from { opacity: 0; transform: translateX(-10px); }
+                to { opacity: 1; transform: translateX(0); }
               }
-              .animate-scan {
-                animation: scan 1s ease-in-out infinite;
+              .animate-spin-slow {
+                animation: spin-slow 8s linear infinite;
+              }
+              .animate-scan-fixed {
+                animation: scan-fixed 2s ease-in-out infinite;
               }
               .animate-fadeIn {
                 animation: fadeIn 0.3s ease-out forwards;
