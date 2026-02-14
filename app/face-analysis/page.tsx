@@ -575,7 +575,7 @@ export default function FaceAnalysisPage() {
             imageHeight: 600,
             gender,
           }));
-          router.push('/face-analysis/result');
+          router.replace('/face-analysis/result');
           return;
         }
 
@@ -583,7 +583,7 @@ export default function FaceAnalysisPage() {
 
         if (saveData.success) {
           // 4. 공유 가능한 결과 페이지로 리다이렉트
-          router.push(`/face-analysis/result/${saveData.shareCode}`);
+          router.replace(`/face-analysis/result/${saveData.shareCode}`);
         } else {
           // DB 저장 실패 시 기존 방식으로 폴백
           sessionStorage.setItem('faceAnalysisResult', JSON.stringify({
@@ -594,7 +594,7 @@ export default function FaceAnalysisPage() {
             imageHeight: 600,
             gender,
           }));
-          router.push('/face-analysis/result');
+          router.replace('/face-analysis/result');
         }
       } else {
         setError(data.error || '분석에 실패했습니다.');
