@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import Button from '@/components/Button';
 import {
   MessageCircle,
@@ -59,35 +60,27 @@ const tests = [
 
 export default function TestListPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [completedTests, setCompletedTests] = useState<number[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const isLoading = status === 'loading';
+  const isLoggedIn = status === 'authenticated' && !!session?.user;
+
   useEffect(() => {
-    loadCompletedTests();
-  }, []);
+    if (isLoggedIn) {
+      loadCompletedTests();
+    }
+  }, [isLoggedIn]);
 
   const loadCompletedTests = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const response = await fetch('/api/test/results');
+      const data = await response.json();
 
-      if (token) {
-        setIsLoggedIn(true);
-        // 로그인 사용자: API에서 가져오기
-        const response = await fetch('/api/test/results', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          setCompletedTests(data.results.map((r: { testType: number }) => r.testType));
-        }
-      } else {
-        setIsLoggedIn(false);
+      if (data.success) {
+        setCompletedTests(data.results.map((r: { testType: number }) => r.testType));
       }
     } catch (error) {
       console.error('Failed to load completed tests:', error);
@@ -97,13 +90,9 @@ export default function TestListPage() {
   const handleDeleteAllTests = async () => {
     try {
       setIsDeleting(true);
-      const token = localStorage.getItem('token');
 
       const response = await fetch('/api/test/results', {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
       });
 
       const data = await response.json();
@@ -140,7 +129,13 @@ export default function TestListPage() {
 
           {/* 진행 상황 or 회원가입 유도 */}
           <div className="max-w-xl mx-auto mb-8">
-            {isLoggedIn ? (
+            {isLoading ? (
+              <div className="bg-white rounded-2xl p-6 shadow-sm animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
+                <div className="h-3 bg-gray-200 rounded-full w-full mb-4" />
+                <div className="h-10 bg-gray-200 rounded-xl w-full" />
+              </div>
+            ) : isLoggedIn ? (
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-semibold text-gray-700">
@@ -339,7 +334,7 @@ export default function TestListPage() {
               </div>
             </div>
 
-            {!isLoggedIn && (
+            {!isLoading && !isLoggedIn && (
               <div className="bg-red-600/80 border-2 border-white/50 rounded-xl p-4 mb-4">
                 <p className="font-bold text-base flex items-center justify-center gap-2">
                   <span className="text-xl">🔐</span>
@@ -351,7 +346,7 @@ export default function TestListPage() {
               </div>
             )}
 
-            {isLoggedIn ? (
+            {!isLoading && (isLoggedIn ? (
               <Button
                 variant="secondary"
                 className="bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-lg"
@@ -376,7 +371,7 @@ export default function TestListPage() {
                   로그인
                 </Button>
               </div>
-            )}
+            ))}
           </div>
         </div>
 
