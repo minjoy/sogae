@@ -5,9 +5,31 @@ import { saveFaceAnalysis } from '@/lib/face-analysis-db'
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
+// 클라이언트 IP 추출
+function getClientIp(request: NextRequest): string {
+  // Cloudflare
+  const cfConnectingIp = request.headers.get('cf-connecting-ip')
+  if (cfConnectingIp) return cfConnectingIp
+
+  // X-Forwarded-For (프록시)
+  const xForwardedFor = request.headers.get('x-forwarded-for')
+  if (xForwardedFor) {
+    const ips = xForwardedFor.split(',').map(ip => ip.trim())
+    return ips[0]
+  }
+
+  // X-Real-IP (Nginx)
+  const xRealIp = request.headers.get('x-real-ip')
+  if (xRealIp) return xRealIp
+
+  // Fallback
+  return 'unknown'
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const clientIp = getClientIp(request)
 
     const {
       score,
@@ -21,6 +43,7 @@ export async function POST(request: NextRequest) {
       panAngle,
       tiltAngle,
       rollAngle,
+      clientFingerprint,
     } = body
 
     // 필수 필드 검증
@@ -56,6 +79,8 @@ export async function POST(request: NextRequest) {
       panAngle,
       tiltAngle,
       rollAngle,
+      clientIp,
+      clientFingerprint,
     })
 
     return NextResponse.json({

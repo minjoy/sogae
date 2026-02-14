@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAdminAuth } from '@/lib/useAdminAuth';
 
 interface User {
   id: string;
@@ -16,27 +17,26 @@ interface User {
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { password, isAuthenticated, isLoading: authLoading, error: authError, login, getStoredPassword } = useAdminAuth();
+  const [inputPassword, setInputPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 세션 스토리지에서 비밀번호 확인
+  // 인증 후 사용자 목록 가져오기
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedPassword = sessionStorage.getItem('adminPassword');
-      if (savedPassword) {
-        setPassword(savedPassword);
-        fetchUsers(savedPassword);
-      }
+    if (isAuthenticated && password) {
+      fetchUsers(password);
     }
-  }, []);
+  }, [isAuthenticated, password]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetchUsers(password);
+    const success = await login(inputPassword);
+    if (success) {
+      fetchUsers(inputPassword);
+    }
   };
 
   const fetchUsers = async (pwd: string) => {
@@ -53,13 +53,9 @@ export default function AdminUsersPage() {
       const data = await response.json();
 
       if (data.success) {
-        setIsAuthenticated(true);
         setUsers(data.users);
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('adminPassword', pwd);
-        }
       } else {
-        setError(data.error || '인증 실패');
+        setError(data.error || '데이터 로드 실패');
       }
     } catch {
       setError('서버 오류가 발생했습니다');
@@ -89,6 +85,18 @@ export default function AdminUsersPage() {
     return gender === 'male' ? '남성' : gender === 'female' ? '여성' : gender;
   };
 
+  // 인증 확인 중
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white mx-auto mb-4"></div>
+          <p>세션 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
@@ -99,14 +107,14 @@ export default function AdminUsersPage() {
           <form onSubmit={handleLogin}>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={inputPassword}
+              onChange={(e) => setInputPassword(e.target.value)}
               placeholder="비밀번호 입력"
               className="w-full px-4 py-3 bg-gray-700 text-white rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
-            {error && (
-              <p className="text-red-400 text-sm mb-4 text-center">{error}</p>
+            {(error || authError) && (
+              <p className="text-red-400 text-sm mb-4 text-center">{error || authError}</p>
             )}
             <button
               type="submit"

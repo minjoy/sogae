@@ -201,7 +201,7 @@ export default function AdminPage() {
               <StatCard title="최근 7일 가입" value={stats.recentUsers} icon="🆕" />
             </div>
 
-            {/* 두쫀쿠맵 관리 */}
+            {/* 기능 관리 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <div
                 className="bg-gray-800 rounded-xl p-6 cursor-pointer hover:bg-gray-700 transition-colors"
@@ -212,6 +212,20 @@ export default function AdminPage() {
                   <div>
                     <h3 className="text-lg font-bold text-white">두쫀쿠맵 관리</h3>
                     <p className="text-gray-400 text-sm">매장 등록/수정 요청 관리</p>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-400 mt-3">클릭하여 관리하기 →</p>
+              </div>
+
+              <div
+                className="bg-gray-800 rounded-xl p-6 cursor-pointer hover:bg-gray-700 transition-colors"
+                onClick={() => router.push('/xq9k2m-admin-panel/face-results')}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl">🔮</div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">관상 분석 결과</h3>
+                    <p className="text-gray-400 text-sm">관상/궁합 분석 결과 및 통계</p>
                   </div>
                 </div>
                 <p className="text-xs text-blue-400 mt-3">클릭하여 관리하기 →</p>

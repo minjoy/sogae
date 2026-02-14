@@ -20,6 +20,8 @@ export interface FaceAnalysisData {
   panAngle?: number
   tiltAngle?: number
   rollAngle?: number
+  clientIp?: string
+  clientFingerprint?: string
   expiresAt: Date
   viewCount: number
   createdAt: Date
@@ -35,6 +37,8 @@ export interface FaceCompatibilityData {
   analysis: Record<string, unknown>
   isPaid: boolean
   paymentId?: string
+  clientIp?: string
+  clientFingerprint?: string
   expiresAt: Date
   createdAt: Date
 }
@@ -76,13 +80,30 @@ export async function initFaceAnalysisTables(): Promise<void> {
         pan_angle FLOAT,
         tilt_angle FLOAT,
         roll_angle FLOAT,
+        client_ip VARCHAR(45),
+        client_fingerprint VARCHAR(64),
         expires_at DATETIME NOT NULL,
         view_count INT DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_share_code (share_code),
-        INDEX idx_expires_at (expires_at)
+        INDEX idx_expires_at (expires_at),
+        INDEX idx_client_ip (client_ip),
+        INDEX idx_client_fingerprint (client_fingerprint)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `)
+
+    // 기존 테이블에 client_ip, client_fingerprint 컬럼 추가 (이미 있으면 무시)
+    try {
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE face_analyses
+        ADD COLUMN client_ip VARCHAR(45),
+        ADD COLUMN client_fingerprint VARCHAR(64),
+        ADD INDEX idx_client_ip (client_ip),
+        ADD INDEX idx_client_fingerprint (client_fingerprint)
+      `)
+    } catch {
+      // 이미 컬럼이 존재하면 무시
+    }
 
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS face_compatibilities (
@@ -95,11 +116,28 @@ export async function initFaceAnalysisTables(): Promise<void> {
         analysis JSON NOT NULL,
         is_paid BOOLEAN DEFAULT FALSE,
         payment_id VARCHAR(255),
+        client_ip VARCHAR(45),
+        client_fingerprint VARCHAR(64),
         expires_at DATETIME NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_share_code (share_code)
+        INDEX idx_share_code (share_code),
+        INDEX idx_client_ip (client_ip),
+        INDEX idx_client_fingerprint (client_fingerprint)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `)
+
+    // 기존 테이블에 client_ip, client_fingerprint 컬럼 추가 (이미 있으면 무시)
+    try {
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE face_compatibilities
+        ADD COLUMN client_ip VARCHAR(45),
+        ADD COLUMN client_fingerprint VARCHAR(64),
+        ADD INDEX idx_client_ip (client_ip),
+        ADD INDEX idx_client_fingerprint (client_fingerprint)
+      `)
+    } catch {
+      // 이미 컬럼이 존재하면 무시
+    }
   } catch (error) {
     console.error('Error initializing face analysis tables:', error)
     throw error
@@ -119,6 +157,8 @@ export async function saveFaceAnalysis(data: {
   panAngle?: number
   tiltAngle?: number
   rollAngle?: number
+  clientIp?: string
+  clientFingerprint?: string
 }): Promise<{ id: string; shareCode: string }> {
   await initFaceAnalysisTables()
 
@@ -130,8 +170,9 @@ export async function saveFaceAnalysis(data: {
     `INSERT INTO face_analyses (
       id, share_code, score, gender, categories, analysis,
       landmarks, image_width, image_height, image_data,
-      pan_angle, tilt_angle, roll_angle, expires_at, view_count, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())`,
+      pan_angle, tilt_angle, roll_angle, client_ip, client_fingerprint,
+      expires_at, view_count, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW())`,
     id,
     shareCode,
     data.score,
@@ -145,6 +186,8 @@ export async function saveFaceAnalysis(data: {
     data.panAngle ?? null,
     data.tiltAngle ?? null,
     data.rollAngle ?? null,
+    data.clientIp ?? null,
+    data.clientFingerprint ?? null,
     expiresAt
   )
 
@@ -172,6 +215,8 @@ export async function getFaceAnalysisByShareCode(
       pan_angle: number | null
       tilt_angle: number | null
       roll_angle: number | null
+      client_ip: string | null
+      client_fingerprint: string | null
       expires_at: Date
       view_count: number
       created_at: Date
@@ -216,6 +261,8 @@ export async function getFaceAnalysisByShareCode(
     panAngle: row.pan_angle ?? undefined,
     tiltAngle: row.tilt_angle ?? undefined,
     rollAngle: row.roll_angle ?? undefined,
+    clientIp: row.client_ip ?? undefined,
+    clientFingerprint: row.client_fingerprint ?? undefined,
     expiresAt: new Date(row.expires_at),
     viewCount: row.view_count + 1,
     createdAt: new Date(row.created_at),
@@ -242,6 +289,8 @@ export async function saveFaceCompatibility(data: {
   compatibilityScore: number
   categoryScores: Record<string, number>
   analysis: Record<string, unknown>
+  clientIp?: string
+  clientFingerprint?: string
 }): Promise<{ id: string; shareCode: string }> {
   await initFaceAnalysisTables()
 
@@ -253,8 +302,8 @@ export async function saveFaceCompatibility(data: {
     `INSERT INTO face_compatibilities (
       id, share_code, male_analysis_id, female_analysis_id,
       compatibility_score, category_scores, analysis,
-      is_paid, expires_at, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, FALSE, ?, NOW())`,
+      is_paid, client_ip, client_fingerprint, expires_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, FALSE, ?, ?, ?, NOW())`,
     id,
     shareCode,
     data.maleAnalysisId,
@@ -262,6 +311,8 @@ export async function saveFaceCompatibility(data: {
     data.compatibilityScore,
     JSON.stringify(data.categoryScores),
     JSON.stringify(data.analysis),
+    data.clientIp ?? null,
+    data.clientFingerprint ?? null,
     expiresAt
   )
 
@@ -285,6 +336,8 @@ export async function getFaceCompatibilityByShareCode(
       analysis: string
       is_paid: boolean
       payment_id: string | null
+      client_ip: string | null
+      client_fingerprint: string | null
       expires_at: Date
       created_at: Date
     }>
@@ -313,6 +366,8 @@ export async function getFaceCompatibilityByShareCode(
       : row.analysis,
     isPaid: Boolean(row.is_paid),
     paymentId: row.payment_id ?? undefined,
+    clientIp: row.client_ip ?? undefined,
+    clientFingerprint: row.client_fingerprint ?? undefined,
     expiresAt: new Date(row.expires_at),
     createdAt: new Date(row.created_at),
   }

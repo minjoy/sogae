@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FaceAnalysisToggle from '@/components/FaceAnalysisToggle';
+import { getOrCreateFingerprint } from '@/lib/fingerprint';
 
 // MediaPipe 타입 선언
 declare global {
@@ -538,6 +539,9 @@ export default function FaceAnalysisPage() {
           },
         };
 
+        // 클라이언트 fingerprint 가져오기
+        const clientFingerprint = await getOrCreateFingerprint();
+
         const saveResponse = await fetch('/api/face/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -553,6 +557,7 @@ export default function FaceAnalysisPage() {
             panAngle: data.result.panAngle,
             tiltAngle: data.result.tiltAngle,
             rollAngle: data.result.rollAngle,
+            clientFingerprint,
           }),
         });
 

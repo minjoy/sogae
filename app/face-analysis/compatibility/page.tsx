@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FaceAnalysisToggle from '@/components/FaceAnalysisToggle';
+import { getOrCreateFingerprint } from '@/lib/fingerprint';
 
 // MediaPipe 타입 선언
 declare global {
@@ -198,6 +199,9 @@ export default function CompatibilityPage() {
     }, 100);
 
     try {
+      // 클라이언트 fingerprint 가져오기
+      const clientFingerprint = await getOrCreateFingerprint();
+
       // API 호출과 최소 대기 시간을 동시에 처리
       const [response] = await Promise.all([
         fetch('/api/face/compatibility/analyze', {
@@ -216,6 +220,7 @@ export default function CompatibilityPage() {
               imageHeight: female.imageHeight,
               imageData: female.image,
             },
+            clientFingerprint,
           }),
         }),
         new Promise(resolve => setTimeout(resolve, MIN_ANIMATION_TIME)), // 최소 5초 대기

@@ -223,6 +223,10 @@ model FaceAnalysis {
   tiltAngle       Float?   @map("tilt_angle")
   rollAngle       Float?   @map("roll_angle")
 
+  // 클라이언트 식별 정보
+  clientIp        String?  @map("client_ip")
+  clientFingerprint String? @map("client_fingerprint")
+
   // 만료 관리
   expiresAt       DateTime @map("expires_at") // 이미지 만료일 (1주일 후)
   viewCount       Int      @default(0) @map("view_count")
@@ -231,6 +235,8 @@ model FaceAnalysis {
 
   @@index([shareCode])
   @@index([expiresAt])
+  @@index([clientIp])
+  @@index([clientFingerprint])
   @@map("face_analyses")
 }
 
@@ -252,9 +258,15 @@ model FaceCompatibility {
   isPaid          Boolean  @default(false) @map("is_paid")
   paymentId       String?  @map("payment_id")
 
+  // 클라이언트 식별 정보
+  clientIp        String?  @map("client_ip")
+  clientFingerprint String? @map("client_fingerprint")
+
   expiresAt       DateTime @map("expires_at")
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([shareCode])
+  @@index([clientIp])
+  @@index([clientFingerprint])
   @@map("face_compatibilities")
 }

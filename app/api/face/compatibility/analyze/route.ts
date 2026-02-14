@@ -3,6 +3,27 @@ import { analyzeFace, convertVisionLandmarks } from '@/lib/face-analysis';
 import { analyzeCompatibility } from '@/lib/compatibility-analysis';
 import { prismaAny as prisma } from '@/lib/prisma';
 
+// 클라이언트 IP 추출
+function getClientIp(request: NextRequest): string {
+  // Cloudflare
+  const cfConnectingIp = request.headers.get('cf-connecting-ip')
+  if (cfConnectingIp) return cfConnectingIp
+
+  // X-Forwarded-For (프록시)
+  const xForwardedFor = request.headers.get('x-forwarded-for')
+  if (xForwardedFor) {
+    const ips = xForwardedFor.split(',').map(ip => ip.trim())
+    return ips[0]
+  }
+
+  // X-Real-IP (Nginx)
+  const xRealIp = request.headers.get('x-real-ip')
+  if (xRealIp) return xRealIp
+
+  // Fallback
+  return 'unknown'
+}
+
 // MediaPipe 랜드마크를 Google Vision 형식으로 변환
 function convertMediaPipeLandmarks(
   landmarks: Array<{ x: number; y: number; z: number }>,
@@ -109,7 +130,8 @@ function generateShareCode(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { male, female } = body;
+    const { male, female, clientFingerprint } = body;
+    const clientIp = getClientIp(request);
 
     if (!male?.landmarks || !female?.landmarks) {
       return NextResponse.json(
@@ -200,6 +222,8 @@ export async function POST(request: NextRequest) {
         categoryScores: compatibility.categoryScores as Record<string, number>,
         analysis: analysisData,
         isPaid: false,
+        clientIp,
+        clientFingerprint: clientFingerprint || null,
         expiresAt,
       },
     });
