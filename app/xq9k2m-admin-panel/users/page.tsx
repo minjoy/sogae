@@ -6,10 +6,10 @@ import { useAdminAuth } from '@/lib/useAdminAuth';
 
 interface User {
   id: string;
-  email: string;
+  email: string | null;
   nickname: string;
   gender: string | null;
-  birthyear: number | null;
+  birthYear: string | null;
   createdAt: string;
   testCount: number;
   cardCount: number;
@@ -66,8 +66,8 @@ export default function AdminUsersPage() {
 
   const filteredUsers = users.filter(
     (user) =>
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.nickname || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatDate = (dateString: string) => {
@@ -193,13 +193,13 @@ export default function AdminUsersPage() {
                       {user.nickname}
                     </td>
                     <td className="px-4 py-3 text-gray-300 text-sm">
-                      {user.email}
+                      {user.email || '-'}
                     </td>
                     <td className="px-4 py-3 text-center text-gray-300 text-sm">
                       {getGenderLabel(user.gender)}
                     </td>
                     <td className="px-4 py-3 text-center text-gray-300 text-sm">
-                      {user.birthyear || '-'}
+                      {user.birthYear || '-'}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded-lg text-sm">
