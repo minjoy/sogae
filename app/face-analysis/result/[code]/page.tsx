@@ -969,6 +969,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   const [memo, setMemo] = useState('');
   const [showRevealAnimation, setShowRevealAnimation] = useState(false);
   const [revealStep, setRevealStep] = useState(0);
+  const [showScoreTooltip, setShowScoreTooltip] = useState(false);
 
   // 데이터 로드
   useEffect(() => {
@@ -1563,6 +1564,26 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   if (showRevealAnimation && revealStep < 3) {
     const isHighScore = data.score >= 80;
 
+    // 점수별 파티클 설정
+    const getParticleConfig = (score: number) => {
+      if (score >= 85) return { count: 50, sizes: [3, 4, 5, 6], glowIntensity: 1, hasSparkle: true, hasPulse: true };
+      if (score >= 70) return { count: 35, sizes: [2, 3, 4, 5], glowIntensity: 0.8, hasSparkle: true, hasPulse: false };
+      if (score >= 55) return { count: 25, sizes: [2, 3, 4], glowIntensity: 0.6, hasSparkle: false, hasPulse: false };
+      if (score >= 40) return { count: 18, sizes: [2, 3], glowIntensity: 0.4, hasSparkle: false, hasPulse: false };
+      return { count: 12, sizes: [2], glowIntensity: 0.2, hasSparkle: false, hasPulse: false };
+    };
+
+    const particleConfig = getParticleConfig(data.score);
+    const particleColors = data.score >= 85
+      ? ['#FFD700', '#FFF8DC', '#FFEC8B', '#FFE4B5', '#FFFFFF']
+      : data.score >= 70
+        ? ['#FF6B6B', '#FF8E8E', '#FFB6C1', '#FF69B4', '#FFD700']
+        : data.score >= 55
+          ? ['#4ECDC4', '#7FDBDA', '#A8E6CF', '#88D8B0', '#B8E0D2']
+          : data.score >= 40
+            ? ['#95E1D3', '#A8E6CF', '#B8E0D2', '#C8F7C5']
+            : ['#A8A8A8', '#C0C0C0', '#D3D3D3', '#E8E8E8'];
+
     return (
       <div
         className="fixed inset-0 flex items-center justify-center z-50 overflow-hidden min-h-screen"
@@ -1572,24 +1593,68 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        {/* 배경 파티클 (높은 점수만) */}
-        {isHighScore && (
-          <div className="absolute inset-0 overflow-hidden">
-            {[...Array(20)].map((_, i) => (
+        {/* 배경 파티클 - 모든 점수대에서 표시, 점수별로 화려함 차등 */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(particleConfig.count)].map((_, i) => {
+            const particleSize = particleConfig.sizes[i % particleConfig.sizes.length];
+            return (
               <div
                 key={i}
-                className="absolute w-2 h-2 rounded-full animate-float"
+                className={`absolute rounded-full ${particleConfig.hasPulse ? 'animate-particle-pulse' : 'animate-float'}`}
                 style={{
-                  backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#FF69B4'][i % 4],
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  animationDuration: `${3 + Math.random() * 2}s`,
+                  width: `${particleSize * 2}px`,
+                  height: `${particleSize * 2}px`,
+                  backgroundColor: particleColors[i % particleColors.length],
+                  left: `${(i * 17 + 5) % 100}%`,
+                  top: `${(i * 23 + 10) % 100}%`,
+                  animationDelay: `${(i * 0.15) % 3}s`,
+                  animationDuration: `${2.5 + (i % 3)}s`,
+                  boxShadow: `0 0 ${6 * particleConfig.glowIntensity}px ${particleColors[i % particleColors.length]}, 0 0 ${12 * particleConfig.glowIntensity}px ${particleColors[i % particleColors.length]}50`,
+                  opacity: 0.7 + (particleConfig.glowIntensity * 0.3),
                 }}
               />
-            ))}
-          </div>
-        )}
+            );
+          })}
+
+          {/* 반짝이는 별 효과 (70점 이상) */}
+          {particleConfig.hasSparkle && [...Array(data.score >= 85 ? 15 : 8)].map((_, i) => (
+            <div
+              key={`sparkle-${i}`}
+              className="absolute animate-sparkle"
+              style={{
+                left: `${(i * 31 + 8) % 100}%`,
+                top: `${(i * 29 + 5) % 100}%`,
+                animationDelay: `${(i * 0.3) % 2}s`,
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill={data.score >= 85 ? '#FFD700' : '#FF69B4'}>
+                <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+              </svg>
+            </div>
+          ))}
+
+          {/* 빛줄기 효과 (85점 이상) */}
+          {data.score >= 85 && (
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={`ray-${i}`}
+                  className="absolute animate-ray"
+                  style={{
+                    left: '50%',
+                    top: '50%',
+                    width: '2px',
+                    height: '150%',
+                    background: `linear-gradient(to bottom, transparent, ${scoreGrade.color}40, transparent)`,
+                    transform: `rotate(${i * 60}deg) translateX(-50%)`,
+                    transformOrigin: 'top center',
+                    animationDelay: `${i * 0.2}s`,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* 중앙 내용 */}
         <div className="relative text-center px-8">
@@ -1673,8 +1738,26 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
         <style jsx>{`
           @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.6; }
+            25% { transform: translateY(-15px) rotate(90deg) scale(1.1); opacity: 0.9; }
+            50% { transform: translateY(-25px) rotate(180deg) scale(1.2); opacity: 1; }
+            75% { transform: translateY(-10px) rotate(270deg) scale(1.05); opacity: 0.8; }
+          }
+          @keyframes particlePulse {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; box-shadow: 0 0 10px currentColor; }
+            25% { transform: translateY(-20px) scale(1.3); opacity: 1; box-shadow: 0 0 25px currentColor; }
+            50% { transform: translateY(-30px) scale(1.5); opacity: 0.9; box-shadow: 0 0 35px currentColor; }
+            75% { transform: translateY(-15px) scale(1.2); opacity: 1; box-shadow: 0 0 20px currentColor; }
+          }
+          @keyframes sparkle {
+            0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+            25% { transform: scale(1.2) rotate(90deg); opacity: 1; }
+            50% { transform: scale(0.8) rotate(180deg); opacity: 0.8; }
+            75% { transform: scale(1) rotate(270deg); opacity: 1; }
+          }
+          @keyframes ray {
+            0%, 100% { opacity: 0.1; transform: rotate(var(--rotation)) scaleY(0.8); }
+            50% { opacity: 0.4; transform: rotate(var(--rotation)) scaleY(1.2); }
           }
           @keyframes countUp {
             0% { transform: scale(0.5); opacity: 0; }
@@ -1687,6 +1770,15 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           }
           .animate-float {
             animation: float 3s ease-in-out infinite;
+          }
+          .animate-particle-pulse {
+            animation: particlePulse 2.5s ease-in-out infinite;
+          }
+          .animate-sparkle {
+            animation: sparkle 2s ease-in-out infinite;
+          }
+          .animate-ray {
+            animation: ray 3s ease-in-out infinite;
           }
           .animate-countUp {
             animation: countUp 0.8s ease-out forwards;
@@ -1723,19 +1815,72 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </div>
 
           {/* 얼굴력 점수 - 캔버스 아래로 이동 */}
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 relative">
             <div
-              className="inline-flex items-center gap-2 backdrop-blur px-5 py-3 rounded-full border"
+              className="inline-flex items-center gap-2 backdrop-blur px-5 py-3 rounded-full border cursor-pointer hover:scale-105 transition-transform"
               style={{
                 backgroundColor: 'rgba(0,0,0,0.7)',
                 borderColor: scoreGrade.color,
                 boxShadow: `0 0 20px ${scoreGrade.color}40`
               }}
+              onClick={() => setShowScoreTooltip(!showScoreTooltip)}
             >
               <span className="text-white/70 text-lg">얼굴력</span>
               <span className="text-2xl font-black" style={{ color: scoreGrade.color }}>{data.score}</span>
               <span className="text-white/70 text-lg">점</span>
+              <span className="text-white/50 text-sm ml-1">ⓘ</span>
             </div>
+
+            {/* 얼굴력 설명 툴팁 */}
+            {showScoreTooltip && (
+              <div
+                className="absolute left-1/2 -translate-x-1/2 mt-3 w-80 bg-slate-800/95 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-2xl z-50 animate-fadeInTooltip"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-slate-800/95 border-l border-t border-white/20 rotate-45"></div>
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-white font-bold text-lg flex items-center gap-2">
+                      <span style={{ color: scoreGrade.color }}>✦</span> 얼굴력이란?
+                    </h4>
+                    <button
+                      onClick={() => setShowScoreTooltip(false)}
+                      className="text-white/50 hover:text-white/80 text-xl leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <p className="text-white/80 text-sm leading-relaxed mb-3">
+                    얼굴력은 <strong>관상학적 특징</strong>을 종합 분석하여 산출한 점수입니다.
+                    얼굴의 비율, 이목구비 균형, 관상적 특성을 AI가 분석합니다.
+                  </p>
+                  <div className="bg-white/5 rounded-xl p-3 mb-3">
+                    <p className="text-white/60 text-xs mb-2">평가 항목</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex items-center gap-1.5 text-white/80">
+                        <span className="text-cyan-400">•</span> 삼정(상/중/하) 비율
+                      </div>
+                      <div className="flex items-center gap-1.5 text-white/80">
+                        <span className="text-pink-400">•</span> 눈/코/입 균형
+                      </div>
+                      <div className="flex items-center gap-1.5 text-white/80">
+                        <span className="text-yellow-400">•</span> 황금비율 근접도
+                      </div>
+                      <div className="flex items-center gap-1.5 text-white/80">
+                        <span className="text-purple-400">•</span> 관상적 특성
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 text-xs flex-wrap">
+                    <span className="px-2 py-1 rounded-full bg-gray-600/50 text-gray-300">~39 COMMON</span>
+                    <span className="px-2 py-1 rounded-full bg-emerald-900/50 text-emerald-300">40~54 UNCOMMON</span>
+                    <span className="px-2 py-1 rounded-full bg-teal-900/50 text-teal-300">55~69 RARE</span>
+                    <span className="px-2 py-1 rounded-full bg-rose-900/50 text-rose-300">70~84 EPIC</span>
+                    <span className="px-2 py-1 rounded-full bg-amber-900/50 text-amber-300">85~ LEGENDARY</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 만료 안내 */}
