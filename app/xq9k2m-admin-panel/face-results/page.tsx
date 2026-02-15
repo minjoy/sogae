@@ -367,7 +367,7 @@ export default function FaceResultsPage() {
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">성별</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">카테고리</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">각도</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">IP</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">FP</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">조회수</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">생성일</th>
                   </tr>
@@ -427,15 +427,18 @@ export default function FaceResultsPage() {
                           {analysis.panAngle?.toFixed(1) || '-'}/{analysis.tiltAngle?.toFixed(1) || '-'}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {analysis.clientIp ? (
+                          {analysis.clientFingerprint ? (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                fetchUserHistory('ip', analysis.clientIp!);
+                                fetchUserHistory('fingerprint', analysis.clientFingerprint!);
                               }}
-                              className="text-xs text-blue-400 hover:underline"
+                              className="text-xs text-blue-400 hover:underline font-mono"
+                              title={analysis.clientFingerprint}
                             >
-                              {analysis.clientIp}
+                              {analysis.clientFingerprint.length > 8
+                                ? analysis.clientFingerprint.slice(0, 8) + '…'
+                                : analysis.clientFingerprint}
                             </button>
                           ) : (
                             <span className="text-gray-500 text-xs">-</span>
@@ -490,7 +493,7 @@ export default function FaceResultsPage() {
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">남자점수</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">여자점수</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">카테고리</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">IP</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">FP</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-300">생성일</th>
                   </tr>
                 </thead>
@@ -566,15 +569,18 @@ export default function FaceResultsPage() {
                           ) : '-'}
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {analysis.clientIp ? (
+                          {analysis.clientFingerprint ? (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                fetchUserHistory('ip', analysis.clientIp!);
+                                fetchUserHistory('fingerprint', analysis.clientFingerprint!);
                               }}
-                              className="text-xs text-blue-400 hover:underline"
+                              className="text-xs text-blue-400 hover:underline font-mono"
+                              title={analysis.clientFingerprint}
                             >
-                              {analysis.clientIp}
+                              {analysis.clientFingerprint.length > 8
+                                ? analysis.clientFingerprint.slice(0, 8) + '…'
+                                : analysis.clientFingerprint}
                             </button>
                           ) : (
                             <span className="text-gray-500 text-xs">-</span>
