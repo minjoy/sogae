@@ -988,17 +988,19 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     if (!ctx) return;
 
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvasSize = 500; // 크기 증가
-      canvas.width = canvasSize;
-      canvas.height = canvasSize;
+    const tryLoad = (useCors: boolean) => {
+      if (useCors) img.crossOrigin = 'anonymous';
+      else img.removeAttribute('crossOrigin');
+      img.onload = () => {
+        const canvasSize = 500; // 크기 증가
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
 
-      const landmarks = data.landmarks!;
+        const landmarks = data.landmarks!;
 
-      // 배경 (검정)
-      ctx.fillStyle = '#1a1a2e';
-      ctx.fillRect(0, 0, canvasSize, canvasSize);
+        // 배경 (검정)
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
 
       // 이미지 그리기 (원형 마스크 없이)
       ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
@@ -1131,7 +1133,13 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       });
       ctx.globalAlpha = 1;
     };
-    img.src = data.imageData;
+      img.onerror = () => {
+        // CORS 실패 시 crossOrigin 없이 재시도
+        if (useCors) tryLoad(false);
+      };
+      img.src = data.imageData!;
+    };
+    tryLoad(true);
   }, [data]);
 
   useEffect(() => {
@@ -1223,13 +1231,23 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     const faceSize = 624; // 520 * 1.2
 
     if (data.imageData && data.landmarks) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      await new Promise<void>((resolve) => {
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        img.src = data.imageData!;
-      });
+      // 이미지 로드 (CORS 시도 후 실패하면 CORS 없이 재시도)
+      const loadImg = (useCors: boolean): Promise<HTMLImageElement> => {
+        return new Promise((resolve) => {
+          const img = new Image();
+          if (useCors) img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => {
+            if (useCors) {
+              loadImg(false).then(resolve);
+            } else {
+              resolve(img);
+            }
+          };
+          img.src = data.imageData!;
+        });
+      };
+      const img = await loadImg(true);
 
       if (img.complete && img.naturalWidth > 0) {
         const landmarks = data.landmarks;
