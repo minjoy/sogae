@@ -928,6 +928,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   const [oneLiner, setOneLiner] = useState<string>('');
   const [isGeneratingCard, setIsGeneratingCard] = useState(false);
   const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
+  const [cardReady, setCardReady] = useState(false);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [memo, setMemo] = useState('');
@@ -1462,6 +1463,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     const dataUrl = canvas.toDataURL('image/png');
     setShareCardUrl(dataUrl);
     setIsGeneratingCard(false);
+
+    // 5초 후 카드 표시 (광고 노출 시간 확보)
+    setTimeout(() => {
+      setCardReady(true);
+    }, 5000);
   }, [data, oneLiner]);
 
   // 카드 다운로드 (모바일: Web Share API만, PC: 파일 다운로드)
@@ -2171,27 +2177,51 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             </button>
           ) : (
             <div className="space-y-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={shareCardUrl}
-                alt="공유 카드"
-                className="w-full rounded-xl border border-white/30"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={downloadCard}
-                  className="py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20"
-                >
-                  💾 저장하기
-                </button>
-                <button
-                  onClick={shareCard}
-                  className="py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-medium"
-                >
-                  📤 공유하기
-                </button>
+              {/* 쿠팡 광고 (카드 생성 후 항상 표시) */}
+              <div className="rounded-xl overflow-hidden">
+                <iframe
+                  src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=100&tsource="
+                  width="100%"
+                  height="100"
+                  frameBorder="0"
+                  scrolling="no"
+                  referrerPolicy="unsafe-url"
+                  className="w-full"
+                />
               </div>
-              <p className="text-center text-white/70 text-sm">카카오톡, 인스타그램으로 내 관상 카드를 공유해보세요!</p>
+
+              {!cardReady ? (
+                /* 5초 대기 중: 로딩 표시 */
+                <div className="flex flex-col items-center gap-3 py-6">
+                  <div className="w-6 h-6 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-white/70 text-sm">공유 카드를 생성중이에요.</p>
+                </div>
+              ) : (
+                /* 5초 후: 카드 + 버튼 표시 */
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={shareCardUrl}
+                    alt="공유 카드"
+                    className="w-full rounded-xl border border-white/30"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={downloadCard}
+                      className="py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20"
+                    >
+                      💾 저장하기
+                    </button>
+                    <button
+                      onClick={shareCard}
+                      className="py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-medium"
+                    >
+                      📤 공유하기
+                    </button>
+                  </div>
+                  <p className="text-center text-white/70 text-sm">카카오톡, 인스타그램으로 내 관상 카드를 공유해보세요!</p>
+                </>
+              )}
             </div>
           )}
         </div>
