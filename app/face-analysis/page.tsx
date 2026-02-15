@@ -582,7 +582,23 @@ export default function FaceAnalysisPage() {
         const saveData = await saveResponse.json();
 
         if (saveData.success) {
-          // 4. 공유 가능한 결과 페이지로 리다이렉트
+          // 4. localStorage에 결과 저장 (마이페이지 최근 관상 표시용)
+          try {
+            const saved = localStorage.getItem('faceAnalysisList');
+            const list = saved ? JSON.parse(saved) : [];
+            const existingIndex = list.findIndex((item: { id: string }) => item.id === saveData.shareCode);
+            if (existingIndex < 0) {
+              list.push({
+                id: saveData.shareCode,
+                savedAt: new Date().toISOString(),
+              });
+              localStorage.setItem('faceAnalysisList', JSON.stringify(list));
+            }
+          } catch {
+            // localStorage 오류 무시
+          }
+
+          // 5. 공유 가능한 결과 페이지로 리다이렉트
           router.replace(`/face-analysis/result/${saveData.shareCode}`);
         } else {
           // DB 저장 실패 시 기존 방식으로 폴백
