@@ -836,20 +836,35 @@ export function analyzeFace(
   // 7개 부위 × 레벨 기반 점수 (직관적 계산)
   const levels = [eyeAngleLevel, eyebrowLevel, noseLevel, philtrumLevel, mouthLevel, jawLevel, eyeSizeLevel];
 
-  // 레벨별 점수 계산 함수 - 격차 확대 (극단값 감점)
-  // level 3 (이상적) = 10점, level 2,4 (양호) = 4점, level 1,5 (극단) = -2점
-  const getLevelScore = (level: number, isEyebrow: boolean = false): number => {
-    // 눈두덩이 예외: 넓은 건(level 4, 5) 좋으므로 10점
-    if (isEyebrow && level >= 4) return 10;
-
-    if (level === 3) return 10;           // 이상적
-    if (level === 2 || level === 4) return 4;  // 양호
-    return -2;                              // 극단 (감점)
+  // 연속 함수 기반 부위별 점수 계산 (클리프 효과 제거)
+  // 이산적 레벨(10/4/-2) 대신 원시 측정값에 가우시안 벨 커브 적용
+  // → 경계값에서 미세한 측정 차이로 인한 점수 급변 방지
+  const bellScore = (value: number, idealLow: number, idealHigh: number, sigma: number): number => {
+    let distance: number;
+    if (value >= idealLow && value <= idealHigh) distance = 0;
+    else if (value < idealLow) distance = idealLow - value;
+    else distance = value - idealHigh;
+    return clamp(Math.round((12 * Math.exp(-0.5 * (distance / sigma) ** 2) - 2) * 10) / 10, -2, 10);
   };
 
-  // 각 부위별 점수 계산
-  const featureScores = levels.map((level, idx) => getLevelScore(level, idx === 1));
-  const rawBalanceScore = featureScores.reduce((a, b) => a + b, 0);
+  // 눈두덩이 전용: 넓을수록 좋으므로 idealLow 이상이면 항상 만점
+  const eyebrowScore = (value: number, idealLow: number, sigma: number): number => {
+    if (value >= idealLow) return 10;
+    const distance = idealLow - value;
+    return clamp(Math.round((12 * Math.exp(-0.5 * (distance / sigma) ** 2) - 2) * 10) / 10, -2, 10);
+  };
+
+  // 각 부위별 연속 점수 [눈꼬리, 눈두덩이, 코, 인중, 입, 턱, 눈크기]
+  const featureScores = [
+    bellScore(eyeAngleDegrees, -5, 2, 1.3),        // 눈꼬리: ideal -5°~2°
+    eyebrowScore(eyebrowRatio, 2.55, 0.13),         // 눈두덩이: ≥2.55 이상적
+    bellScore(noseLengthRatio, 1.28, 1.55, 0.18),   // 코: ideal 1.28~1.55
+    bellScore(philtrumRatio, 0.28, 0.38, 0.035),    // 인중: ideal 0.28~0.38
+    bellScore(mouthRatio, 1.05, 1.15, 0.05),        // 입: ideal 1.05~1.15
+    bellScore(avgJawAngle, 29, 31, 0.9),             // 턱: ideal 29°~31°
+    bellScore(eyeFaceWidthRatio, 5.0, 6.0, 0.5),    // 눈크기: ideal 5.0~6.0
+  ];
+  const rawBalanceScore = Math.round(featureScores.reduce((a, b) => a + b, 0) * 10) / 10;
 
   // 최소 -14점 (7×-2), 최대 70점 (7×10) → 0~100으로 정규화
   const minBalance = -14;
