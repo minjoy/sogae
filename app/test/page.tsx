@@ -18,6 +18,8 @@ import {
   Lightbulb,
   AlertTriangle,
   Check,
+  ChevronRight,
+  Search,
 } from 'lucide-react';
 
 const tests = [
@@ -117,270 +119,191 @@ export default function TestListPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-warm-50 to-white">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* 헤더 */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* 상단: 왜 테스트 해야 하는지 */}
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 text-center">
             5가지 마음 테스트
           </h1>
-          <p className="text-gray-600 mb-6">
-            각 테스트는 1~2분이면 완료됩니다
+          <p className="text-center text-gray-500 text-sm mb-5">
+            총 9분이면 나를 완전히 파악할 수 있어요
           </p>
 
-          {/* 진행 상황 or 회원가입 유도 */}
-          <div className="max-w-xl mx-auto mb-8">
-            {isLoading ? (
-              <div className="bg-white rounded-2xl p-6 shadow-sm animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
-                <div className="h-3 bg-gray-200 rounded-full w-full mb-4" />
-                <div className="h-10 bg-gray-200 rounded-xl w-full" />
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Search className="w-4 h-4 text-primary-600" />
               </div>
-            ) : isLoggedIn ? (
-              <div className="bg-white rounded-2xl p-6 shadow-sm">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm font-semibold text-gray-700">
-                    진행 상황
-                  </span>
-                  <span className="text-2xl font-bold text-primary-600">
-                    {completedCount} / 5
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-                  <div
-                    className="bg-gradient-to-r from-primary-500 to-primary-600 h-3 rounded-full transition-all duration-500"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-
-                {completedCount === 5 ? (
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                    <p className="text-green-800 font-semibold flex items-center justify-center gap-2">
-                      <PartyPopper className="w-5 h-5" />
-                      모든 테스트 완료! 이제 통합 카드를 만들 수 있어요
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <p className="text-blue-900 text-sm">
-                      <strong>{5 - completedCount}개</strong> 남았어요! 완료하면 <strong>나만의 사용설명서 카드</strong>를 받아볼 수 있어요
-                    </p>
-                  </div>
-                )}
-
-                {completedCount > 0 && (
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="mt-4 text-sm text-red-500 hover:text-red-700 underline"
-                  >
-                    전체 테스트 삭제하기
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-                <p className="text-center text-gray-900 font-semibold mb-1">
-                  로그인 없이 테스트 가능!
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">왜 이 테스트를 해야 할까요?</p>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                  감정, 소비, 일, 갈등, 에너지 — 5가지 영역을 분석하면
+                  <strong className="text-gray-700"> 나도 몰랐던 내 패턴</strong>이 보입니다.
+                  반복되는 실수, 관계 문제, 번아웃의 원인을 정확히 짚어드려요.
                 </p>
-                <p className="text-center text-sm text-gray-500 mb-4">
-                  단, 5개 완료 후 <strong className="text-primary-600">통합 결과 · 사용설명서 카드</strong>는 로그인이 필요해요
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    onClick={() => router.push('/signup')}
-                    variant="primary"
-                    className="px-4 py-2 text-sm"
-                  >
-                    무료 회원가입
-                  </Button>
-                  <Button
-                    onClick={() => router.push('/login')}
-                    variant="outline"
-                    className="px-4 py-2 text-sm"
-                  >
-                    로그인
-                  </Button>
-                </div>
               </div>
-            )}
+            </div>
+            <div className="flex items-center gap-4 text-xs text-gray-400 pl-11">
+              <span className="flex items-center gap-1">
+                <Target className="w-3.5 h-3.5" /> 과학 기반 분석
+              </span>
+              <span className="flex items-center gap-1">
+                <Gift className="w-3.5 h-3.5" /> 5개 완료 시 사용설명서 카드
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* 테스트 목록 */}
-        <div className="space-y-4 mb-8">
+        {/* 진행 상황 (로그인 시) */}
+        {!isLoading && isLoggedIn && (
+          <div className="mb-5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-500">진행 상황</span>
+              <span className="text-sm font-bold text-primary-600">{completedCount}/5</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-primary-500 to-primary-600 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            {completedCount === 5 && (
+              <div className="mt-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <p className="text-green-700 font-semibold text-xs flex items-center gap-1.5">
+                  <PartyPopper className="w-4 h-4" />
+                  모든 테스트 완료! 통합 카드를 만들 수 있어요
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 비로그인 안내 */}
+        {!isLoading && !isLoggedIn && (
+          <div className="mb-5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center justify-between">
+            <p className="text-xs text-blue-800">
+              로그인 없이 가능! 5개 완료 후 <strong>통합 카드</strong>는 로그인 필요
+            </p>
+            <Button
+              onClick={() => router.push('/signup')}
+              variant="primary"
+              className="px-3 py-1.5 text-xs flex-shrink-0 ml-3"
+            >
+              가입
+            </Button>
+          </div>
+        )}
+
+        {/* 테스트 목록 - 컴팩트 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-100 mb-6">
           {tests.map((test) => {
             const isCompleted = isLoggedIn && completedTests.includes(test.id);
 
             return (
               <div
                 key={test.id}
-                className={`bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border-2 ${
-                  isCompleted
-                    ? 'border-green-300 bg-green-50/30'
-                    : 'border-gray-100'
-                }`}
+                className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => router.push(`/test/${test.id}`)}
               >
-                {/* Desktop Layout */}
-                <div className="hidden md:flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center">
-                        <test.icon className="w-7 h-7 text-primary-600" />
-                      </div>
-                      {isCompleted && (
-                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-semibold text-gray-900">
-                          {test.title}
-                        </h3>
-                        {isCompleted && (
-                          <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
-                            완료
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">{test.desc}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500 mb-2">{test.duration}</div>
-                    <Button variant={isCompleted ? 'outline' : 'primary'}>
-                      {isCompleted ? '다시하기' : '시작하기'}
-                    </Button>
+                {/* 아이콘 + 완료 표시 */}
+                <div className="relative flex-shrink-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isCompleted ? 'bg-green-100' : 'bg-primary-50'
+                  }`}>
+                    {isCompleted ? (
+                      <Check className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <test.icon className="w-5 h-5 text-primary-600" />
+                    )}
                   </div>
                 </div>
 
-                {/* Mobile Layout */}
-                <div className="md:hidden">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="relative flex-shrink-0">
-                      <div className="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center">
-                        <test.icon className="w-7 h-7 text-primary-600" />
-                      </div>
-                      {isCompleted && (
-                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-semibold text-gray-900">
-                          {test.title}
-                        </h3>
-                        {isCompleted && (
-                          <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
-                            완료
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1">{test.desc}</p>
-                      <div className="text-xs text-gray-500">{test.duration}</div>
-                    </div>
+                {/* 텍스트 */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className={`text-sm font-semibold ${isCompleted ? 'text-green-700' : 'text-gray-900'}`}>
+                      {test.title}
+                    </h3>
+                    {isCompleted && (
+                      <span className="bg-green-100 text-green-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                        완료
+                      </span>
+                    )}
                   </div>
-                  <Button
-                    variant={isCompleted ? 'outline' : 'primary'}
-                    className="w-full"
-                  >
-                    {isCompleted ? '다시하기' : '시작하기'}
-                  </Button>
+                  <p className="text-xs text-gray-500 mt-0.5">{test.desc}</p>
+                </div>
+
+                {/* 소요시간 + 화살표 */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <span className="text-[11px] text-gray-400">{test.duration}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* 완료 혜택 안내 */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 rounded-2xl p-8 text-center text-white shadow-2xl mb-6 border-4 border-yellow-300">
-          {/* 반짝이는 효과 */}
-          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-            <div className="absolute top-2 left-4 text-2xl animate-pulse">✨</div>
-            <div className="absolute top-4 right-6 text-xl animate-pulse delay-100">⭐</div>
-            <div className="absolute bottom-8 left-8 text-lg animate-pulse delay-200">✨</div>
-            <div className="absolute bottom-4 right-4 text-2xl animate-pulse delay-300">🌟</div>
+        {/* 완료 혜택 안내 - 컴팩트 */}
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-5 text-white mb-5">
+          <h3 className="font-bold text-base mb-3 flex items-center gap-2">
+            <Gift className="w-5 h-5" /> 5개 완료 시 특별 혜택
+          </h3>
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="bg-white/15 backdrop-blur rounded-lg p-2.5 text-center">
+              <Heart className="w-4 h-4 mx-auto mb-1" />
+              <p className="text-[11px] font-semibold leading-tight">나 사용설명서<br/>카드</p>
+            </div>
+            <div className="bg-white/15 backdrop-blur rounded-lg p-2.5 text-center">
+              <Link2 className="w-4 h-4 mx-auto mb-1" />
+              <p className="text-[11px] font-semibold leading-tight">4글자<br/>성격코드</p>
+            </div>
+            <div className="bg-white/15 backdrop-blur rounded-lg p-2.5 text-center">
+              <Lightbulb className="w-4 h-4 mx-auto mb-1" />
+              <p className="text-[11px] font-semibold leading-tight">맞춤 상대<br/>분석</p>
+            </div>
           </div>
 
-          <div className="relative z-10">
-            <div className="text-5xl mb-3 animate-bounce">🎁</div>
-            <h3 className="text-2xl font-black mb-4 drop-shadow-lg">
-              5개 테스트 완료 시 특별 혜택!
-            </h3>
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-black/20 backdrop-blur rounded-xl p-4">
-                <div className="w-10 h-10 mx-auto mb-2 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-amber-900" />
-                </div>
-                <p className="font-bold mb-1">나 사용설명서 카드</p>
-                <p className="text-sm opacity-90">5가지 테스트 통합 분석</p>
-              </div>
-              <div className="bg-black/20 backdrop-blur rounded-xl p-4">
-                <div className="w-10 h-10 mx-auto mb-2 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Link2 className="w-5 h-5 text-amber-900" />
-                </div>
-                <p className="font-bold mb-1">4글자 성격코드</p>
-                <p className="text-sm opacity-90">MBTI처럼 공유 가능!</p>
-              </div>
-              <div className="bg-black/20 backdrop-blur rounded-xl p-4">
-                <div className="w-10 h-10 mx-auto mb-2 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Lightbulb className="w-5 h-5 text-amber-900" />
-                </div>
-                <p className="font-bold mb-1">맞춤 상대 분석</p>
-                <p className="text-sm opacity-90">나와 딱 맞는 유형 추천</p>
-              </div>
-            </div>
-
-            {!isLoading && !isLoggedIn && (
-              <div className="bg-red-600/80 border-2 border-white/50 rounded-xl p-4 mb-4">
-                <p className="font-bold text-base flex items-center justify-center gap-2">
-                  <span className="text-xl">🔐</span>
-                  이 혜택은 로그인 후에만 받을 수 있어요!
-                </p>
-                <p className="text-xs mt-1 opacity-90">
-                  로그인하면 진행 상황이 저장되고, 5개 완료 시 통합 결과를 확인할 수 있습니다
-                </p>
-              </div>
-            )}
-
-            {!isLoading && (isLoggedIn ? (
+          {!isLoading && (isLoggedIn ? (
+            <Button
+              variant="secondary"
+              className="w-full bg-white text-orange-600 hover:bg-gray-50 font-bold text-sm"
+              onClick={() => router.push('/my')}
+            >
+              내 진행 상황 보기
+            </Button>
+          ) : (
+            <div className="flex gap-2">
               <Button
                 variant="secondary"
-                className="bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-lg"
-                onClick={() => router.push('/my')}
+                className="flex-1 bg-white text-orange-600 hover:bg-gray-50 font-bold text-sm"
+                onClick={() => router.push('/signup')}
               >
-                내 진행 상황 보기
+                무료 회원가입
               </Button>
-            ) : (
-              <div className="flex gap-3 justify-center">
-                <Button
-                  variant="secondary"
-                  className="bg-white text-orange-600 hover:bg-gray-50 font-bold shadow-lg"
-                  onClick={() => router.push('/signup')}
-                >
-                  무료 회원가입
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-2 border-white text-white hover:bg-white/20 font-semibold"
-                  onClick={() => router.push('/login')}
-                >
-                  로그인
-                </Button>
-              </div>
-            ))}
-          </div>
+              <Button
+                variant="outline"
+                className="flex-1 border-2 border-white/60 text-white hover:bg-white/20 font-semibold text-sm"
+                onClick={() => router.push('/login')}
+              >
+                로그인
+              </Button>
+            </div>
+          ))}
         </div>
 
-        {/* 안내 */}
-        <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-          <p className="text-sm text-gray-600 flex items-center justify-center gap-1.5">
-            <Lightbulb className="w-4 h-4 text-primary-500" />
+        {/* 하단 안내 + 삭제 */}
+        <div className="text-center space-y-2">
+          <p className="text-xs text-gray-400">
             모든 테스트는 무료이며, 언제든지 다시 할 수 있어요
           </p>
+          {isLoggedIn && completedCount > 0 && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-xs text-red-400 hover:text-red-600 underline"
+            >
+              전체 테스트 삭제
+            </button>
+          )}
         </div>
       </div>
 
