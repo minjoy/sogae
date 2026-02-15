@@ -228,7 +228,7 @@ model FaceAnalysis {
   clientFingerprint String? @map("client_fingerprint")
 
   // 만료 관리
-  expiresAt       DateTime @map("expires_at") // 이미지 만료일 (1주일 후)
+  expiresAt       DateTime @map("expires_at") // 이미지 만료일 (3일 후)
   viewCount       Int      @default(0) @map("view_count")
 
   createdAt       DateTime @default(now()) @map("created_at")

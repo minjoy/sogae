@@ -988,6 +988,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     if (!ctx) return;
 
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvasSize = 500; // 크기 증가
       canvas.width = canvasSize;
@@ -1223,6 +1224,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
     if (data.imageData && data.landmarks) {
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       await new Promise<void>((resolve) => {
         img.onload = () => resolve();
         img.onerror = () => resolve();

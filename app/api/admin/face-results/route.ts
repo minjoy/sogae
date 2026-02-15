@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { initFaceAnalysisTables } from '@/lib/face-analysis-db'
+import { getCdnUrl, isS3Key } from '@/lib/s3'
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'care1234@'
 
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
         categories: typeof row.categories === 'string' ? JSON.parse(row.categories) : row.categories,
         analysis: typeof row.analysis === 'string' ? JSON.parse(row.analysis) : row.analysis,
         hasImage: !!row.image_data,
-        imageData: row.image_data,
+        imageData: row.image_data ? (isS3Key(row.image_data) ? getCdnUrl(row.image_data) : row.image_data) : null,
         panAngle: row.pan_angle,
         tiltAngle: row.tilt_angle,
         rollAngle: row.roll_angle,

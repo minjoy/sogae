@@ -1,4 +1,5 @@
 import { prisma } from './prisma'
+import { uploadImageToS3, getCdnUrl, isS3Key, deleteMultipleFromS3, getFaceAnalysisS3Key } from './s3'
 
 // 타입 정의
 export interface FaceAnalysisData {
@@ -164,7 +165,20 @@ export async function saveFaceAnalysis(data: {
 
   const id = generateUUID()
   const shareCode = generateShareCode()
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 1주일 후
+  const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3일 후
+
+  // 이미지를 S3에 업로드 (base64 → S3)
+  let imageDataToStore: string | null = null
+  if (data.imageData) {
+    try {
+      const s3Key = getFaceAnalysisS3Key(shareCode)
+      await uploadImageToS3(data.imageData, s3Key)
+      imageDataToStore = s3Key // DB에는 S3 키만 저장
+    } catch (error) {
+      console.error('S3 upload failed, falling back to DB storage:', error)
+      imageDataToStore = data.imageData // S3 실패 시 base64로 폴백
+    }
+  }
 
   await prisma.$executeRawUnsafe(
     `INSERT INTO face_analyses (
@@ -182,7 +196,7 @@ export async function saveFaceAnalysis(data: {
     data.landmarks ? JSON.stringify(data.landmarks) : null,
     data.imageWidth ?? null,
     data.imageHeight ?? null,
-    data.imageData ?? null,
+    imageDataToStore,
     data.panAngle ?? null,
     data.tiltAngle ?? null,
     data.rollAngle ?? null,
@@ -257,7 +271,7 @@ export async function getFaceAnalysisByShareCode(
       : undefined,
     imageWidth: row.image_width ?? undefined,
     imageHeight: row.image_height ?? undefined,
-    imageData: isExpired ? undefined : (row.image_data ?? undefined),
+    imageData: isExpired ? undefined : (row.image_data ? (isS3Key(row.image_data) ? getCdnUrl(row.image_data) : row.image_data) : undefined),
     panAngle: row.pan_angle ?? undefined,
     tiltAngle: row.tilt_angle ?? undefined,
     rollAngle: row.roll_angle ?? undefined,
@@ -269,10 +283,32 @@ export async function getFaceAnalysisByShareCode(
   }
 }
 
-// 만료된 이미지 삭제 (정리 작업)
+// 만료된 이미지 삭제 (정리 작업 - S3 + DB)
 export async function cleanupExpiredImages(): Promise<number> {
   await initFaceAnalysisTables()
 
+  // 1. 만료된 레코드에서 S3 키 수집
+  const expiredRows = await prisma.$queryRawUnsafe<
+    Array<{ image_data: string | null }>
+  >(`
+    SELECT image_data FROM face_analyses
+    WHERE expires_at < NOW() AND image_data IS NOT NULL
+  `)
+
+  // 2. S3에 저장된 이미지 일괄 삭제
+  const s3Keys = expiredRows
+    .map((row) => row.image_data)
+    .filter((key): key is string => isS3Key(key))
+
+  if (s3Keys.length > 0) {
+    try {
+      await deleteMultipleFromS3(s3Keys)
+    } catch (error) {
+      console.error('S3 cleanup error:', error)
+    }
+  }
+
+  // 3. DB에서 이미지 데이터 제거
   const result = await prisma.$executeRawUnsafe(`
     UPDATE face_analyses
     SET image_data = NULL, landmarks = NULL
