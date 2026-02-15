@@ -810,13 +810,19 @@ export default function FaceAnalysisPage() {
 
           {/* 헤더 */}
           <div className="text-center mb-8">
-            <div className="text-6xl mb-4">🔮</div>
+            <div className="w-28 h-28 mx-auto mb-4 rounded-full overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/resultface.gif" alt="관상 분석" className="w-full h-full object-cover" />
+            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">경험 기반 관상 풀이</h1>
             <p className="text-gray-600">
               다년간의 관상학 연구와 고전 문헌을 바탕으로
             </p>
             <p className="text-gray-600">
               얼굴 특징에 담긴 의미를 풀어드려요
+            </p>
+            <p className="text-amber-600 font-semibold mt-2">
+              ⚡ 5초 안에 결과가 나옵니다
             </p>
           </div>
 
@@ -886,7 +892,7 @@ export default function FaceAnalysisPage() {
             <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-500 space-y-1">
               <p>• 수집 항목: 얼굴 이미지, 성별 정보</p>
               <p>• 이용 목적: 관상 분석 서비스 제공</p>
-              <p>• 보유 기간: 분석 후 7일 이내 자동 삭제</p>
+              <p>• 보유 기간: 분석 후 3일 이내 자동 삭제</p>
             </div>
           </div>
 
@@ -1110,7 +1116,7 @@ export default function FaceAnalysisPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">3. 개인정보 보유 및 이용 기간</h3>
-                  <p>• 얼굴 이미지: 분석 완료 후 <strong>7일 이내 자동 삭제</strong></p>
+                  <p>• 얼굴 이미지: 분석 완료 후 <strong>3일 이내 자동 삭제</strong></p>
                   <p>• 분석 결과 데이터: 공유 링크 만료 후 삭제</p>
                 </div>
                 <div>
