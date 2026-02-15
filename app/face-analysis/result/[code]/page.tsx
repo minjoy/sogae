@@ -1942,7 +1942,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         {(() => {
           const advice = generateDetailedAdvice(data.score, data.categories, data.analysis);
           return (
-            <div className="bg-white/5 backdrop-blur rounded-2xl overflow-hidden mb-6 border border-white/10">
+            <div className={`rounded-2xl overflow-hidden mb-6 ${
+              expandedItem === 'advice'
+                ? 'bg-white/5 backdrop-blur border border-white/10'
+                : 'bg-gradient-to-r from-amber-500/20 via-pink-500/15 to-purple-500/20 border border-amber-400/30 shadow-lg shadow-amber-500/10'
+            }`}>
               <button
                 onClick={() => setExpandedItem(expandedItem === 'advice' ? null : 'advice')}
                 className="w-full px-6 py-4 flex items-center justify-between text-white"
@@ -1950,8 +1954,13 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
                 <span className="font-bold flex items-center gap-2">
                   <span>💡</span> 조언 및 인간관계 궁합
                 </span>
-                <span className={`transform transition-transform ${expandedItem === 'advice' ? 'rotate-180' : ''}`}>
-                  ▼
+                <span className="flex items-center gap-2">
+                  {expandedItem !== 'advice' && (
+                    <span className="text-xs text-amber-300/90 font-normal animate-pulse">열어보세요</span>
+                  )}
+                  <span className={`transform transition-transform ${expandedItem === 'advice' ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
                 </span>
               </button>
 
@@ -2023,7 +2032,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         })()}
 
         {/* 상세 분석 (접을 수 있음) */}
-        <div className="bg-white/5 backdrop-blur rounded-2xl overflow-hidden mb-6 border border-white/10">
+        <div className={`rounded-2xl overflow-hidden mb-6 ${
+          expandedItem === 'detail'
+            ? 'bg-white/5 backdrop-blur border border-white/10'
+            : 'bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-indigo-500/20 border border-cyan-400/30 shadow-lg shadow-cyan-500/10'
+        }`}>
           <button
             onClick={() => setExpandedItem(expandedItem === 'detail' ? null : 'detail')}
             className="w-full px-6 py-4 flex items-center justify-between text-white"
@@ -2031,8 +2044,13 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             <span className="font-bold flex items-center gap-2">
               <span>🔍</span> 상세 분석 보기
             </span>
-            <span className={`transform transition-transform ${expandedItem === 'detail' ? 'rotate-180' : ''}`}>
-              ▼
+            <span className="flex items-center gap-2">
+              {expandedItem !== 'detail' && (
+                <span className="text-xs text-cyan-300/90 font-normal animate-pulse">열어보세요</span>
+              )}
+              <span className={`transform transition-transform ${expandedItem === 'detail' ? 'rotate-180' : ''}`}>
+                ▼
+              </span>
             </span>
           </button>
 
@@ -2131,9 +2149,16 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         </div>
 
         {/* 공유 카드 생성 */}
-        <div className="bg-white/5 backdrop-blur rounded-2xl p-6 mb-6 border border-white/10">
+        <div className={`rounded-2xl p-6 mb-6 ${
+          shareCardUrl
+            ? 'bg-white/5 backdrop-blur border border-white/10'
+            : 'bg-gradient-to-r from-pink-500/10 to-purple-500/10 border border-pink-400/20 shadow-md shadow-pink-500/5'
+        }`}>
           <h3 className="text-white font-bold mb-4 flex items-center gap-2">
             <span>📸</span> 인스타그램 공유 카드
+            {!shareCardUrl && (
+              <span className="text-xs text-pink-300/80 font-normal ml-auto">카드를 만들어보세요</span>
+            )}
           </h3>
 
           {!shareCardUrl ? (
@@ -2146,6 +2171,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             </button>
           ) : (
             <div className="space-y-4">
+              <p className="text-center text-white/70 text-sm">카카오톡, 인스타그램으로 내 관상 카드를 공유해보세요!</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={shareCardUrl}
