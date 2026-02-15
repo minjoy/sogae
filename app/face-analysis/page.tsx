@@ -679,10 +679,11 @@ export default function FaceAnalysisPage() {
       const img = new Image();
       img.crossOrigin = 'anonymous';
 
+      const blobUrl = URL.createObjectURL(file);
       await new Promise<void>((resolve, reject) => {
         img.onload = () => resolve();
         img.onerror = () => reject(new Error('이미지를 로드할 수 없습니다.'));
-        img.src = URL.createObjectURL(file);
+        img.src = blobUrl;
       });
 
       setCapturedImage(img.src);
@@ -697,17 +698,30 @@ export default function FaceAnalysisPage() {
           ctx.drawImage(img, 0, 0);
         }
 
+        // FaceMesh 트래킹 상태 초기화 (이전 이미지 잔존 방지)
+        const blankImg = new Image();
+        blankImg.width = 2;
+        blankImg.height = 2;
+        await new Promise<void>((resolve) => {
+          blankImg.onload = () => resolve();
+          blankImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAC0lEQVQI12NgAAIAASAAceOpkQAAAABJRU5ErkJggg==';
+        });
+        faceMeshRef.current.onResults(() => {});
+        await faceMeshRef.current.send({ image: blankImg });
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         // FaceMesh로 분석 (최대 2회 시도)
         let allFaceLandmarks: FaceLandmark[][] = [];
 
+        // onResults 콜백을 루프 밖에서 한 번만 등록
+        faceMeshRef.current.onResults((results: MediaPipeResults) => {
+          if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+            allFaceLandmarks = results.multiFaceLandmarks;
+          }
+        });
+
         for (let attempt = 0; attempt < 2; attempt++) {
           allFaceLandmarks = [];
-
-          faceMeshRef.current.onResults((results: MediaPipeResults) => {
-            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-              allFaceLandmarks = results.multiFaceLandmarks;
-            }
-          });
 
           await faceMeshRef.current.send({ image: img });
 
@@ -725,6 +739,9 @@ export default function FaceAnalysisPage() {
             await new Promise(resolve => setTimeout(resolve, 300));
           }
         }
+
+        // blob URL 해제 (캔버스에 이미 그렸으므로 불필요)
+        URL.revokeObjectURL(blobUrl);
 
         if (allFaceLandmarks.length > 0) {
           // 여러 얼굴이 감지된 경우 가장 큰 얼굴 선택
