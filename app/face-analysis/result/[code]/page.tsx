@@ -2205,12 +2205,14 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
               <div className="rounded-xl overflow-hidden">
                 <iframe
                   src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=100&tsource="
-                  width="100%"
+                  width="684"
                   height="100"
                   frameBorder="0"
                   scrolling="no"
                   referrerPolicy="unsafe-url"
                   className="w-full"
+                  // @ts-expect-error browsingtopics is a valid HTML attribute
+                  browsingtopics=""
                 />
               </div>
 
