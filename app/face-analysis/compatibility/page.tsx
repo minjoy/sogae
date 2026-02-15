@@ -437,7 +437,7 @@ export default function CompatibilityPage() {
                   <p className="text-white/90">개인정보 수집 및 이용에 동의합니다</p>
                   <p className="text-white/50 text-xs mt-1">
                     수집항목: 얼굴 이미지, 분석 결과<br/>
-                    보유기간: 7일 후 자동 삭제<br/>
+                    보유기간: 3일 후 자동 삭제<br/>
                     이미지는 외부로 전송되지 않습니다
                   </p>
                 </div>

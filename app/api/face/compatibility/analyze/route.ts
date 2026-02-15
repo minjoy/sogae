@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
 
     // 7일 후 만료
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + 3);
 
     // DB에 저장
     // JSON 직렬화로 Prisma 타입 호환성 확보
