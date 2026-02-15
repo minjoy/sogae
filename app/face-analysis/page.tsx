@@ -803,7 +803,7 @@ export default function FaceAnalysisPage() {
   // 선택 화면
   if (mode === 'select') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+      <div className="min-h-screen" style={{ backgroundColor: '#EDF4F8' }}>
         <div className="container mx-auto px-4 py-8 max-w-lg">
           {/* 페이지 전환 토글 */}
           <FaceAnalysisToggle variant="light" />
