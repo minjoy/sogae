@@ -102,8 +102,8 @@ export default function MyPage() {
                 if (faceData.success) {
                   setFaceResult({
                     shareCode: lastFace.id,
-                    score: faceData.result.score,
-                    gender: faceData.result.gender,
+                    score: faceData.data.score,
+                    gender: faceData.data.gender,
                   });
                 }
               }
