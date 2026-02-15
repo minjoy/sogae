@@ -930,12 +930,21 @@ export function analyzeFace(
   // 관상 핵심부위 보정 적용
   const adjustedScore = rawFinalScore + physiognomyBonus;
 
-  // 편차 확대: 중간점(50) 기준으로 저점은 더 낮추고 고점은 더 높이기
-  const midpoint = 50;
-  const spread = 1.2;
-  const spreadScore = midpoint + (adjustedScore - midpoint) * spread;
+  // 기본 상향 보정: +5점 (더 많은 사람이 50점 이상 구간 진입)
+  const boostedScore = adjustedScore + 5;
 
-  const normalizedScore = clamp(Math.round(spreadScore), 10, 100);
+  // 점수 보정 곡선: 50점 이상은 상향 곡선 적용, 50점 미만은 유지
+  // 50점 이상: power 0.7 곡선으로 60~80대 분포 확대
+  // 50점 미만: 그대로 (낮은 점수는 낮게 유지)
+  let curvedScore: number;
+  if (boostedScore >= 50) {
+    const ratio = (boostedScore - 50) / 50; // 0~1
+    curvedScore = 50 + Math.pow(ratio, 0.7) * 50;
+  } else {
+    curvedScore = boostedScore;
+  }
+
+  const normalizedScore = clamp(Math.round(curvedScore), 10, 100);
 
   // === 관상 특성 점수 계산 (Excel 기반) ===
   let traits = createEmptyTraits();
