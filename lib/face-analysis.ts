@@ -927,10 +927,15 @@ export function analyzeFace(
   const categoryAvg = (r1 + r2 + r3 + r4) / 4;
   const rawFinalScore = facescoreNormalized * 0.25 + categoryAvg * 0.35 + balanceScore * 0.40;
 
-  // 관상 핵심부위 보정 적용 (기존 0.35 제곱 부스트 제거)
+  // 관상 핵심부위 보정 적용
   const adjustedScore = rawFinalScore + physiognomyBonus;
 
-  const normalizedScore = clamp(Math.round(adjustedScore), 10, 100);
+  // 편차 확대: 중간점(50) 기준으로 저점은 더 낮추고 고점은 더 높이기
+  const midpoint = 50;
+  const spread = 1.2;
+  const spreadScore = midpoint + (adjustedScore - midpoint) * spread;
+
+  const normalizedScore = clamp(Math.round(spreadScore), 10, 100);
 
   // === 관상 특성 점수 계산 (Excel 기반) ===
   let traits = createEmptyTraits();
