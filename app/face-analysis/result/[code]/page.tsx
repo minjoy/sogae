@@ -1232,34 +1232,19 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     const faceSize = 624; // 520 * 1.2
 
     if (data.imageData && data.landmarks) {
-      // 이미지 로드 (CDN URL인 경우 fetch→blob으로 CORS 우회)
+      // 이미지 로드 (같은 origin 프록시 API를 통해 CORS 우회)
       const loadImg = async (): Promise<HTMLImageElement> => {
-        const imgSrc = data.imageData!;
-        let objectUrl: string | null = null;
-
-        // CDN/HTTP URL인 경우 fetch로 blob 변환하여 tainted canvas 방지
-        if (imgSrc.startsWith('http')) {
-          try {
-            const res = await fetch(imgSrc);
-            const blob = await res.blob();
-            objectUrl = URL.createObjectURL(blob);
-          } catch {
-            // fetch 실패 시 원본 URL 사용
-          }
-        }
+        // CDN URL인 경우 프록시 API를 통해 같은 origin에서 로드
+        const imgSrc = data.imageData!.startsWith('http')
+          ? `/api/face/image-proxy?code=${resolvedParams.code}`
+          : data.imageData!;
 
         return new Promise((resolve, reject) => {
           const img = new Image();
           img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            if (objectUrl) URL.revokeObjectURL(objectUrl);
-            resolve(img);
-          };
-          img.onerror = () => {
-            if (objectUrl) URL.revokeObjectURL(objectUrl);
-            reject(new Error('이미지 로드 실패'));
-          };
-          img.src = objectUrl || imgSrc;
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('이미지 로드 실패'));
+          img.src = imgSrc;
         });
       };
       const img = await loadImg();
@@ -1507,7 +1492,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       console.error('공유 카드 생성 실패:', err);
       setIsGeneratingCard(false);
     }
-  }, [data, oneLiner]);
+  }, [data, oneLiner, resolvedParams.code]);
 
   // 카드 다운로드 (모바일: Web Share API만, PC: 파일 다운로드)
   const downloadCard = async () => {
