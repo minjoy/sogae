@@ -1155,9 +1155,10 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
     setIsGeneratingCard(true);
 
+    try {
     const canvas = shareCanvasRef.current;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) { setIsGeneratingCard(false); return; }
 
     canvas.width = 1080;
     canvas.height = 1350; // 세로 확장
@@ -1231,23 +1232,37 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     const faceSize = 624; // 520 * 1.2
 
     if (data.imageData && data.landmarks) {
-      // 이미지 로드 (CORS 시도 후 실패하면 CORS 없이 재시도)
-      const loadImg = (useCors: boolean): Promise<HTMLImageElement> => {
-        return new Promise((resolve) => {
+      // 이미지 로드 (CDN URL인 경우 fetch→blob으로 CORS 우회)
+      const loadImg = async (): Promise<HTMLImageElement> => {
+        const imgSrc = data.imageData!;
+        let objectUrl: string | null = null;
+
+        // CDN/HTTP URL인 경우 fetch로 blob 변환하여 tainted canvas 방지
+        if (imgSrc.startsWith('http')) {
+          try {
+            const res = await fetch(imgSrc);
+            const blob = await res.blob();
+            objectUrl = URL.createObjectURL(blob);
+          } catch {
+            // fetch 실패 시 원본 URL 사용
+          }
+        }
+
+        return new Promise((resolve, reject) => {
           const img = new Image();
-          if (useCors) img.crossOrigin = 'anonymous';
-          img.onload = () => resolve(img);
-          img.onerror = () => {
-            if (useCors) {
-              loadImg(false).then(resolve);
-            } else {
-              resolve(img);
-            }
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            resolve(img);
           };
-          img.src = data.imageData!;
+          img.onerror = () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            reject(new Error('이미지 로드 실패'));
+          };
+          img.src = objectUrl || imgSrc;
         });
       };
-      const img = await loadImg(true);
+      const img = await loadImg();
 
       if (img.complete && img.naturalWidth > 0) {
         const landmarks = data.landmarks;
@@ -1488,6 +1503,10 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     setTimeout(() => {
       setCardReady(true);
     }, 5000);
+    } catch (err) {
+      console.error('공유 카드 생성 실패:', err);
+      setIsGeneratingCard(false);
+    }
   }, [data, oneLiner]);
 
   // 카드 다운로드 (모바일: Web Share API만, PC: 파일 다운로드)
