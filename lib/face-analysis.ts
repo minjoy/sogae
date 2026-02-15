@@ -855,14 +855,15 @@ export function analyzeFace(
   };
 
   // 각 부위별 연속 점수 [눈꼬리, 눈두덩이, 코, 인중, 입, 턱, 눈크기]
+  // sigma = 커브 가파름 (작을수록 이상적 범위 밖에서 빠르게 감점)
   const featureScores = [
-    bellScore(eyeAngleDegrees, -5, 2, 1.3),        // 눈꼬리: ideal -5°~2°
-    eyebrowScore(eyebrowRatio, 2.55, 0.13),         // 눈두덩이: ≥2.55 이상적
-    bellScore(noseLengthRatio, 1.28, 1.55, 0.18),   // 코: ideal 1.28~1.55
-    bellScore(philtrumRatio, 0.28, 0.38, 0.035),    // 인중: ideal 0.28~0.38
-    bellScore(mouthRatio, 1.05, 1.15, 0.05),        // 입: ideal 1.05~1.15
-    bellScore(avgJawAngle, 29, 31, 0.9),             // 턱: ideal 29°~31°
-    bellScore(eyeFaceWidthRatio, 5.0, 6.0, 0.5),    // 눈크기: ideal 5.0~6.0
+    bellScore(eyeAngleDegrees, -5, 2, 0.8),         // 눈꼬리: ideal -5°~2°
+    eyebrowScore(eyebrowRatio, 2.55, 0.08),          // 눈두덩이: ≥2.55 이상적
+    bellScore(noseLengthRatio, 1.28, 1.55, 0.06),    // 코: ideal 1.28~1.55 (3단계라 급경사)
+    bellScore(philtrumRatio, 0.28, 0.38, 0.02),      // 인중: ideal 0.28~0.38
+    bellScore(mouthRatio, 1.05, 1.15, 0.03),         // 입: ideal 1.05~1.15
+    bellScore(avgJawAngle, 29, 31, 0.55),             // 턱: ideal 29°~31°
+    bellScore(eyeFaceWidthRatio, 5.0, 6.0, 0.3),     // 눈크기: ideal 5.0~6.0
   ];
   const rawBalanceScore = Math.round(featureScores.reduce((a, b) => a + b, 0) * 10) / 10;
 
