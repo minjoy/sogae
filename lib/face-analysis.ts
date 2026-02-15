@@ -165,6 +165,9 @@ export interface FaceAnalysisResult {
     extremeCount: number;           // 극단값(level 1 또는 5) 부위 개수
     variance: number;               // 레벨 분산
     featureLevels: number[];        // 각 부위별 레벨 [눈꼬리, 눈두덩이, 코, 인중, 입, 턱, 눈크기]
+    // 관상 핵심부위 보정
+    physiognomyBonus: number;       // 관상 핵심부위 가감점
+    lowerLipChinRatio: number;      // 아랫입술~턱끝 비율
   };
 }
 
@@ -833,23 +836,23 @@ export function analyzeFace(
   // 7개 부위 × 레벨 기반 점수 (직관적 계산)
   const levels = [eyeAngleLevel, eyebrowLevel, noseLevel, philtrumLevel, mouthLevel, jawLevel, eyeSizeLevel];
 
-  // 레벨별 점수 계산 함수 - 격차 확대
-  // level 3 (이상적) = 10점, level 2,4 (양호) = 5점, level 1,5 (극단) = 0점
+  // 레벨별 점수 계산 함수 - 격차 확대 (극단값 감점)
+  // level 3 (이상적) = 10점, level 2,4 (양호) = 4점, level 1,5 (극단) = -2점
   const getLevelScore = (level: number, isEyebrow: boolean = false): number => {
     // 눈두덩이 예외: 넓은 건(level 4, 5) 좋으므로 10점
     if (isEyebrow && level >= 4) return 10;
 
     if (level === 3) return 10;           // 이상적
-    if (level === 2 || level === 4) return 5;  // 양호 (7→5로 하향)
-    return 0;                              // 극단 (3→0으로 하향)
+    if (level === 2 || level === 4) return 4;  // 양호
+    return -2;                              // 극단 (감점)
   };
 
   // 각 부위별 점수 계산
   const featureScores = levels.map((level, idx) => getLevelScore(level, idx === 1));
   const rawBalanceScore = featureScores.reduce((a, b) => a + b, 0);
 
-  // 최소 0점 (7×0), 최대 70점 (7×10) → 0~100으로 정규화
-  const minBalance = 0;
+  // 최소 -14점 (7×-2), 최대 70점 (7×10) → 0~100으로 정규화
+  const minBalance = -14;
   const maxBalance = 70;
   const balanceScore = clamp(
     Math.round(((rawBalanceScore - minBalance) / (maxBalance - minBalance)) * 100),
@@ -865,11 +868,10 @@ export function analyzeFace(
 
   // === 카테고리 점수 정규화 ===
   // 각 카테고리 raw 점수를 0~100 범위로 변환
-  // 실제 raw 점수 분포에 맞춰 avgVal, spread 설정
+  // 기준점을 45로 낮추고 편차를 28로 확대하여 점수 분포 개선
   const normalizeCategory = (val: number, avgVal: number, spread: number): number => {
     const deviation = (val - avgVal) / spread;
-    // 기준점 50, 편차 반영 (0~100 범위)
-    const normalized = 50 + deviation * 25;
+    const normalized = 45 + deviation * 28;
     return clamp(Math.round(normalized), 0, 100);
   };
 
@@ -877,35 +879,58 @@ export function analyzeFace(
   const rawR1 = r1, rawR2 = r2, rawR3 = r3, rawR4 = r4;
 
   // 각 카테고리 정규화 - 실제 raw 점수 분포 기반
-  // r1: 운명/권력 (raw 범위 ~13~65, 평균 ~40)
-  // r2: 정신/성인/사랑 (raw 범위 ~50~160, 평균 ~100)
-  // r3: 일/사교/돈 (raw 범위 ~45~107, 평균 ~75)
-  // r4: 친절/책임/진실 (raw 범위 ~25~77, 평균 ~50)
   r1 = normalizeCategory(r1, 40, 15);
   r2 = normalizeCategory(r2, 100, 35);
   r3 = normalizeCategory(r3, 75, 20);
   r4 = normalizeCategory(r4, 50, 15);
 
-  // 최종 점수: facescore + 카테고리 + 균형의 조합
-  // 균형 잡힌 얼굴이 높은 점수를 받도록 설계
+  // === 관상 핵심 부위 보정 (부스트/페널티) ===
+  // 관상학에서 특히 중요한 얼굴 특징에 대한 직접 가감점
+  let physiognomyBonus = 0;
+
+  // 1. 눈두덩이 넓은지 (관상: 넓을수록 복, 조상덕)
+  if (eyebrowLevel >= 5) physiognomyBonus += 6;
+  else if (eyebrowLevel >= 4) physiognomyBonus += 4;
+  else if (eyebrowLevel <= 1) physiognomyBonus -= 5;
+  else if (eyebrowLevel <= 2) physiognomyBonus -= 3;
+
+  // 2. 턱이 튼튼한지 (관상: 튼튼할수록 말년운, 의지력)
+  if (jawLevel >= 5) physiognomyBonus += 6;
+  else if (jawLevel >= 4) physiognomyBonus += 4;
+  else if (jawLevel <= 1) physiognomyBonus -= 5;
+  else if (jawLevel <= 2) physiognomyBonus -= 3;
+
+  // 3. 들창코 여부 (관상: 들창코 = 재물 유출상)
+  if (noseTypeRatio > 0.25) physiognomyBonus -= 7;
+  else if (noseTypeRatio < 0.12) physiognomyBonus += 3;
+
+  // 4. 인중이 좁지 않은지 (관상: 인중 넓고 길수록 장수, 자녀운)
+  if (philtrumLevel >= 4) physiognomyBonus += 4;
+  else if (philtrumLevel >= 3) physiognomyBonus += 2;
+  else if (philtrumLevel <= 1) physiognomyBonus -= 5;
+  else if (philtrumLevel <= 2) physiognomyBonus -= 3;
+
+  // 5. 입이 작지 않은지 (관상: 입 크면 권력운, 일복)
+  if (mouthLevel >= 4) physiognomyBonus += 4;
+  else if (mouthLevel >= 3) physiognomyBonus += 2;
+  else if (mouthLevel <= 1) physiognomyBonus -= 5;
+  else if (mouthLevel <= 2) physiognomyBonus -= 3;
+
+  // 6. 아랫입술~턱끝 거리 (관상: 너무 넓으면 불균형)
+  const lowerLipToChin = Math.abs(fp[29].y - fp[9].y) * rotationComp.vertical;
+  const lowerLipChinRatio = lowerLipToChin / noseWidth;
+  if (lowerLipChinRatio > 1.4) physiognomyBonus -= 5;
+  else if (lowerLipChinRatio > 1.2) physiognomyBonus -= 2;
+  else if (lowerLipChinRatio < 0.5) physiognomyBonus -= 3;
+
+  // 최종 점수: facescore + 카테고리 + 균형 + 관상 핵심부위 보정
   const categoryAvg = (r1 + r2 + r3 + r4) / 4;
-  // facescore 25% + 카테고리 평균 35% + 균형 점수 40% (균형이 가장 중요)
-  const rawFinalScore = facescoreNormalized * 0.25 + categoryAvg * 0.35 + balanceScore * 0.4;
+  const rawFinalScore = facescoreNormalized * 0.25 + categoryAvg * 0.35 + balanceScore * 0.40;
 
-  // 40점 이상 구간에 확실한 부스트 적용
-  // 40점 미만: 그대로 유지 (낮은 점수는 낮게)
-  // 40점 이상: 강력하게 부스트
-  let adjustedScore: number;
-  if (rawFinalScore < 40) {
-    adjustedScore = rawFinalScore;
-  } else {
-    // 40~100 구간을 확장: 0.35 제곱으로 더 강력한 부스트
-    const excess = (rawFinalScore - 40) / 60; // 0~1 범위
-    const boosted = Math.pow(excess, 0.35) * 60; // 0.35 제곱 = 더 강력한 부스트
-    adjustedScore = 40 + boosted;
-  }
+  // 관상 핵심부위 보정 적용 (기존 0.35 제곱 부스트 제거)
+  const adjustedScore = rawFinalScore + physiognomyBonus;
 
-  const normalizedScore = clamp(Math.round(adjustedScore), 0, 100);
+  const normalizedScore = clamp(Math.round(adjustedScore), 10, 100);
 
   // === 관상 특성 점수 계산 (Excel 기반) ===
   let traits = createEmptyTraits();
@@ -1225,11 +1250,14 @@ export function analyzeFace(
       // 균형 점수 관련
       balanceScore,
       rawBalanceScore,
-      featureScores, // 각 부위별 점수 (3, 7, 10)
+      featureScores, // 각 부위별 점수
       idealCount,
       extremeCount,
       variance,
       featureLevels: levels, // [눈꼬리, 눈두덩이, 코, 인중, 입, 턱, 눈크기]
+      // 관상 핵심부위 보정
+      physiognomyBonus,
+      lowerLipChinRatio: Math.round(lowerLipChinRatio * 100) / 100,
     },
   };
 }
