@@ -2171,7 +2171,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             </button>
           ) : (
             <div className="space-y-4">
-              <p className="text-center text-white/70 text-sm">카카오톡, 인스타그램으로 내 관상 카드를 공유해보세요!</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={shareCardUrl}
@@ -2192,6 +2191,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
                   📤 공유하기
                 </button>
               </div>
+              <p className="text-center text-white/70 text-sm">카카오톡, 인스타그램으로 내 관상 카드를 공유해보세요!</p>
             </div>
           )}
         </div>
