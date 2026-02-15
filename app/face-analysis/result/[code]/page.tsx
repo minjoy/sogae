@@ -2200,7 +2200,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           {/* 광고 영역 1 */}
           <div className="rounded-xl overflow-hidden mb-3">
             <iframe
-              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=&width=684&height=100&tsource="
+              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=100&tsource="
               width="684"
               height="100"
               frameBorder="0"
