@@ -47,7 +47,6 @@ export default function CompatibilityPage() {
   const [error, setError] = useState<string | null>(null);
   const [faceMeshLoaded, setFaceMeshLoaded] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [privacyConsent, setPrivacyConsent] = useState(false);
   const [showDonationPopup, setShowDonationPopup] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -424,41 +423,17 @@ export default function CompatibilityPage() {
               </div>
             </div>
 
-            {/* 개인정보 동의 */}
-            <div className="bg-white/5 backdrop-blur rounded-2xl p-4 border border-white/10">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={privacyConsent}
-                  onChange={(e) => setPrivacyConsent(e.target.checked)}
-                  className="mt-1 w-5 h-5 rounded border-white/30 bg-white/10 text-pink-500 focus:ring-pink-500"
-                />
-                <div className="text-sm">
-                  <p className="text-white/90">개인정보 수집 및 이용에 동의합니다</p>
-                  <p className="text-white/50 text-xs mt-1">
-                    수집항목: 얼굴 이미지, 분석 결과<br/>
-                    보유기간: 3일 후 자동 삭제<br/>
-                    이미지는 외부로 전송되지 않습니다
-                  </p>
-                </div>
-              </label>
-            </div>
-
             {/* 시작 버튼 */}
             <button
               onClick={() => {
-                if (privacyConsent) {
-                  setError(null);
-                  setStep('male');
-                  setShowDonationPopup(true);
-                  window.scrollTo(0, 0);
-                } else {
-                  setError('개인정보 수집에 동의해주세요.');
-                }
+                setError(null);
+                setStep('male');
+                setShowDonationPopup(true);
+                window.scrollTo(0, 0);
               }}
               disabled={!faceMeshLoaded}
               className={`w-full py-4 rounded-2xl font-bold text-lg transition-all ${
-                faceMeshLoaded && privacyConsent
+                faceMeshLoaded
                   ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-600 hover:to-purple-600 shadow-lg shadow-pink-500/25'
                   : 'bg-white/10 text-white/50 cursor-not-allowed'
               }`}

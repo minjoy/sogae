@@ -128,11 +128,8 @@ export default function FaceAnalysisPage() {
   const [faceMeshLoaded, setFaceMeshLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [landmarks, setLandmarks] = useState<FaceLandmark[] | null>(null);
-  const [privacyConsent, setPrivacyConsent] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [analysisStep, setAnalysisStep] = useState<number>(0);
   const [showAnalysisAnimation, setShowAnalysisAnimation] = useState(false);
-  const [showConsentWarning, setShowConsentWarning] = useState(false);
 
   // 분석 단계 정보
   const analysisSteps = [
@@ -855,60 +852,12 @@ export default function FaceAnalysisPage() {
             </div>
           </div>
 
-          {/* 개인정보 동의 */}
-          <div className={`bg-white rounded-2xl shadow-lg p-6 mb-6 transition-all duration-300 ${
-            showConsentWarning ? 'ring-2 ring-red-500 ring-offset-2' : ''
-          }`}>
-            <div className="flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="privacy-consent"
-                checked={privacyConsent}
-                onChange={(e) => {
-                  setPrivacyConsent(e.target.checked);
-                  if (e.target.checked) setShowConsentWarning(false);
-                }}
-                className={`mt-1 w-5 h-5 rounded border-gray-300 text-amber-500 focus:ring-amber-500 ${
-                  showConsentWarning ? 'border-red-500' : ''
-                }`}
-              />
-              <label htmlFor="privacy-consent" className="text-sm text-gray-700 leading-relaxed">
-                <span className={`font-medium ${showConsentWarning ? 'text-red-600' : 'text-gray-900'}`}>[필수]</span> 얼굴 분석을 위한{' '}
-                <button
-                  type="button"
-                  onClick={() => setShowPrivacyModal(true)}
-                  className="text-amber-600 underline font-medium"
-                >
-                  개인정보 수집 및 이용
-                </button>
-                에 동의합니다.
-              </label>
-            </div>
-            {showConsentWarning && (
-              <p className="mt-2 text-sm text-red-600 font-medium animate-pulse">
-                분석을 시작하려면 개인정보 수집에 동의해주세요
-              </p>
-            )}
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-500 space-y-1">
-              <p>• 수집 항목: 얼굴 이미지, 성별 정보</p>
-              <p>• 이용 목적: 관상 분석 서비스 제공</p>
-              <p>• 보유 기간: 분석 후 3일 이내 자동 삭제</p>
-            </div>
-          </div>
-
           {/* 분석 방법 선택 */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">분석 방법 선택</h3>
             <div className="space-y-4">
               <button
-                onClick={() => {
-                  if (!privacyConsent) {
-                    setShowConsentWarning(true);
-                    alert('📌 개인정보 수집 동의가 필요합니다\n\n분석을 시작하려면 위의 개인정보 수집 및 이용에 동의해주세요.');
-                    return;
-                  }
-                  setMode('camera');
-                }}
+                onClick={() => setMode('camera')}
                 disabled={!faceMeshLoaded}
                 className="w-full py-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -916,14 +865,7 @@ export default function FaceAnalysisPage() {
                 카메라로 촬영하기
               </button>
               <button
-                onClick={() => {
-                  if (!privacyConsent) {
-                    setShowConsentWarning(true);
-                    alert('📌 개인정보 수집 동의가 필요합니다\n\n분석을 시작하려면 위의 개인정보 수집 및 이용에 동의해주세요.');
-                    return;
-                  }
-                  fileInputRef.current?.click();
-                }}
+                onClick={() => fileInputRef.current?.click()}
                 disabled={!faceMeshLoaded}
                 className="w-full py-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -1096,64 +1038,6 @@ export default function FaceAnalysisPage() {
           </div>
         )}
 
-        {/* 개인정보 처리방침 모달 */}
-        {showPrivacyModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl">
-              <div className="p-6 border-b border-gray-100">
-                <h2 className="text-xl font-bold text-gray-900">개인정보 수집 및 이용 동의</h2>
-              </div>
-              <div className="p-6 overflow-y-auto max-h-[50vh] text-sm text-gray-700 space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">1. 수집하는 개인정보 항목</h3>
-                  <p>• 얼굴 이미지 (촬영 또는 업로드한 사진)</p>
-                  <p>• 성별 정보 (사용자 선택)</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">2. 개인정보 수집 및 이용 목적</h3>
-                  <p>• 관상 분석 서비스 제공</p>
-                  <p>• 분석 결과 생성 및 공유 링크 제공</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">3. 개인정보 보유 및 이용 기간</h3>
-                  <p>• 얼굴 이미지: 분석 완료 후 <strong>3일 이내 자동 삭제</strong></p>
-                  <p>• 분석 결과 데이터: 공유 링크 만료 후 삭제</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">4. 개인정보 처리 위탁</h3>
-                  <p>• 얼굴 이미지는 사용자 기기에서 처리되며, 외부 서버로 전송되지 않습니다.</p>
-                  <p>• 분석 결과만 서버에 저장되어 공유 기능을 제공합니다.</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">5. 동의 거부권 및 불이익</h3>
-                  <p>• 개인정보 수집에 동의하지 않을 권리가 있습니다.</p>
-                  <p>• 다만, 동의하지 않을 경우 관상 분석 서비스를 이용할 수 없습니다.</p>
-                </div>
-                <div className="bg-amber-50 p-4 rounded-lg">
-                  <p className="text-amber-800 font-medium">⚠️ 주의사항</p>
-                  <p className="text-amber-700 mt-1">본 서비스는 전통 관상학 문헌을 참고한 재미 목적의 풀이이며, 실제 성격이나 운세를 정확히 예측하지 않습니다. 결과는 참고용으로만 활용해주세요.</p>
-                </div>
-              </div>
-              <div className="p-6 border-t border-gray-100 flex gap-3">
-                <button
-                  onClick={() => setShowPrivacyModal(false)}
-                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all"
-                >
-                  닫기
-                </button>
-                <button
-                  onClick={() => {
-                    setPrivacyConsent(true);
-                    setShowPrivacyModal(false);
-                  }}
-                  className="flex-1 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-all"
-                >
-                  동의합니다
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
