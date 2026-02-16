@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import KakaoAd from "@/components/KakaoAd";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mytype.co.kr";
@@ -97,6 +98,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <script
+          type="text/javascript"
+          src="//t1.daumcdn.net/kas/static/ba.min.js"
+          async
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
@@ -119,6 +125,7 @@ export default function RootLayout({
           <main className="flex-1">
             {children}
           </main>
+          <KakaoAd />
           <Footer />
         </AuthProvider>
       </body>
