@@ -40,3 +40,4 @@ next-env.d.ts
 prisma/migrations
 sogae.ait
 ait-dist/
+.granite/
