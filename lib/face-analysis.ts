@@ -822,11 +822,17 @@ export function analyzeFace(
   const scoreRange = maxFacescore - minFacescore;
 
   // 선형 매핑: facescore를 0~100점으로 변환
-  const facescoreNormalized = clamp(
+  const linearScore = clamp(
     Math.round(((facescore - minFacescore) / scoreRange) * 100),
     0,
     100
   );
+
+  // 60점 이상 구간 부스트: 거듭제곱 커브로 점수를 조금씩 상향
+  // 60 이하는 그대로, 60~100 구간을 완만하게 끌어올림 (최대 100 유지)
+  const facescoreNormalized = linearScore <= 60
+    ? linearScore
+    : Math.min(100, Math.round(60 + Math.pow((linearScore - 60) / 40, 0.75) * 40));
 
   // draw.py 호환: 상위 X% 계산 (face_color)
   const faceColor = (150 - (facescore - 172)) / 149 * 100;
