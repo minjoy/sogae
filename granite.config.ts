@@ -1,7 +1,7 @@
 import { defineConfig } from '@apps-in-toss/web-framework/config';
 
 export default defineConfig({
-  appName: 'sogae',
+  appName: 'miniface',
   web: {
     host: 'localhost',
     port: 3000,
