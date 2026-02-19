@@ -98,16 +98,15 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <script
-          type="text/javascript"
-          src="//t1.daumcdn.net/kas/static/ba.min.js"
-          async
-        />
-        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="antialiased bg-warm-50 flex flex-col min-h-screen">
+        <Script
+          src="https://t1.daumcdn.net/kas/static/ba.min.js"
+          strategy="afterInteractive"
+        />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-7LK6RWFPHP"
           strategy="afterInteractive"
