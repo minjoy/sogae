@@ -2191,20 +2191,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             )}
           </h3>
 
-          {/* 쿠팡 파트너스 광고 */}
-          <div className="rounded-xl overflow-hidden">
-            <iframe
-              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=FaceResult&width=684&height=100&tsource="
-              width="684"
-              height="100"
-              frameBorder="0"
-              scrolling="no"
-              referrerPolicy="unsafe-url"
-              className="w-full"
-            />
-          </div>
-          <p className="text-gray-300 text-[10px] mt-1 text-center mb-2">파트너스 수수료를 받을 수 있습니다</p>
-
           {!shareCardUrl ? (
             <button
               onClick={generateShareCard}
@@ -2224,6 +2210,18 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
               ) : (
                 /* 5초 후: 카드 + 버튼 표시 */
                 <>
+                  {/* 쿠팡 파트너스 광고 */}
+                  <div className="rounded-xl overflow-hidden">
+                    <iframe
+                      src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=FaceResult&width=684&height=100&tsource="
+                      width="684"
+                      height="100"
+                      frameBorder="0"
+                      scrolling="no"
+                      referrerPolicy="unsafe-url"
+                      className="w-full"
+                    />
+                  </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={shareCardUrl}
