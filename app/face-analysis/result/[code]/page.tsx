@@ -2192,6 +2192,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             )}
           </h3>
 
+          {/* 카카오 애드핏 광고 (항상 표시) */}
+          <div className="rounded-xl overflow-hidden">
+            <KakaoAd />
+          </div>
+
           {!shareCardUrl ? (
             <button
               onClick={generateShareCard}
@@ -2202,11 +2207,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             </button>
           ) : (
             <div className="space-y-4">
-              {/* 카카오 애드핏 광고 (카드 생성 후 항상 표시) */}
-              <div className="rounded-xl overflow-hidden">
-                <KakaoAd />
-              </div>
-
               {!cardReady ? (
                 /* 5초 대기 중: 로딩 표시 */
                 <div className="flex flex-col items-center gap-3 py-6">
