@@ -2267,6 +2267,33 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           </p>
         </div>
 
+          {/* 광고 영역 1 */}
+          <div className="rounded-xl overflow-hidden mb-3">
+            <iframe
+              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=100&tsource="
+              width="684"
+              height="100"
+              frameBorder="0"
+              scrolling="no"
+              referrerPolicy="unsafe-url"
+              className="w-full"
+            />
+          </div>
+
+          {/* 쿠팡 파트너스 영역 */}
+          <div className="rounded-xl overflow-hidden">
+            <iframe
+              src="https://ads-partners.coupang.com/widgets.html?id=965198&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=140&tsource="
+              width="684"
+              height="140"
+              frameBorder="0"
+              scrolling="no"
+              referrerPolicy="unsafe-url"
+              className="w-full"
+            />
+          </div>
+          <p className="text-white/30 text-[10px] mt-1 text-center">파트너스 수수료를 받을 수 있습니다</p>
+
         {/* 광고 영역 - 서비스 후원 */}
         <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 backdrop-blur rounded-2xl p-5 mb-6 border border-amber-500/20">
           <div className="text-center mb-3">
