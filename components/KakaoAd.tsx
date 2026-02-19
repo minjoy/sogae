@@ -11,7 +11,9 @@ declare global {
   }
 }
 
-export default function KakaoAd() {
+const DEFAULT_UNIT = "DAN-O48mpzGHyoZjEhpR";
+
+export default function KakaoAd({ unitId = DEFAULT_UNIT }: { unitId?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
@@ -25,7 +27,7 @@ export default function KakaoAd() {
 
     const tryDisplay = () => {
       if (window.adfit) {
-        window.adfit.display("DAN-O48mpzGHyoZjEhpR");
+        window.adfit.display(unitId);
       } else if (attempts < maxAttempts) {
         attempts++;
         timerId = setTimeout(tryDisplay, 500);
@@ -37,14 +39,14 @@ export default function KakaoAd() {
     return () => {
       clearTimeout(timerId);
     };
-  }, []);
+  }, [unitId]);
 
   return (
     <div ref={containerRef} className="flex justify-center py-3">
       <ins
         className="kakao_ad_area"
         style={{ display: "none" }}
-        data-ad-unit="DAN-O48mpzGHyoZjEhpR"
+        data-ad-unit={unitId}
         data-ad-width="320"
         data-ad-height="100"
       />

@@ -2194,7 +2194,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
           {/* 카카오 애드핏 광고 (항상 표시) */}
           <div className="rounded-xl overflow-hidden">
-            <KakaoAd />
+            <KakaoAd unitId="DAN-U54Ed1V0fm5q7IaW" />
           </div>
 
           {!shareCardUrl ? (
