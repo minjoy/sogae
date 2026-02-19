@@ -822,18 +822,11 @@ export function analyzeFace(
   const scoreRange = maxFacescore - minFacescore;
 
   // 선형 매핑: facescore를 0~100점으로 변환
-  const linearScore = clamp(
+  const facescoreNormalized = clamp(
     Math.round(((facescore - minFacescore) / scoreRange) * 100),
     0,
     100
   );
-
-  // 60점 이상 구간 재평가: 60+ 얼굴의 평균이 80점 이상 나오도록 설계
-  // 60 이하는 그대로, 60~100을 75~100으로 리매핑 (거듭제곱 커브)
-  // 60→75, 65→81, 70→85, 75→88, 80→90, 90→95, 100→100
-  const facescoreNormalized = linearScore <= 60
-    ? linearScore
-    : Math.min(100, Math.round(75 + Math.pow((linearScore - 60) / 40, 0.7) * 25));
 
   // draw.py 호환: 상위 X% 계산 (face_color)
   const faceColor = (150 - (facescore - 172)) / 149 * 100;
@@ -965,6 +958,12 @@ export function analyzeFace(
     curvedScore = 50 + Math.pow(ratio, 0.7) * 50;
   } else {
     curvedScore = boostedScore;
+  }
+
+  // 60점 이상 최종 재평가: 60+ 얼굴의 평균이 80점 이상 나오도록 리매핑
+  // 60→75, 65→81, 70→85, 75→88, 80→90, 90→95, 100→100
+  if (curvedScore >= 60) {
+    curvedScore = 75 + Math.pow((curvedScore - 60) / 40, 0.7) * 25;
   }
 
   const normalizedScore = clamp(Math.round(curvedScore), 10, 100);
