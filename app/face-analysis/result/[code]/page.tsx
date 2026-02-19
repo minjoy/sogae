@@ -2261,7 +2261,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
         {/* 광고 영역 - 서비스 후원 */}
         <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 backdrop-blur rounded-2xl p-5 mb-6 border border-amber-500/20">
-          <div className="text-center mb-4">
+          <div className="text-center mb-3">
             <p className="text-amber-300 text-sm font-medium mb-1">
               🙏 관상 복비는 광고 한 번으로 충분해요
             </p>
@@ -2269,12 +2269,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
               광고 클릭이 더 좋은 관상 서비스를 만드는 데 큰 힘이 됩니다
             </p>
           </div>
-
-          {/* 카카오 애드핏 광고 */}
-          <div className="rounded-xl overflow-hidden">
-            <KakaoAd />
-          </div>
-          <p className="text-white/30 text-[10px] mt-1 text-center">파트너스 수수료를 받을 수 있습니다</p>
+          <p className="text-white/30 text-[10px] mt-1 text-center">서비스 하단의 광고 클릭으로 응원해주세요</p>
         </div>
 
         {/* 액션 버튼 */}

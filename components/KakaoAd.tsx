@@ -19,17 +19,23 @@ export default function KakaoAd() {
     if (initialized.current) return;
     initialized.current = true;
 
-    const timer = setTimeout(() => {
+    let attempts = 0;
+    const maxAttempts = 20;
+    let timerId: ReturnType<typeof setTimeout>;
+
+    const tryDisplay = () => {
       if (window.adfit) {
         window.adfit.display("DAN-O48mpzGHyoZjEhpR");
+      } else if (attempts < maxAttempts) {
+        attempts++;
+        timerId = setTimeout(tryDisplay, 500);
       }
-    }, 300);
+    };
+
+    timerId = setTimeout(tryDisplay, 300);
 
     return () => {
-      clearTimeout(timer);
-      if (window.adfit) {
-        window.adfit.destroy("DAN-O48mpzGHyoZjEhpR");
-      }
+      clearTimeout(timerId);
     };
   }, []);
 
