@@ -828,11 +828,12 @@ export function analyzeFace(
     100
   );
 
-  // 60점 이상 구간 부스트: 거듭제곱 커브로 점수를 조금씩 상향
-  // 60 이하는 그대로, 60~100 구간을 완만하게 끌어올림 (최대 100 유지)
+  // 60점 이상 구간 재평가: 60+ 얼굴의 평균이 80점 이상 나오도록 설계
+  // 60 이하는 그대로, 60~100을 75~100으로 리매핑 (거듭제곱 커브)
+  // 60→75, 65→81, 70→85, 75→88, 80→90, 90→95, 100→100
   const facescoreNormalized = linearScore <= 60
     ? linearScore
-    : Math.min(100, Math.round(60 + Math.pow((linearScore - 60) / 40, 0.75) * 40));
+    : Math.min(100, Math.round(75 + Math.pow((linearScore - 60) / 40, 0.7) * 25));
 
   // draw.py 호환: 상위 X% 계산 (face_color)
   const faceColor = (150 - (facescore - 172)) / 149 * 100;
