@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import KakaoAd from '@/components/KakaoAd';
 
 
 // 분석 결과로부터 조언/주의사항/궁합 생성 (얼굴 특징 기반)
@@ -2201,19 +2202,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             </button>
           ) : (
             <div className="space-y-4">
-              {/* 쿠팡 광고 (카드 생성 후 항상 표시) */}
+              {/* 카카오 애드핏 광고 (카드 생성 후 항상 표시) */}
               <div className="rounded-xl overflow-hidden">
-                <iframe
-                  src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=100&tsource="
-                  width="684"
-                  height="100"
-                  frameBorder="0"
-                  scrolling="no"
-                  referrerPolicy="unsafe-url"
-                  className="w-full"
-                  // @ts-expect-error browsingtopics is a valid HTML attribute
-                  browsingtopics=""
-                />
+                <KakaoAd />
               </div>
 
               {!cardReady ? (
@@ -2279,28 +2270,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             </p>
           </div>
 
-          {/* 광고 영역 1 */}
-          <div className="rounded-xl overflow-hidden mb-3">
-            <iframe
-              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=100&tsource="
-              width="684"
-              height="100"
-              frameBorder="0"
-              scrolling="no"
-              referrerPolicy="unsafe-url"
-            />
-          </div>
-
-          {/* 쿠팡 파트너스 영역 */}
+          {/* 카카오 애드핏 광고 */}
           <div className="rounded-xl overflow-hidden">
-            <iframe
-              src="https://ads-partners.coupang.com/widgets.html?id=965198&template=carousel&trackingCode=AF2407547&subId=Gwansang&width=684&height=140&tsource="
-              width="684"
-              height="140"
-              frameBorder="0"
-              scrolling="no"
-              referrerPolicy="unsafe-url"
-            />
+            <KakaoAd />
           </div>
           <p className="text-white/30 text-[10px] mt-1 text-center">파트너스 수수료를 받을 수 있습니다</p>
         </div>
