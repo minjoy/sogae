@@ -125,7 +125,6 @@ export default function RootLayout({
             {children}
           </main>
           <KakaoAd />
-          <KakaoAd unitId="DAN-U54Ed1V0fm5q7IaW" />
           <Footer />
         </AuthProvider>
       </body>

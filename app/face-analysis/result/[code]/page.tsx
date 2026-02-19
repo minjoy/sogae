@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import KakaoAd from '@/components/KakaoAd';
 
 
 // 분석 결과로부터 조언/주의사항/궁합 생성 (얼굴 특징 기반)
@@ -2192,10 +2191,19 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             )}
           </h3>
 
-          {/* 카카오 애드핏 광고 (항상 표시) */}
+          {/* 쿠팡 파트너스 광고 */}
           <div className="rounded-xl overflow-hidden">
-            <KakaoAd unitId="DAN-U54Ed1V0fm5q7IaW" />
+            <iframe
+              src="https://ads-partners.coupang.com/widgets.html?id=964752&template=carousel&trackingCode=AF2407547&subId=FaceResult&width=684&height=100&tsource="
+              width="684"
+              height="100"
+              frameBorder="0"
+              scrolling="no"
+              referrerPolicy="unsafe-url"
+              className="w-full"
+            />
           </div>
+          <p className="text-gray-300 text-[10px] mt-1 text-center mb-2">파트너스 수수료를 받을 수 있습니다</p>
 
           {!shareCardUrl ? (
             <button
