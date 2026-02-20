@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: `${baseUrl}/og-image-optimized.png?v=2`,
+        url: `${baseUrl}/og-image-optimized.png?v=3`,
         width: 1200,
         height: 630,
         alt: '궁합 분석 결과',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '친구들의 관상 궁합을 구경하세요!',
     description: '두 사람의 운명적 인연을 확인해보세요. 전통 관상학과 오행 이론을 바탕으로 분석한 궁합 결과입니다.',
-    images: [`${baseUrl}/og-image-optimized.png?v=2`],
+    images: [`${baseUrl}/og-image-optimized.png?v=3`],
   },
 }
 

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     url: `${baseUrl}/face-analysis/compatibility`,
     images: [
       {
-        url: `${baseUrl}/og-image-optimized.png?v=2`,
+        url: `${baseUrl}/og-image-optimized.png?v=3`,
         width: 1200,
         height: 630,
         alt: '두 사람 궁합 분석',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '두 사람 궁합 분석 | 언연이',
     description: '관상으로 보는 두 사람의 인연! 전통 관상학과 오행 이론을 바탕으로 두 분의 깊은 인연을 분석해드립니다.',
-    images: [`${baseUrl}/og-image-optimized.png?v=2`],
+    images: [`${baseUrl}/og-image-optimized.png?v=3`],
   },
 }
 

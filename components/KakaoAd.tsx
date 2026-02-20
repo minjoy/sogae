@@ -2,55 +2,27 @@
 
 import { useEffect, useRef } from "react";
 
-declare global {
-  interface Window {
-    adfit?: {
-      display: (unit: string) => void;
-      destroy: (unit: string) => void;
-    };
-  }
-}
-
-const DEFAULT_UNIT = "DAN-O48mpzGHyoZjEhpR";
-
-export default function KakaoAd({ unitId = DEFAULT_UNIT }: { unitId?: string }) {
+export default function KakaoAd() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const initialized = useRef(false);
+  const loaded = useRef(false);
 
   useEffect(() => {
-    if (initialized.current) return;
+    if (loaded.current || !containerRef.current) return;
+    loaded.current = true;
 
-    let attempts = 0;
-    const maxAttempts = 30;
-    let timerId: ReturnType<typeof setTimeout>;
+    const ins = document.createElement("ins");
+    ins.className = "kakao_ad_area";
+    ins.style.display = "none";
+    ins.setAttribute("data-ad-unit", "DAN-O48mpzGHyoZjEhpR");
+    ins.setAttribute("data-ad-width", "320");
+    ins.setAttribute("data-ad-height", "100");
+    containerRef.current.appendChild(ins);
 
-    const tryDisplay = () => {
-      if (window.adfit) {
-        initialized.current = true;
-        window.adfit.display(unitId);
-      } else if (attempts < maxAttempts) {
-        attempts++;
-        timerId = setTimeout(tryDisplay, 500);
-      }
-    };
+    const script = document.createElement("script");
+    script.src = "//t1.daumcdn.net/kas/static/ba.min.js";
+    script.async = true;
+    containerRef.current.appendChild(script);
+  }, []);
 
-    // 약간의 딜레이 후 시도 (DOM이 완전히 마운트된 후)
-    timerId = setTimeout(tryDisplay, 100);
-
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [unitId]);
-
-  return (
-    <div ref={containerRef} className="flex justify-center py-3">
-      <ins
-        className="kakao_ad_area"
-        style={{ display: "none" }}
-        data-ad-unit={unitId}
-        data-ad-width="320"
-        data-ad-height="100"
-      />
-    </div>
-  );
+  return <div ref={containerRef} className="flex justify-center py-3" />;
 }
