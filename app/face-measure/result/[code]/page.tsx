@@ -1005,7 +1005,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       front: {
         faceWidth: { px: debug.faceWidth, mm: toMm(debug.faceWidth), label: '얼굴 넓이', key: 'A', desc: '양쪽 볼의 가장 넓은 거리' },
         jawWidth: { px: debug.jawWidth, mm: toMm(debug.jawWidth), label: '턱 넓이', key: 'B', desc: '양쪽 턱각 사이 거리' },
-        jawAngle: { value: debug.avgJawAngle, label: '턱 각도', key: 'C', desc: '턱각 부위의 각도', unit: '°' },
+        jawAngle: { value: debug.avgJawAngle, label: '턱 각도', key: 'C', desc: '볼 중앙~턱각 선과 턱끝~턱각 선이 만나는 각도', unit: '°' },
         chinLength: { px: debug.lowerLipChinRatio ? (debug.lowerLipChinRatio * (debug.faceWidth || 0)) : undefined, mm: toMm(debug.lowerLipChinRatio ? (debug.lowerLipChinRatio * (debug.faceWidth || 0)) : undefined), label: '턱 길이', key: 'D', desc: '아랫입술 아래 ~ 턱끝 거리' },
         lipWidth: { px: debug.mouthWidth, mm: lipMm, label: '입술 가로길이', key: 'E', desc: '입술 양 끝 사이 거리 (기준값)' },
         upperLipThickness: { px: debug.upperLipHeight, mm: toMm(debug.upperLipHeight), label: '윗입술 두께', key: 'F', desc: '윗입술 위끝 ~ 입술 경계' },
