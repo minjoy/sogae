@@ -124,6 +124,8 @@ export default function FaceAnalysisPage() {
   const [mode, setMode] = useState<'select' | 'camera' | 'upload'>('select');
   const [isLoading, setIsLoading] = useState(false);
   const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [faceView, setFaceView] = useState<'front' | 'side'>('front');
+  const [lipWidthMm, setLipWidthMm] = useState<string>('');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [faceMeshLoaded, setFaceMeshLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -452,6 +454,8 @@ export default function FaceAnalysisPage() {
           imageWidth,
           imageHeight,
           gender,
+          faceView,
+          lipWidthMm: lipWidthMm ? parseFloat(lipWidthMm) : undefined,
         }),
       });
 
@@ -537,6 +541,9 @@ export default function FaceAnalysisPage() {
             imageWidth,
             imageHeight,
           },
+          // 성형외과 측정용 메타데이터
+          faceView,
+          lipWidthMm: lipWidthMm ? parseFloat(lipWidthMm) : undefined,
         };
 
         // 클라이언트 fingerprint 가져오기
@@ -558,6 +565,8 @@ export default function FaceAnalysisPage() {
             tiltAngle: data.result.tiltAngle,
             rollAngle: data.result.rollAngle,
             clientFingerprint,
+            faceView,
+            lipWidthMm: lipWidthMm ? parseFloat(lipWidthMm) : undefined,
           }),
         });
 
@@ -619,7 +628,7 @@ export default function FaceAnalysisPage() {
       setIsLoading(false);
       setShowAnalysisAnimation(false);
     }
-  }, [gender, capturedImage, router, cropFaceImage]);
+  }, [gender, faceView, lipWidthMm, capturedImage, router, cropFaceImage]);
 
   // 사진 촬영
   const capturePhoto = useCallback(async () => {
@@ -849,6 +858,54 @@ export default function FaceAnalysisPage() {
                 <span className="text-2xl block mb-1">👩</span>
                 여성
               </button>
+            </div>
+          </div>
+
+          {/* 앞모습 / 옆모습 선택 */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">촬영 방향</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setFaceView('front')}
+                className={`py-4 rounded-xl font-semibold transition-all ${
+                  faceView === 'front'
+                    ? 'bg-amber-500 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span className="text-2xl block mb-1">😀</span>
+                앞모습 (정면)
+              </button>
+              <button
+                onClick={() => setFaceView('side')}
+                className={`py-4 rounded-xl font-semibold transition-all ${
+                  faceView === 'side'
+                    ? 'bg-amber-500 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <span className="text-2xl block mb-1">🗣️</span>
+                옆모습 (측면)
+              </button>
+            </div>
+          </div>
+
+          {/* 입술 가로길이 입력 (기준값) */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">입술 가로길이 입력 (기준값)</h3>
+            <p className="text-sm text-gray-500 mb-4">실제 입술 가로길이를 mm 단위로 입력하면, 나머지 측정값을 실제 크기로 환산합니다.</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                value={lipWidthMm}
+                onChange={(e) => setLipWidthMm(e.target.value)}
+                placeholder="예: 50"
+                min="20"
+                max="80"
+                step="0.1"
+                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl text-lg font-semibold text-center focus:border-amber-500 focus:outline-none transition-colors"
+              />
+              <span className="text-gray-600 font-medium text-lg">mm</span>
             </div>
           </div>
 
