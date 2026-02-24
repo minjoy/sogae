@@ -230,6 +230,20 @@ export default function AdminPage() {
                 </div>
                 <p className="text-xs text-blue-400 mt-3">클릭하여 관리하기 →</p>
               </div>
+
+              <div
+                className="bg-gradient-to-br from-cyan-900 to-blue-900 rounded-xl p-6 cursor-pointer hover:from-cyan-800 hover:to-blue-800 transition-colors border border-cyan-700/50"
+                onClick={() => router.push('/face-measure')}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-3xl">📐</div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">얼굴 정밀 측정</h3>
+                    <p className="text-cyan-300 text-sm">성형외과용 얼굴 계측 분석</p>
+                  </div>
+                </div>
+                <p className="text-xs text-cyan-400 mt-3">측정 페이지로 이동 →</p>
+              </div>
             </div>
 
             {/* 테스트별 통계 */}
