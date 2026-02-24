@@ -1250,113 +1250,115 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     if (!ctx) return;
 
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvasSize = 500;
-      const halfW = canvasSize / 2;
-      canvas.width = canvasSize;
-      canvas.height = canvasSize;
+    const tryLoad = (useCors: boolean) => {
+      if (useCors) img.crossOrigin = 'anonymous';
+      else img.removeAttribute('crossOrigin');
+      img.onload = () => {
+        const canvasSize = 500;
+        const halfW = canvasSize / 2;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
 
-      // 1. 얼굴 중심선 (코 브릿지 x좌표 기준)
-      const landmarks = data.landmarks!;
-      const noseBridgeIdx = 6;
-      const centerX = noseBridgeIdx < landmarks.length ? landmarks[noseBridgeIdx][0] * canvasSize : halfW;
+        // 1. 얼굴 중심선 (코 브릿지 x좌표 기준)
+        const landmarks = data.landmarks!;
+        const noseBridgeIdx = 6;
+        const centerX = noseBridgeIdx < landmarks.length ? landmarks[noseBridgeIdx][0] * canvasSize : halfW;
 
-      // 2. 대칭 점수 계산 (좌우 대응 랜드마크 거리 차이)
-      const pairs = [
-        [33, 263],   // 눈꼬리 좌우
-        [133, 362],  // 눈머리 좌우
-        [70, 300],   // 눈썹 외측 좌우
-        [107, 336],  // 눈썹 내측 좌우
-        [61, 291],   // 입꼬리 좌우
-        [172, 397],  // 턱각 좌우
-        [159, 386],  // 눈 위 좌우
-        [145, 374],  // 눈 아래 좌우
-      ];
+        // 2. 대칭 점수 계산 (좌우 대응 랜드마크 거리 차이)
+        const pairs = [
+          [33, 263],   // 눈꼬리 좌우
+          [133, 362],  // 눈머리 좌우
+          [70, 300],   // 눈썹 외측 좌우
+          [107, 336],  // 눈썹 내측 좌우
+          [61, 291],   // 입꼬리 좌우
+          [172, 397],  // 턱각 좌우
+          [159, 386],  // 눈 위 좌우
+          [145, 374],  // 눈 아래 좌우
+        ];
 
-      let totalDiff = 0;
-      let validPairs = 0;
-      pairs.forEach(([l, r]) => {
-        if (l < landmarks.length && r < landmarks.length) {
-          const lx = landmarks[l][0], ly = landmarks[l][1];
-          const rx = landmarks[r][0], ry = landmarks[r][1];
-          const cx = landmarks[noseBridgeIdx][0];
-          // 좌우 대칭 거리 비교
-          const leftDist = Math.sqrt((lx - cx) ** 2 + (ly - landmarks[noseBridgeIdx][1]) ** 2);
-          const rightDist = Math.sqrt((rx - cx) ** 2 + (ry - landmarks[noseBridgeIdx][1]) ** 2);
-          const diff = Math.abs(leftDist - rightDist) / Math.max(leftDist, rightDist, 0.001);
-          totalDiff += diff;
-          validPairs++;
-        }
-      });
+        let totalDiff = 0;
+        let validPairs = 0;
+        pairs.forEach(([l, r]) => {
+          if (l < landmarks.length && r < landmarks.length) {
+            const lx = landmarks[l][0], ly = landmarks[l][1];
+            const rx = landmarks[r][0], ry = landmarks[r][1];
+            const cx = landmarks[noseBridgeIdx][0];
+            // 좌우 대칭 거리 비교
+            const leftDist = Math.sqrt((lx - cx) ** 2 + (ly - landmarks[noseBridgeIdx][1]) ** 2);
+            const rightDist = Math.sqrt((rx - cx) ** 2 + (ry - landmarks[noseBridgeIdx][1]) ** 2);
+            const diff = Math.abs(leftDist - rightDist) / Math.max(leftDist, rightDist, 0.001);
+            totalDiff += diff;
+            validPairs++;
+          }
+        });
 
-      const symmetryScore = validPairs > 0 ? Math.round(Math.max(0, 100 - (totalDiff / validPairs) * 500)) : 0;
+        const symmetryScore = validPairs > 0 ? Math.round(Math.max(0, 100 - (totalDiff / validPairs) * 500)) : 0;
 
-      // 3. 원본 이미지 그리기 (오른쪽 절반)
-      ctx.fillStyle = '#1a1a2e';
-      ctx.fillRect(0, 0, canvasSize, canvasSize);
+        // 3. 원본 이미지 그리기 (오른쪽 절반)
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
 
-      // 왼쪽 얼굴 그리기 (원본)
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(0, 0, centerX, canvasSize);
-      ctx.clip();
-      ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
-      ctx.restore();
+        // 왼쪽 얼굴 그리기 (원본)
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, centerX, canvasSize);
+        ctx.clip();
+        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
+        ctx.restore();
 
-      // 오른쪽: 왼쪽 얼굴을 좌우반전
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(centerX, 0, canvasSize - centerX, canvasSize);
-      ctx.clip();
-      ctx.translate(centerX * 2, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
-      ctx.restore();
+        // 오른쪽: 왼쪽 얼굴을 좌우반전
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(centerX, 0, canvasSize - centerX, canvasSize);
+        ctx.clip();
+        ctx.translate(centerX * 2, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
+        ctx.restore();
 
-      // 중심선
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      ctx.moveTo(centerX, 0);
-      ctx.lineTo(centerX, canvasSize);
-      ctx.stroke();
-      ctx.setLineDash([]);
+        // 중심선
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, canvasSize);
+        ctx.stroke();
+        ctx.setLineDash([]);
 
-      // 대칭 점수 배지
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      const badgeW = 180;
-      const badgeH = 50;
-      const badgeX = (canvasSize - badgeW) / 2;
-      const badgeY = canvasSize - 70;
-      ctx.beginPath();
-      ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
-      ctx.fill();
+        // 대칭 점수 배지
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        const badgeW = 180;
+        const badgeH = 50;
+        const badgeX = (canvasSize - badgeW) / 2;
+        const badgeY = canvasSize - 70;
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 12);
+        ctx.fill();
 
-      ctx.shadowBlur = 0;
-      ctx.font = 'bold 14px -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.fillText('대칭 점수', canvasSize / 2, badgeY + 20);
-      ctx.font = 'bold 22px -apple-system, sans-serif';
-      ctx.fillStyle = symmetryScore >= 80 ? '#4ECDC4' : symmetryScore >= 60 ? '#FFD700' : '#FF6B6B';
-      ctx.fillText(`${symmetryScore}점`, canvasSize / 2, badgeY + 43);
+        ctx.shadowBlur = 0;
+        ctx.font = 'bold 14px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fillText('대칭 점수', canvasSize / 2, badgeY + 20);
+        ctx.font = 'bold 22px -apple-system, sans-serif';
+        ctx.fillStyle = symmetryScore >= 80 ? '#4ECDC4' : symmetryScore >= 60 ? '#FFD700' : '#FF6B6B';
+        ctx.fillText(`${symmetryScore}점`, canvasSize / 2, badgeY + 43);
 
-      // "왼쪽 얼굴 반전" 라벨
-      ctx.font = '11px -apple-system, sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.fillText('← 왼쪽 원본 | 왼쪽 반전 →', canvasSize / 2, 20);
+        // "왼쪽 얼굴 반전" 라벨
+        ctx.font = '11px -apple-system, sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillText('← 왼쪽 원본 | 왼쪽 반전 →', canvasSize / 2, 20);
+      };
+      img.onerror = () => {
+        // CORS 실패 시 crossOrigin 없이 재시도
+        if (useCors) tryLoad(false);
+      };
+      img.src = data.imageData!;
     };
-    img.onerror = () => {
-      // CORS 실패 시 재시도
-      const img2 = new Image();
-      img2.onload = img.onload;
-      img2.src = data.imageData!;
-    };
-    img.src = data.imageData!;
+    tryLoad(true);
   }, [data]);
 
   useEffect(() => {
