@@ -1443,47 +1443,18 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           });
         });
 
-        // 3. 마스크를 좌우 반전하여 원본 위에 중첩
+        // 3. 마스크를 좌우 반전하여 오른쪽 얼굴 위에만 중첩
         ctx.save();
+        ctx.beginPath();
+        ctx.rect(centerX, 0, canvasSize - centerX, canvasSize);
+        ctx.clip();
         ctx.translate(centerX * 2, 0);
         ctx.scale(-1, 1);
         ctx.globalAlpha = 0.9;
         ctx.drawImage(maskCanvas, 0, 0);
         ctx.restore();
 
-        // 4. 원래 오른쪽 랜드마크도 다른 색으로 그려서 비교
-        const rightFeatures: { points: number[]; color: string; lineWidth: number }[] = [
-          // 오른쪽 눈
-          { points: [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398, 362], color: 'rgba(0, 255, 255, 0.35)', lineWidth: 2.5 },
-          // 오른쪽 눈썹
-          { points: [300, 293, 334, 296, 336, 285, 295, 282, 283, 276], color: 'rgba(255, 0, 255, 0.35)', lineWidth: 2 },
-          // 오른쪽 턱 윤곽
-          { points: [152, 377, 400, 378, 379, 365, 397, 288, 361, 323, 454], color: 'rgba(78, 205, 196, 0.35)', lineWidth: 2 },
-          // 오른쪽 상단 윤곽
-          { points: [10, 338, 297, 332, 284, 251, 389, 356, 454], color: 'rgba(78, 205, 196, 0.35)', lineWidth: 2 },
-        ];
-
-        rightFeatures.forEach(({ points, color, lineWidth }) => {
-          ctx.strokeStyle = color;
-          ctx.lineWidth = lineWidth;
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.shadowColor = 'transparent';
-          ctx.shadowBlur = 0;
-          ctx.beginPath();
-          let started = false;
-          points.forEach((idx) => {
-            if (idx < landmarks.length) {
-              const x = landmarks[idx][0] * canvasSize;
-              const y = landmarks[idx][1] * canvasSize;
-              if (!started) { ctx.moveTo(x, y); started = true; }
-              else ctx.lineTo(x, y);
-            }
-          });
-          ctx.stroke();
-        });
-
-        // 5. 중심선
+        // 4. 중심선
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 5]);
@@ -1493,34 +1464,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // 6. 범례
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-        const legendW = 260;
-        const legendH = 44;
-        const legendX = (canvasSize - legendW) / 2;
-        const legendY = canvasSize - 58;
-        ctx.beginPath();
-        ctx.roundRect(legendX, legendY, legendW, legendH, 10);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        ctx.font = 'bold 11px -apple-system, sans-serif';
-        ctx.textAlign = 'center';
-        // 밝은 선 = 왼쪽 반전, 흐린 선 = 오른쪽 원본
-        ctx.fillStyle = '#00FFFF';
-        ctx.fillText('━', canvasSize / 2 - 90, legendY + 18);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.fillText('왼쪽 반전 마스크', canvasSize / 2 - 40, legendY + 18);
-        ctx.fillStyle = 'rgba(0, 255, 255, 0.35)';
-        ctx.fillText('━', canvasSize / 2 - 90, legendY + 36);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.fillText('오른쪽 원본 라인', canvasSize / 2 - 40, legendY + 36);
-
+        // 5. 안내 텍스트
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
         ctx.font = '11px -apple-system, sans-serif';
-        ctx.fillText('겹칠수록 대칭 · 벌어질수록 비대칭', canvasSize / 2, 20);
+        ctx.textAlign = 'center';
+        ctx.fillText('왼쪽 얼굴 마스크를 반전하여 오른쪽 얼굴에 중첩', canvasSize / 2, 20);
       };
       img.onerror = () => {
         if (useCors) tryLoad(false);
