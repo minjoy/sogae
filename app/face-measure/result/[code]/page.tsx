@@ -1189,73 +1189,159 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         const P = DEBUG_POINTS;
 
         if (faceDir !== 'front') {
-          // ========== 옆모습: 윤곽선만 그리기 ==========
-          // 보이는 쪽 윤곽선 결정
+          // ========== 옆모습: 보이는 쪽 윤곽선에 번호 점 표시 ==========
           const isLeft = faceDir === 'left';
 
-          // MediaPipe face oval 기반 섬세한 윤곽 (보이는 쪽만)
-          // 이마 상단부터 턱끝까지 세밀한 포인트
-          const sideContourLeft = [
-            10, 338, 297, 332, 284, 251, 389, 356, 454, // 이마→오른쪽 관자놀이 (왼쪽 얼굴일 때 뒤쪽)
-            323, 361, 288, 397, 365, 379, 378, 400, 377, // 오른쪽 턱라인
-            152, // 턱끝
-            148, 176, 149, 150, 136, 172, 58, 132, 93, // 왼쪽 턱라인
-            234, 127, 162, 21, 54, 103, 67, 109, 10, // 왼쪽 관자놀이→이마 (왼쪽 얼굴일 때 앞쪽)
-          ];
-          const sideContourRight = [
-            10, 109, 67, 103, 54, 21, 162, 127, 234, // 이마→왼쪽 관자놀이 (오른쪽 얼굴일 때 뒤쪽)
-            93, 132, 58, 172, 136, 150, 149, 176, 148, // 왼쪽 턱라인
-            152, // 턱끝
-            377, 400, 378, 379, 365, 397, 288, 361, 323, // 오른쪽 턱라인
-            454, 356, 389, 251, 284, 332, 297, 338, 10, // 오른쪽 관자놀이→이마 (오른쪽 얼굴일 때 앞쪽)
-          ];
+          // 보이는 쪽의 윤곽선 포인트만 (이마 꼭대기 → 앞쪽 이마 → 코 → 턱 순서)
+          // 왼쪽 보일 때: 왼쪽 이마~관자놀이~턱라인 + 코 프로필
+          // 오른쪽 보일 때: 오른쪽 이마~관자놀이~턱라인 + 코 프로필
+          const visibleContour = isLeft
+            ? [
+                // 이마 꼭대기 → 앞쪽 이마 라인 (보이는 쪽)
+                10, 109, 67, 103, 54, 21, 162, 127, 234,
+                // 관자놀이 → 턱라인 (보이는 쪽)
+                93, 132, 58, 172, 136, 150, 149, 176, 148,
+                // 턱끝
+                152,
+              ]
+            : [
+                // 이마 꼭대기 → 앞쪽 이마 라인 (보이는 쪽)
+                10, 338, 297, 332, 284, 251, 389, 356, 454,
+                // 관자놀이 → 턱라인 (보이는 쪽)
+                323, 361, 288, 397, 365, 379, 378, 400, 377,
+                // 턱끝
+                152,
+              ];
 
-          // 코 윤곽 (옆에서 보이는 코 라인)
+          // 코 프로필 (이마→코끝→콧볼)
           const noseProfile = isLeft
-            ? [168, 6, 197, 195, 5, 4, 1, 2, 98, 327, 326, 2] // 코 브릿지→코끝→콧볼
-            : [168, 6, 197, 195, 5, 4, 1, 2, 327, 98, 97, 2];
+            ? [168, 6, 197, 195, 5, 4, 1, 2, 98]
+            : [168, 6, 197, 195, 5, 4, 1, 2, 327];
 
-          const contourPoints = isLeft ? sideContourLeft : sideContourRight;
+          // 입술 (보이는 쪽)
+          const lipLine = isLeft
+            ? [61, 146, 91, 181, 84, 17, 14, 87, 178, 88, 95]
+            : [291, 375, 321, 405, 314, 17, 14, 317, 402, 318, 324];
 
-          // 윤곽선 그리기 (부드러운 곡선)
-          const drawSmoothContour = (indices: number[], color: string, width: number) => {
-            const pts = indices.map(i => pt(i)).filter(Boolean) as {x:number,y:number}[];
-            if (pts.length < 3) return;
+          // 눈 (보이는 쪽)
+          const eyeLine = isLeft
+            ? [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246, 33]
+            : [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398, 362];
 
-            ctx.save();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 6;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+          // 눈썹 (보이는 쪽)
+          const browLine = isLeft
+            ? [70, 63, 105, 66, 107, 55, 65, 52, 53, 46]
+            : [300, 293, 334, 296, 336, 285, 295, 282, 283, 276];
 
-            // 베지어 곡선으로 부드럽게
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < pts.length - 1; i++) {
-              const cp = pts[i];
-              const next = pts[i + 1];
-              const mx = (cp.x + next.x) / 2;
-              const my = (cp.y + next.y) / 2;
-              ctx.quadraticCurveTo(cp.x, cp.y, mx, my);
+          // 윤곽선 연결 + 번호 점 그리기 함수
+          const drawNumberedContour = (
+            indices: number[],
+            color: string,
+            lineWidth: number,
+            startNum: number,
+            showLine: boolean = true
+          ): number => {
+            const pts = indices.map(i => ({ point: pt(i), idx: i })).filter(p => p.point !== null) as {point: {x:number,y:number}, idx: number}[];
+            if (pts.length < 2) return startNum;
+
+            // 선 그리기
+            if (showLine) {
+              ctx.save();
+              ctx.strokeStyle = color;
+              ctx.lineWidth = lineWidth;
+              ctx.shadowColor = color;
+              ctx.shadowBlur = 4;
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.beginPath();
+              ctx.moveTo(pts[0].point.x, pts[0].point.y);
+              for (let i = 1; i < pts.length - 1; i++) {
+                const cp = pts[i].point;
+                const next = pts[i + 1].point;
+                const mx = (cp.x + next.x) / 2;
+                const my = (cp.y + next.y) / 2;
+                ctx.quadraticCurveTo(cp.x, cp.y, mx, my);
+              }
+              ctx.lineTo(pts[pts.length - 1].point.x, pts[pts.length - 1].point.y);
+              ctx.stroke();
+              ctx.restore();
             }
-            const last = pts[pts.length - 1];
-            ctx.lineTo(last.x, last.y);
-            ctx.stroke();
-            ctx.restore();
+
+            // 번호 점 그리기
+            let num = startNum;
+            for (const { point } of pts) {
+              // 점
+              ctx.beginPath();
+              ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+              ctx.fillStyle = color;
+              ctx.fill();
+              ctx.strokeStyle = '#000';
+              ctx.lineWidth = 1;
+              ctx.stroke();
+
+              // 번호 배지
+              const numStr = String(num);
+              ctx.font = 'bold 9px -apple-system, sans-serif';
+              const textW = ctx.measureText(numStr).width;
+              const badgeW = Math.max(textW + 6, 14);
+              const badgeH = 13;
+              const bx = point.x + 6;
+              const by = point.y - 8;
+
+              ctx.fillStyle = 'rgba(0,0,0,0.7)';
+              ctx.beginPath();
+              ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 3);
+              ctx.fill();
+
+              ctx.fillStyle = color;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(numStr, bx, by);
+
+              num++;
+            }
+            return num;
           };
 
-          // 얼굴 윤곽선
-          drawSmoothContour(contourPoints, '#4ECDC4', 2.5);
-          // 코 프로필 라인
-          drawSmoothContour(noseProfile, '#FFFF00', 2);
+          // 각 파트별로 번호를 이어서 그리기
+          let nextNum = 1;
+          nextNum = drawNumberedContour(visibleContour, '#4ECDC4', 2.5, nextNum);   // 윤곽선 (청록)
+          nextNum = drawNumberedContour(noseProfile, '#FFFF00', 2, nextNum);        // 코 (노랑)
+          nextNum = drawNumberedContour(lipLine, '#FF6B6B', 1.5, nextNum);          // 입술 (빨강)
+          nextNum = drawNumberedContour(eyeLine, '#00FFFF', 1.5, nextNum);          // 눈 (시안)
+          drawNumberedContour(browLine, '#DA70D6', 1.5, nextNum);                   // 눈썹 (보라)
+
+          // 범례
+          ctx.save();
+          const legendY = canvasSize - 60;
+          const legendItems = [
+            { color: '#4ECDC4', label: '윤곽선' },
+            { color: '#FFFF00', label: '코' },
+            { color: '#FF6B6B', label: '입술' },
+            { color: '#00FFFF', label: '눈' },
+            { color: '#DA70D6', label: '눈썹' },
+          ];
+          ctx.font = '10px -apple-system, sans-serif';
+          const totalWidth = legendItems.reduce((w, item) => w + ctx.measureText(item.label).width + 20, 0);
+          let lx = (canvasSize - totalWidth) / 2;
+          for (const item of legendItems) {
+            ctx.fillStyle = item.color;
+            ctx.beginPath();
+            ctx.arc(lx + 5, legendY, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(item.label, lx + 12, legendY);
+            lx += ctx.measureText(item.label).width + 24;
+          }
+          ctx.restore();
 
           // 방향 라벨
           ctx.font = '11px -apple-system, sans-serif';
           ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
           ctx.textAlign = 'center';
-          ctx.fillText(`${isLeft ? '왼쪽' : '오른쪽'} 옆모습 · 윤곽선 분석`, canvasSize / 2, canvasSize - 15);
+          ctx.fillText(`${isLeft ? '왼쪽' : '오른쪽'} 옆모습 · 번호별 포인트 (보이는 쪽만)`, canvasSize / 2, canvasSize - 15);
 
         } else {
           // ========== 정면: 기존 측정선 ==========
