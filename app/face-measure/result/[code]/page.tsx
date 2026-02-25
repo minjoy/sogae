@@ -1026,12 +1026,41 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   }, [data]);
 
   // 얼굴 랜드마크 그리기 - 성형외과 측정선 스타일
+  // 얼굴 방향 판단 (랜드마크 기반)
+  const detectFaceDirection = useCallback((): 'front' | 'left' | 'right' => {
+    if (!data?.landmarks) return 'front';
+    const landmarks = data.landmarks;
+    if (landmarks.length < 470) return 'front';
+
+    // 코끝(1)과 양쪽 눈(33, 263)의 x좌표로 pan 각도 추정
+    const noseTip = landmarks[1][0];
+    const leftEye = landmarks[33][0];
+    const rightEye = landmarks[263][0];
+    const eyeCenter = (leftEye + rightEye) / 2;
+    const eyeDistance = Math.abs(rightEye - leftEye);
+
+    // 눈 사이 거리가 매우 좁으면 옆모습
+    // pan ratio: 코가 눈 중심에서 벗어난 정도
+    if (eyeDistance < 0.04) {
+      // 눈이 거의 겹침 → 완전 옆모습
+      return noseTip < eyeCenter ? 'right' : 'left';
+    }
+
+    const panRatio = (noseTip - eyeCenter) / (eyeDistance * 0.5);
+    // |panRatio| > 0.6 이면 옆모습으로 판단
+    if (panRatio > 0.6) return 'left';  // 코가 오른쪽으로 치우침 → 왼쪽 얼굴 보임
+    if (panRatio < -0.6) return 'right'; // 코가 왼쪽으로 치우침 → 오른쪽 얼굴 보임
+    return 'front';
+  }, [data]);
+
   const drawFaceMesh = useCallback(() => {
     if (!canvasRef.current || !data?.imageData || !data?.landmarks) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    const faceDir = detectFaceDirection();
 
     const img = new Image();
     const tryLoad = (useCors: boolean) => {
@@ -1059,16 +1088,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         };
 
         // 측정선 색상 팔레트
-        const colors = {
-          A: '#00FFFF', // 얼굴 넓이 - 시안
-          B: '#FFD700', // 턱 넓이 - 골드
-          C: '#FF6B6B', // 턱 각도 - 레드
-          D: '#FF69B4', // 턱 길이 - 핑크
-          E: '#00FF88', // 입술 가로 - 그린
-          F: '#FF8C00', // 윗입술 - 오렌지
-          G: '#DA70D6', // 아랫입술 - 오키드
-          H: '#4DA6FF', // 눈 넓이 - 블루
-          I: '#ADFF2F', // 눈 높이 - 옐로우그린
+        const colors: Record<string, string> = {
+          A: '#00FFFF', B: '#FFD700', C: '#FF6B6B', D: '#FF69B4',
+          E: '#00FF88', F: '#FF8C00', G: '#DA70D6', H: '#4DA6FF', I: '#ADFF2F',
         };
 
         // 측정선 그리기 함수
@@ -1080,7 +1102,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           ctx.shadowBlur = 6;
           ctx.setLineDash([]);
 
-          // 오프셋 적용 (겹침 방지)
           const dx = p2.x - p1.x;
           const dy = p2.y - p1.y;
           const len = Math.sqrt(dx*dx + dy*dy);
@@ -1090,13 +1111,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           const a = { x: p1.x + nx, y: p1.y + ny };
           const b = { x: p2.x + nx, y: p2.y + ny };
 
-          // 선
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
           ctx.stroke();
 
-          // 양끝 마커 (짧은 수직선)
           const perpLen = 6;
           const px = -dy / len * perpLen;
           const py = dx / len * perpLen;
@@ -1109,7 +1128,6 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           ctx.lineTo(b.x + px, b.y + py);
           ctx.stroke();
 
-          // 점
           [a, b].forEach(point => {
             ctx.beginPath();
             ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
@@ -1117,14 +1135,12 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             ctx.fill();
           });
 
-          // 라벨 (중간점)
           const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
           ctx.shadowBlur = 0;
           ctx.font = 'bold 14px monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
 
-          // 라벨 배경
           const textW = ctx.measureText(label).width + 10;
           ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
           ctx.fillRect(mid.x - textW / 2, mid.y - 10, textW, 20);
@@ -1153,13 +1169,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           ctx.shadowBlur = 4;
           ctx.stroke();
 
-          // 꼭짓점 마커
           ctx.beginPath();
           ctx.arc(vertex.x, vertex.y, 4, 0, Math.PI * 2);
           ctx.fillStyle = color;
           ctx.fill();
 
-          // 라벨
           const midAngle = (angle1 + angle2) / 2;
           const lx = vertex.x + Math.cos(midAngle) * (r + 15);
           const ly = vertex.y + Math.sin(midAngle) * (r + 15);
@@ -1174,78 +1188,151 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
 
         const P = DEBUG_POINTS;
 
-        // === A: 얼굴 넓이 (양쪽 볼 가장 넓은 거리) ===
-        const leftCheek = pt(P.contour.left4); // 왼쪽 광대
-        const rightCheek = pt(P.contour.right4); // 오른쪽 광대
-        if (leftCheek && rightCheek) {
-          drawMeasureLine(leftCheek, rightCheek, colors.A, 'A', -8);
-        }
+        if (faceDir !== 'front') {
+          // ========== 옆모습: 윤곽선만 그리기 ==========
+          // 보이는 쪽 윤곽선 결정
+          const isLeft = faceDir === 'left';
 
-        // === B: 턱 넓이 (양쪽 턱각 거리) ===
-        const leftJaw = pt(P.jaw.leftAngle);
-        const rightJaw = pt(P.jaw.rightAngle);
-        if (leftJaw && rightJaw) {
-          drawMeasureLine(leftJaw, rightJaw, colors.B, 'B', 8);
-        }
+          // MediaPipe face oval 기반 섬세한 윤곽 (보이는 쪽만)
+          // 이마 상단부터 턱끝까지 세밀한 포인트
+          const sideContourLeft = [
+            10, 338, 297, 332, 284, 251, 389, 356, 454, // 이마→오른쪽 관자놀이 (왼쪽 얼굴일 때 뒤쪽)
+            323, 361, 288, 397, 365, 379, 378, 400, 377, // 오른쪽 턱라인
+            152, // 턱끝
+            148, 176, 149, 150, 136, 172, 58, 132, 93, // 왼쪽 턱라인
+            234, 127, 162, 21, 54, 103, 67, 109, 10, // 왼쪽 관자놀이→이마 (왼쪽 얼굴일 때 앞쪽)
+          ];
+          const sideContourRight = [
+            10, 109, 67, 103, 54, 21, 162, 127, 234, // 이마→왼쪽 관자놀이 (오른쪽 얼굴일 때 뒤쪽)
+            93, 132, 58, 172, 136, 150, 149, 176, 148, // 왼쪽 턱라인
+            152, // 턱끝
+            377, 400, 378, 379, 365, 397, 288, 361, 323, // 오른쪽 턱라인
+            454, 356, 389, 251, 284, 332, 297, 338, 10, // 오른쪽 관자놀이→이마 (오른쪽 얼굴일 때 앞쪽)
+          ];
 
-        // === C: 턱 각도 (관자놀이→턱각→턱끝) ===
-        const chin = pt(P.jaw.chin);
-        const leftTemple = pt(P.jaw.leftTemple);
-        if (leftJaw && chin && leftTemple) {
-          drawAngle(leftJaw, leftTemple, chin, colors.C, 'C');
-        }
+          // 코 윤곽 (옆에서 보이는 코 라인)
+          const noseProfile = isLeft
+            ? [168, 6, 197, 195, 5, 4, 1, 2, 98, 327, 326, 2] // 코 브릿지→코끝→콧볼
+            : [168, 6, 197, 195, 5, 4, 1, 2, 327, 98, 97, 2];
 
-        // === D: 턱 길이 (아랫입술 아래 ~ 턱끝) ===
-        const lowerLip = pt(P.mouth.bottom);
-        if (lowerLip && chin) {
-          drawMeasureLine(lowerLip, chin, colors.D, 'D', 30);
-        }
+          const contourPoints = isLeft ? sideContourLeft : sideContourRight;
 
-        // === E: 입술 가로길이 ===
-        const mouthL = pt(P.mouth.left);
-        const mouthR = pt(P.mouth.right);
-        if (mouthL && mouthR) {
-          drawMeasureLine(mouthL, mouthR, colors.E, 'E', 0);
-        }
+          // 윤곽선 그리기 (부드러운 곡선)
+          const drawSmoothContour = (indices: number[], color: string, width: number) => {
+            const pts = indices.map(i => pt(i)).filter(Boolean) as {x:number,y:number}[];
+            if (pts.length < 3) return;
 
-        // === F: 윗입술 두께 ===
-        const mouthTop = pt(P.mouth.top);
-        const mouthCenter = pt(P.mouth.center);
-        if (mouthTop && mouthCenter) {
-          drawMeasureLine(mouthTop, mouthCenter, colors.F, 'F', -20);
-        }
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 6;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
 
-        // === G: 아랫입술 두께 ===
-        const mouthInnerLower = pt(P.mouth.innerLower);
-        if (mouthInnerLower && lowerLip) {
-          drawMeasureLine(mouthInnerLower, lowerLip, colors.G, 'G', 20);
-        }
+            // 베지어 곡선으로 부드럽게
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length - 1; i++) {
+              const cp = pts[i];
+              const next = pts[i + 1];
+              const mx = (cp.x + next.x) / 2;
+              const my = (cp.y + next.y) / 2;
+              ctx.quadraticCurveTo(cp.x, cp.y, mx, my);
+            }
+            const last = pts[pts.length - 1];
+            ctx.lineTo(last.x, last.y);
+            ctx.stroke();
+            ctx.restore();
+          };
 
-        // === H: 눈 넓이 (왼쪽 눈 포인트 중 가장 긴 거리) ===
-        {
-          const leftEyeIndices = FACE_CONNECTIONS.leftEye.filter((v, i, arr) => arr.indexOf(v) === i);
-          let maxDist = 0;
-          let eyeP1: {x:number,y:number}|null = null, eyeP2: {x:number,y:number}|null = null;
-          for (let i = 0; i < leftEyeIndices.length; i++) {
-            const pi = pt(leftEyeIndices[i]);
-            if (!pi) continue;
-            for (let j = i + 1; j < leftEyeIndices.length; j++) {
-              const pj = pt(leftEyeIndices[j]);
-              if (!pj) continue;
-              const d = Math.sqrt((pi.x - pj.x) ** 2 + (pi.y - pj.y) ** 2);
-              if (d > maxDist) { maxDist = d; eyeP1 = pi; eyeP2 = pj; }
+          // 얼굴 윤곽선
+          drawSmoothContour(contourPoints, '#4ECDC4', 2.5);
+          // 코 프로필 라인
+          drawSmoothContour(noseProfile, '#FFFF00', 2);
+
+          // 방향 라벨
+          ctx.font = '11px -apple-system, sans-serif';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.textAlign = 'center';
+          ctx.fillText(`${isLeft ? '왼쪽' : '오른쪽'} 옆모습 · 윤곽선 분석`, canvasSize / 2, canvasSize - 15);
+
+        } else {
+          // ========== 정면: 기존 측정선 ==========
+
+          // === A: 얼굴 넓이 (양쪽 볼 가장 넓은 거리) ===
+          const leftCheek = pt(P.contour.left4);
+          const rightCheek = pt(P.contour.right4);
+          if (leftCheek && rightCheek) {
+            drawMeasureLine(leftCheek, rightCheek, colors.A, 'A', -8);
+          }
+
+          // === B: 턱 넓이 (양쪽 턱각 거리) ===
+          const leftJaw = pt(P.jaw.leftAngle);
+          const rightJaw = pt(P.jaw.rightAngle);
+          if (leftJaw && rightJaw) {
+            drawMeasureLine(leftJaw, rightJaw, colors.B, 'B', 8);
+          }
+
+          // === C: 턱 각도 (관자놀이→턱각→턱끝) ===
+          const chin = pt(P.jaw.chin);
+          const leftTemple = pt(P.jaw.leftTemple);
+          if (leftJaw && chin && leftTemple) {
+            drawAngle(leftJaw, leftTemple, chin, colors.C, 'C');
+          }
+
+          // === D: 턱 길이 (아랫입술 아래 ~ 턱끝) ===
+          const lowerLip = pt(P.mouth.bottom);
+          if (lowerLip && chin) {
+            drawMeasureLine(lowerLip, chin, colors.D, 'D', 30);
+          }
+
+          // === E: 입술 가로길이 ===
+          const mouthL = pt(P.mouth.left);
+          const mouthR = pt(P.mouth.right);
+          if (mouthL && mouthR) {
+            drawMeasureLine(mouthL, mouthR, colors.E, 'E', 0);
+          }
+
+          // === F: 윗입술 두께 ===
+          const mouthTop = pt(P.mouth.top);
+          const mouthCenter = pt(P.mouth.center);
+          if (mouthTop && mouthCenter) {
+            drawMeasureLine(mouthTop, mouthCenter, colors.F, 'F', -20);
+          }
+
+          // === G: 아랫입술 두께 ===
+          const mouthInnerLower = pt(P.mouth.innerLower);
+          if (mouthInnerLower && lowerLip) {
+            drawMeasureLine(mouthInnerLower, lowerLip, colors.G, 'G', 20);
+          }
+
+          // === H: 눈 넓이 (왼쪽 눈 포인트 중 가장 긴 거리) ===
+          {
+            const leftEyeIndices = FACE_CONNECTIONS.leftEye.filter((v, i, arr) => arr.indexOf(v) === i);
+            let maxDist = 0;
+            let eyeP1: {x:number,y:number}|null = null, eyeP2: {x:number,y:number}|null = null;
+            for (let i = 0; i < leftEyeIndices.length; i++) {
+              const pi = pt(leftEyeIndices[i]);
+              if (!pi) continue;
+              for (let j = i + 1; j < leftEyeIndices.length; j++) {
+                const pj = pt(leftEyeIndices[j]);
+                if (!pj) continue;
+                const d = Math.sqrt((pi.x - pj.x) ** 2 + (pi.y - pj.y) ** 2);
+                if (d > maxDist) { maxDist = d; eyeP1 = pi; eyeP2 = pj; }
+              }
+            }
+            if (eyeP1 && eyeP2) {
+              drawMeasureLine(eyeP1, eyeP2, colors.H, 'H', -8);
             }
           }
-          if (eyeP1 && eyeP2) {
-            drawMeasureLine(eyeP1, eyeP2, colors.H, 'H', -8);
-          }
-        }
 
-        // === I: 눈 높이 (왼쪽 눈 기준) ===
-        const eyeTop = pt(P.eyes.leftTop);
-        const eyeBottom = pt(P.eyes.leftBottom);
-        if (eyeTop && eyeBottom) {
-          drawMeasureLine(eyeTop, eyeBottom, colors.I, 'I', -15);
+          // === I: 눈 높이 (왼쪽 눈 기준) ===
+          const eyeTop = pt(P.eyes.leftTop);
+          const eyeBottom = pt(P.eyes.leftBottom);
+          if (eyeTop && eyeBottom) {
+            drawMeasureLine(eyeTop, eyeBottom, colors.I, 'I', -15);
+          }
         }
       };
       img.onerror = () => {
@@ -1255,7 +1342,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       img.src = data.imageData!;
     };
     tryLoad(true);
-  }, [data]);
+  }, [data, detectFaceDirection]);
 
   // 대칭 분석 이미지 생성 (왼쪽 얼굴 좌우반전 합성)
   const drawSymmetryAnalysis = useCallback(() => {
@@ -2515,8 +2602,8 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             );
           })()}
 
-          {/* 대칭 분석 이미지 */}
-          {data.imageData && data.landmarks && (
+          {/* 대칭 분석 이미지 (정면만) */}
+          {data.imageData && data.landmarks && detectFaceDirection() === 'front' && (
             <div className="mt-4 bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
               <h4 className="text-white font-bold text-sm mb-3">얼굴 대칭 분석</h4>
               <p className="text-white/50 text-xs mb-3">왼쪽 얼굴을 좌우반전하여 합성한 이미지입니다.</p>
@@ -2528,8 +2615,8 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             </div>
           )}
 
-          {/* 마스크 반전 중첩 분석 */}
-          {data.imageData && data.landmarks && (
+          {/* 마스크 반전 중첩 분석 (정면만) */}
+          {data.imageData && data.landmarks && detectFaceDirection() === 'front' && (
             <div className="mt-4 bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
               <h4 className="text-white font-bold text-sm mb-3">좌우 비대칭 비교</h4>
               <p className="text-white/50 text-xs mb-3">왼쪽 얼굴 라인을 반전하여 오른쪽 위에 중첩한 이미지입니다. 선이 벌어진 부분이 비대칭 영역입니다.</p>
