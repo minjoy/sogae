@@ -918,6 +918,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   const searchParams = useSearchParams();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const symmetryCanvasRef = useRef<HTMLCanvasElement>(null);
+  const maskOverlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const shareCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // 디버그 모드는 URL 파라미터로만 활성화 (?debug=true)
@@ -1361,13 +1362,182 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     tryLoad(true);
   }, [data]);
 
+  // 마스크 반전 중첩 분석 (왼쪽 랜드마크 마스크를 반전하여 오른쪽 얼굴 위에 중첩)
+  const drawMaskOverlay = useCallback(() => {
+    if (!maskOverlayCanvasRef.current || !data?.imageData || !data?.landmarks) return;
+
+    const canvas = maskOverlayCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    const tryLoad = (useCors: boolean) => {
+      if (useCors) img.crossOrigin = 'anonymous';
+      else img.removeAttribute('crossOrigin');
+      img.onload = () => {
+        const canvasSize = 500;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+
+        const landmarks = data.landmarks!;
+        const noseBridgeIdx = 6;
+        const centerX = noseBridgeIdx < landmarks.length ? landmarks[noseBridgeIdx][0] * canvasSize : canvasSize / 2;
+
+        // 1. 원본 얼굴 이미지 전체 그리기
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
+
+        // 2. 왼쪽 랜드마크로 마스크 라인을 오프스크린 캔버스에 그리기
+        const maskCanvas = document.createElement('canvas');
+        maskCanvas.width = canvasSize;
+        maskCanvas.height = canvasSize;
+        const maskCtx = maskCanvas.getContext('2d')!;
+
+        // 왼쪽 얼굴 부위별 연결선 정의 (FACE_CONNECTIONS 기반)
+        const leftFeatures: { points: number[]; color: string; lineWidth: number }[] = [
+          // 왼쪽 눈
+          { points: [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246, 33], color: '#00FFFF', lineWidth: 2.5 },
+          // 왼쪽 눈썹
+          { points: [70, 63, 105, 66, 107, 55, 65, 52, 53, 46], color: '#FF00FF', lineWidth: 2 },
+          // 코 (중앙이므로 전체 포함)
+          { points: [168, 6, 197, 195, 5, 4, 1, 19, 94, 2], color: '#FFFF00', lineWidth: 2 },
+          // 입술 (중앙이므로 전체 포함 - 왼쪽 부분 강조)
+          { points: [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37, 39, 40, 185, 61], color: '#FF6B6B', lineWidth: 2 },
+          // 왼쪽 턱 윤곽
+          { points: [234, 93, 132, 58, 172, 136, 150, 149, 176, 148, 152], color: '#4ECDC4', lineWidth: 2 },
+          // 왼쪽 상단 윤곽
+          { points: [234, 127, 162, 21, 54, 103, 67, 109, 10], color: '#4ECDC4', lineWidth: 2 },
+        ];
+
+        // 왼쪽 마스크 라인 그리기
+        leftFeatures.forEach(({ points, color, lineWidth }) => {
+          maskCtx.strokeStyle = color;
+          maskCtx.lineWidth = lineWidth;
+          maskCtx.lineCap = 'round';
+          maskCtx.lineJoin = 'round';
+          maskCtx.shadowColor = color;
+          maskCtx.shadowBlur = 4;
+          maskCtx.beginPath();
+          let started = false;
+          points.forEach((idx) => {
+            if (idx < landmarks.length) {
+              const x = landmarks[idx][0] * canvasSize;
+              const y = landmarks[idx][1] * canvasSize;
+              if (!started) { maskCtx.moveTo(x, y); started = true; }
+              else maskCtx.lineTo(x, y);
+            }
+          });
+          maskCtx.stroke();
+
+          // 주요 랜드마크 점 찍기
+          points.forEach((idx) => {
+            if (idx < landmarks.length) {
+              const x = landmarks[idx][0] * canvasSize;
+              const y = landmarks[idx][1] * canvasSize;
+              maskCtx.fillStyle = color;
+              maskCtx.beginPath();
+              maskCtx.arc(x, y, 2, 0, Math.PI * 2);
+              maskCtx.fill();
+            }
+          });
+        });
+
+        // 3. 마스크를 좌우 반전하여 원본 위에 중첩
+        ctx.save();
+        ctx.translate(centerX * 2, 0);
+        ctx.scale(-1, 1);
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(maskCanvas, 0, 0);
+        ctx.restore();
+
+        // 4. 원래 오른쪽 랜드마크도 다른 색으로 그려서 비교
+        const rightFeatures: { points: number[]; color: string; lineWidth: number }[] = [
+          // 오른쪽 눈
+          { points: [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398, 362], color: 'rgba(0, 255, 255, 0.35)', lineWidth: 2.5 },
+          // 오른쪽 눈썹
+          { points: [300, 293, 334, 296, 336, 285, 295, 282, 283, 276], color: 'rgba(255, 0, 255, 0.35)', lineWidth: 2 },
+          // 오른쪽 턱 윤곽
+          { points: [152, 377, 400, 378, 379, 365, 397, 288, 361, 323, 454], color: 'rgba(78, 205, 196, 0.35)', lineWidth: 2 },
+          // 오른쪽 상단 윤곽
+          { points: [10, 338, 297, 332, 284, 251, 389, 356, 454], color: 'rgba(78, 205, 196, 0.35)', lineWidth: 2 },
+        ];
+
+        rightFeatures.forEach(({ points, color, lineWidth }) => {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = lineWidth;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          let started = false;
+          points.forEach((idx) => {
+            if (idx < landmarks.length) {
+              const x = landmarks[idx][0] * canvasSize;
+              const y = landmarks[idx][1] * canvasSize;
+              if (!started) { ctx.moveTo(x, y); started = true; }
+              else ctx.lineTo(x, y);
+            }
+          });
+          ctx.stroke();
+        });
+
+        // 5. 중심선
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, canvasSize);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 6. 범례
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        const legendW = 260;
+        const legendH = 44;
+        const legendX = (canvasSize - legendW) / 2;
+        const legendY = canvasSize - 58;
+        ctx.beginPath();
+        ctx.roundRect(legendX, legendY, legendW, legendH, 10);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.font = 'bold 11px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        // 밝은 선 = 왼쪽 반전, 흐린 선 = 오른쪽 원본
+        ctx.fillStyle = '#00FFFF';
+        ctx.fillText('━', canvasSize / 2 - 90, legendY + 18);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillText('왼쪽 반전 마스크', canvasSize / 2 - 40, legendY + 18);
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.35)';
+        ctx.fillText('━', canvasSize / 2 - 90, legendY + 36);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillText('오른쪽 원본 라인', canvasSize / 2 - 40, legendY + 36);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.font = '11px -apple-system, sans-serif';
+        ctx.fillText('겹칠수록 대칭 · 벌어질수록 비대칭', canvasSize / 2, 20);
+      };
+      img.onerror = () => {
+        if (useCors) tryLoad(false);
+      };
+      img.src = data.imageData!;
+    };
+    tryLoad(true);
+  }, [data]);
+
   useEffect(() => {
     // 애니메이션이 끝난 후 캔버스가 마운트되면 다시 그리기
     if (!showRevealAnimation && data?.imageData && data?.landmarks) {
       drawFaceMesh();
       drawSymmetryAnalysis();
+      drawMaskOverlay();
     }
-  }, [data, drawFaceMesh, drawSymmetryAnalysis, showRevealAnimation]);
+  }, [data, drawFaceMesh, drawSymmetryAnalysis, drawMaskOverlay, showRevealAnimation]);
 
   // 공유 카드 생성
   const generateShareCard = useCallback(async () => {
@@ -2154,6 +2324,19 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
               <p className="text-white/50 text-xs mb-3">왼쪽 얼굴을 좌우반전하여 합성한 이미지입니다.</p>
               <canvas
                 ref={symmetryCanvasRef}
+                className="w-full aspect-square rounded-2xl"
+                style={{ maxWidth: '400px', margin: '0 auto', display: 'block' }}
+              />
+            </div>
+          )}
+
+          {/* 마스크 반전 중첩 분석 */}
+          {data.imageData && data.landmarks && (
+            <div className="mt-4 bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
+              <h4 className="text-white font-bold text-sm mb-3">좌우 비대칭 비교</h4>
+              <p className="text-white/50 text-xs mb-3">왼쪽 얼굴 라인을 반전하여 오른쪽 위에 중첩한 이미지입니다. 선이 벌어진 부분이 비대칭 영역입니다.</p>
+              <canvas
+                ref={maskOverlayCanvasRef}
                 className="w-full aspect-square rounded-2xl"
                 style={{ maxWidth: '400px', margin: '0 auto', display: 'block' }}
               />
