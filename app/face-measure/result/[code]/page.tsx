@@ -919,6 +919,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const symmetryCanvasRef = useRef<HTMLCanvasElement>(null);
   const maskOverlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const debugLandmarkCanvasRef = useRef<HTMLCanvasElement>(null);
   const shareCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // 디버그 모드는 URL 파라미터로만 활성화 (?debug=true)
@@ -1443,6 +1444,52 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           });
         });
 
+        // 2-b. 턱각도 두 직선 (볼중앙→턱각, 턱끝→턱각)
+        const jawAngleIdx = 172;  // 왼쪽 턱각
+        const cheekIdx = 54;      // 왼쪽 광대 (contour.left4)
+        const chinIdx = 152;      // 턱끝
+        if (jawAngleIdx < landmarks.length && cheekIdx < landmarks.length && chinIdx < landmarks.length) {
+          const jx = landmarks[jawAngleIdx][0] * canvasSize, jy = landmarks[jawAngleIdx][1] * canvasSize;
+          const cx = landmarks[cheekIdx][0] * canvasSize, cy = landmarks[cheekIdx][1] * canvasSize;
+          const chx = landmarks[chinIdx][0] * canvasSize, chy = landmarks[chinIdx][1] * canvasSize;
+
+          // 볼→턱각 직선 (연장)
+          const ext = 1.3;
+          maskCtx.strokeStyle = '#FF6B6B';
+          maskCtx.lineWidth = 2.5;
+          maskCtx.shadowColor = '#FF6B6B';
+          maskCtx.shadowBlur = 6;
+          maskCtx.setLineDash([6, 4]);
+          maskCtx.beginPath();
+          maskCtx.moveTo(cx, cy);
+          maskCtx.lineTo(jx + (jx - cx) * (ext - 1), jy + (jy - cy) * (ext - 1));
+          maskCtx.stroke();
+
+          // 턱끝→턱각 직선 (연장)
+          maskCtx.beginPath();
+          maskCtx.moveTo(chx, chy);
+          maskCtx.lineTo(jx + (jx - chx) * (ext - 1), jy + (jy - chy) * (ext - 1));
+          maskCtx.stroke();
+          maskCtx.setLineDash([]);
+
+          // 턱각 꼭짓점
+          maskCtx.fillStyle = '#FF6B6B';
+          maskCtx.beginPath();
+          maskCtx.arc(jx, jy, 4, 0, Math.PI * 2);
+          maskCtx.fill();
+
+          // 각도 호
+          const a1 = Math.atan2(cy - jy, cx - jx);
+          const a2 = Math.atan2(chy - jy, chx - jx);
+          maskCtx.strokeStyle = '#FF6B6B';
+          maskCtx.lineWidth = 2;
+          maskCtx.setLineDash([]);
+          maskCtx.beginPath();
+          maskCtx.arc(jx, jy, 18, Math.min(a1, a2), Math.max(a1, a2));
+          maskCtx.stroke();
+          maskCtx.shadowBlur = 0;
+        }
+
         // 3. 마스크를 좌우 반전하여 오른쪽 얼굴 위에만 중첩
         ctx.save();
         ctx.beginPath();
@@ -1478,14 +1525,203 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
     tryLoad(true);
   }, [data]);
 
+  // 디버그용 랜드마크 전체 표시
+  const drawDebugLandmarks = useCallback(() => {
+    if (!debugLandmarkCanvasRef.current || !data?.imageData || !data?.landmarks) return;
+
+    const canvas = debugLandmarkCanvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    const tryLoad = (useCors: boolean) => {
+      if (useCors) img.crossOrigin = 'anonymous';
+      else img.removeAttribute('crossOrigin');
+      img.onload = () => {
+        const canvasSize = 800;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+
+        const landmarks = data.landmarks!;
+
+        // 1. 원본 이미지 (어둡게)
+        ctx.fillStyle = '#0a0a1a';
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        ctx.globalAlpha = 0.5;
+        ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
+        ctx.globalAlpha = 1;
+
+        // 2. DEBUG_POINTS의 모든 포인트를 카테고리별 색상으로 표시
+        const categoryColors: Record<string, string> = {
+          nose: '#FFFF00',
+          eyes: '#00FFFF',
+          mouth: '#FF6B6B',
+          jaw: '#4ECDC4',
+          eyebrow: '#FF00FF',
+          forehead: '#FF8C00',
+          cheek: '#ADFF2F',
+          contour: '#DA70D6',
+        };
+
+        // 모든 DEBUG_POINTS 포인트 수집
+        const allPoints: { idx: number; label: string; color: string; category: string }[] = [];
+        Object.entries(DEBUG_POINTS).forEach(([category, points]) => {
+          const color = categoryColors[category] || '#FFFFFF';
+          Object.entries(points).forEach(([name, idx]) => {
+            if (typeof idx === 'number') {
+              allPoints.push({ idx, label: `${idx}:${name}`, color, category });
+            }
+          });
+        });
+
+        // FACE_CONNECTIONS 라인도 추가 (포인트 수집)
+        const connectionPoints = new Set<number>();
+        Object.values(FACE_CONNECTIONS).forEach((indices) => {
+          indices.forEach((idx: number) => connectionPoints.add(idx));
+        });
+
+        // FACE_CONNECTIONS에만 있는 포인트 추가
+        connectionPoints.forEach((idx) => {
+          if (!allPoints.find(p => p.idx === idx)) {
+            allPoints.push({ idx, label: `${idx}`, color: 'rgba(255,255,255,0.5)', category: 'connection' });
+          }
+        });
+
+        // 대칭 분석 페어 포인트도 추가
+        const symmetryPairs = [[33,263],[133,362],[70,300],[107,336],[61,291],[172,397],[159,386],[145,374]];
+        symmetryPairs.flat().forEach(idx => {
+          if (!allPoints.find(p => p.idx === idx)) {
+            allPoints.push({ idx, label: `${idx}`, color: '#FFD700', category: 'symmetry' });
+          }
+        });
+
+        // 3. FACE_CONNECTIONS 라인 그리기
+        const connColors: Record<string, string> = {
+          upperSilhouette: '#4ECDC4', upperSilhouetteLeft: '#4ECDC4',
+          jawLine: '#FF6B6B', jawContourLeft: '#4ECDC4', jawContourRight: '#4ECDC4',
+          lowerJawInner: '#FF8C00',
+          leftEye: '#00FFFF', rightEye: '#00FFFF',
+          leftEyebrow: '#FF00FF', rightEyebrow: '#FF00FF',
+          nose: '#FFFF00', lipsOuter: '#FF6B6B',
+        };
+
+        Object.entries(FACE_CONNECTIONS).forEach(([key, indices]) => {
+          ctx.strokeStyle = connColors[key] || '#FFFFFF';
+          ctx.lineWidth = 1;
+          ctx.globalAlpha = 0.4;
+          ctx.beginPath();
+          let started = false;
+          (indices as number[]).forEach((idx) => {
+            if (idx < landmarks.length) {
+              const x = landmarks[idx][0] * canvasSize;
+              const y = landmarks[idx][1] * canvasSize;
+              if (!started) { ctx.moveTo(x, y); started = true; }
+              else ctx.lineTo(x, y);
+            }
+          });
+          ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+
+        // 4. 턱각도 두 직선 강조
+        const jawIdx = 172, cheekPt = 54, chinPt = 152;
+        const jawIdxR = 397, cheekPtR = 284, chinPtR = 152;
+        [[jawIdx, cheekPt, chinPt, '왼턱각'], [jawIdxR, cheekPtR, chinPtR, '우턱각']].forEach(([ji, ci, chi, lbl]) => {
+          const j = ji as number, c = ci as number, ch = chi as number;
+          if (j < landmarks.length && c < landmarks.length && ch < landmarks.length) {
+            const jx = landmarks[j][0] * canvasSize, jy = landmarks[j][1] * canvasSize;
+            const cx2 = landmarks[c][0] * canvasSize, cy2 = landmarks[c][1] * canvasSize;
+            const chx = landmarks[ch][0] * canvasSize, chy = landmarks[ch][1] * canvasSize;
+            ctx.strokeStyle = '#FF6B6B';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 3]);
+            ctx.beginPath(); ctx.moveTo(cx2, cy2); ctx.lineTo(jx, jy); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(chx, chy); ctx.lineTo(jx, jy); ctx.stroke();
+            ctx.setLineDash([]);
+            // 각도 호
+            const a1 = Math.atan2(cy2 - jy, cx2 - jx);
+            const a2 = Math.atan2(chy - jy, chx - jx);
+            ctx.beginPath();
+            ctx.arc(jx, jy, 15, Math.min(a1, a2), Math.max(a1, a2));
+            ctx.strokeStyle = '#FF6B6B';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            // 각도 값
+            const angle = Math.abs(a1 - a2) * (180 / Math.PI);
+            const displayAngle = angle > 180 ? 360 - angle : angle;
+            const midA = (a1 + a2) / 2;
+            ctx.font = 'bold 10px monospace';
+            ctx.fillStyle = '#FF6B6B';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${(lbl as string)} ${displayAngle.toFixed(1)}°`, jx + Math.cos(midA) * 30, jy + Math.sin(midA) * 30);
+          }
+        });
+
+        // 5. 모든 포인트 그리기 (점 + 라벨)
+        // 먼저 라벨 위치 겹침 방지를 위해 정렬
+        const drawnLabels: { x: number; y: number }[] = [];
+        const isOverlap = (x: number, y: number) => drawnLabels.some(l => Math.abs(l.x - x) < 35 && Math.abs(l.y - y) < 8);
+
+        allPoints.forEach(({ idx, label, color }) => {
+          if (idx >= landmarks.length) return;
+          const x = landmarks[idx][0] * canvasSize;
+          const y = landmarks[idx][1] * canvasSize;
+
+          // 점
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 라벨 (겹침 회피)
+          ctx.font = '8px monospace';
+          ctx.textAlign = 'left';
+          let lx = x + 4, ly = y - 4;
+          const offsets = [[4, -4], [4, 10], [-40, -4], [-40, 10], [4, -12], [4, 18]];
+          for (const [ox, oy] of offsets) {
+            if (!isOverlap(x + ox, y + oy)) {
+              lx = x + ox; ly = y + oy;
+              break;
+            }
+          }
+          drawnLabels.push({ x: lx, y: ly });
+
+          // 라벨 배경
+          const metrics = ctx.measureText(label);
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(lx - 1, ly - 7, metrics.width + 2, 9);
+          ctx.fillStyle = color;
+          ctx.fillText(label, lx, ly);
+        });
+
+        // 6. 카테고리 범례
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(5, 5, 130, Object.keys(categoryColors).length * 14 + 10);
+        ctx.font = 'bold 9px monospace';
+        let ly = 18;
+        Object.entries(categoryColors).forEach(([cat, color]) => {
+          ctx.fillStyle = color;
+          ctx.fillText(`● ${cat}`, 10, ly);
+          ly += 14;
+        });
+      };
+      img.onerror = () => {
+        if (useCors) tryLoad(false);
+      };
+      img.src = data.imageData!;
+    };
+    tryLoad(true);
+  }, [data]);
+
   useEffect(() => {
     // 애니메이션이 끝난 후 캔버스가 마운트되면 다시 그리기
     if (!showRevealAnimation && data?.imageData && data?.landmarks) {
       drawFaceMesh();
       drawSymmetryAnalysis();
       drawMaskOverlay();
+      drawDebugLandmarks();
     }
-  }, [data, drawFaceMesh, drawSymmetryAnalysis, drawMaskOverlay, showRevealAnimation]);
+  }, [data, drawFaceMesh, drawSymmetryAnalysis, drawMaskOverlay, drawDebugLandmarks, showRevealAnimation]);
 
   // 공유 카드 생성
   const generateShareCard = useCallback(async () => {
@@ -2287,6 +2523,19 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
                 ref={maskOverlayCanvasRef}
                 className="w-full aspect-square rounded-2xl"
                 style={{ maxWidth: '400px', margin: '0 auto', display: 'block' }}
+              />
+            </div>
+          )}
+
+          {/* 디버그: 랜드마크 전체 표시 */}
+          {data.imageData && data.landmarks && (
+            <div className="mt-4 bg-black/40 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
+              <h4 className="text-white font-bold text-sm mb-3">랜드마크 디버그</h4>
+              <p className="text-white/50 text-xs mb-3">계산에 사용되는 모든 랜드마크 포인트와 연결선입니다. 턱각도 두 직선(점선)이 표시됩니다.</p>
+              <canvas
+                ref={debugLandmarkCanvasRef}
+                className="w-full aspect-square rounded-2xl"
+                style={{ maxWidth: '600px', margin: '0 auto', display: 'block' }}
               />
             </div>
           )}
