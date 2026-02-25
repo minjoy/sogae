@@ -48,26 +48,45 @@ function validateAnalysisResult(
   rollAngle: number,
   faceLandmarks: FaceLandmark[],
   imageWidth: number,
-  imageHeight: number
+  imageHeight: number,
+  faceView: 'front' | 'side' = 'front'
 ): ValidationResult {
   const warnings: string[] = [];
   const errors: string[] = [];
 
-  // 1. 얼굴 회전 각도 검사 (40도 초과 시 경고)
-  const MAX_ROTATION_ANGLE = 40;
+  const isSide = faceView === 'side';
 
-  if (Math.abs(panAngle) > MAX_ROTATION_ANGLE) {
-    warnings.push(`얼굴이 좌우로 ${Math.abs(panAngle).toFixed(0)}° 돌아가 있습니다. 정면을 바라보면 더 정확한 분석이 가능합니다.`);
-  } else if (Math.abs(panAngle) > 25) {
-    warnings.push(`얼굴이 약간 옆으로 돌아가 있어 일부 측정값이 보정되었습니다.`);
-  }
+  // 1. 얼굴 회전 각도 검사
+  if (isSide) {
+    // 옆모습: pan 각도 검증 생략, tilt/roll만 검사
+    if (Math.abs(tiltAngle) > 40) {
+      warnings.push(`얼굴이 위/아래로 ${Math.abs(tiltAngle).toFixed(0)}° 기울어져 있습니다.`);
+    }
+    if (Math.abs(rollAngle) > 25) {
+      warnings.push(`얼굴이 ${Math.abs(rollAngle).toFixed(0)}° 기울어져 있습니다.`);
+    }
+  } else {
+    // 정면: 기존 로직
+    const MAX_ROTATION_ANGLE = 40;
+    if (Math.abs(panAngle) > MAX_ROTATION_ANGLE) {
+      warnings.push(`얼굴이 좌우로 ${Math.abs(panAngle).toFixed(0)}° 돌아가 있습니다. 정면을 바라보면 더 정확한 분석이 가능합니다.`);
+    } else if (Math.abs(panAngle) > 25) {
+      warnings.push(`얼굴이 약간 옆으로 돌아가 있어 일부 측정값이 보정되었습니다.`);
+    }
 
-  if (Math.abs(tiltAngle) > MAX_ROTATION_ANGLE) {
-    warnings.push(`얼굴이 위/아래로 ${Math.abs(tiltAngle).toFixed(0)}° 기울어져 있습니다. 정면을 바라보면 더 정확한 분석이 가능합니다.`);
-  }
+    if (Math.abs(tiltAngle) > MAX_ROTATION_ANGLE) {
+      warnings.push(`얼굴이 위/아래로 ${Math.abs(tiltAngle).toFixed(0)}° 기울어져 있습니다. 정면을 바라보면 더 정확한 분석이 가능합니다.`);
+    }
 
-  if (Math.abs(rollAngle) > 20) {
-    warnings.push(`얼굴이 ${Math.abs(rollAngle).toFixed(0)}° 기울어져 있습니다.`);
+    if (Math.abs(rollAngle) > 20) {
+      warnings.push(`얼굴이 ${Math.abs(rollAngle).toFixed(0)}° 기울어져 있습니다.`);
+    }
+
+    // 복합적인 문제 (정면만)
+    const totalRotation = Math.abs(panAngle) + Math.abs(tiltAngle) + Math.abs(rollAngle);
+    if (totalRotation > 60 && errors.length === 0) {
+      warnings.push(`얼굴 각도가 정면에서 많이 벗어나 있어 분석 정확도가 낮을 수 있습니다.`);
+    }
   }
 
   // 2. 얼굴 크기 검사 (실제 픽셀 크기 기준)
@@ -92,7 +111,6 @@ function validateAnalysisResult(
     if (facePixels < 80) {
       errors.push(`얼굴이 너무 작게 찍혔습니다 (${Math.round(facePixels)}px). 카메라에 가까이 다가가서 다시 촬영해주세요.`);
     } else if (facePixels < 150) {
-      // 80~150px는 경고만 (무시하고 진행 가능)
       warnings.push(`얼굴이 작게 찍혔습니다 (${Math.round(facePixels)}px). 가까이 촬영하면 더 정확한 분석이 가능합니다.`);
     }
 
@@ -100,12 +118,6 @@ function validateAnalysisResult(
     if (minX < 0.02 || maxX > 0.98) {
       warnings.push(`얼굴 일부가 화면 밖으로 잘렸을 수 있습니다.`);
     }
-  }
-
-  // 3. 복합적인 문제 (여러 각도가 동시에 크면 신뢰도 하락)
-  const totalRotation = Math.abs(panAngle) + Math.abs(tiltAngle) + Math.abs(rollAngle);
-  if (totalRotation > 60 && errors.length === 0) {
-    warnings.push(`얼굴 각도가 정면에서 많이 벗어나 있어 분석 정확도가 낮을 수 있습니다.`);
   }
 
   return {
@@ -476,7 +488,8 @@ export default function FaceAnalysisPage() {
           data.result.rollAngle || 0,
           faceLandmarks,
           imageWidth,
-          imageHeight
+          imageHeight,
+          faceView
         );
 
         // 에러가 있으면 분석 중단하고 알림
@@ -732,7 +745,7 @@ export default function FaceAnalysisPage() {
         await faceMeshRef.current.send({ image: blankImg });
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // FaceMesh로 분석 (최대 2회 시도)
+        // FaceMesh로 분석 (최대 3회 시도, 옆모습 시 confidence 낮춰 재시도)
         let allFaceLandmarks: FaceLandmark[][] = [];
 
         // onResults 콜백을 루프 밖에서 한 번만 등록
@@ -742,8 +755,18 @@ export default function FaceAnalysisPage() {
           }
         });
 
-        for (let attempt = 0; attempt < 2; attempt++) {
+        const maxAttempts = faceView === 'side' ? 3 : 2;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
           allFaceLandmarks = [];
+
+          // 옆모습 3차 시도: confidence 낮춰서 재시도
+          if (attempt === 2 && faceView === 'side' && faceMeshRef.current) {
+            faceMeshRef.current.setOptions({
+              minDetectionConfidence: 0.3,
+              minTrackingConfidence: 0.3,
+            });
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
 
           await faceMeshRef.current.send({ image: img });
 
@@ -755,11 +778,19 @@ export default function FaceAnalysisPage() {
             break;
           }
 
-          // 첫 번째 시도 실패 시 재시도 전 약간 대기
-          if (attempt === 0) {
-            console.log('얼굴 인식 1차 시도 실패, 재시도 중...');
+          // 실패 시 재시도 전 약간 대기
+          if (attempt < maxAttempts - 1) {
+            console.log(`얼굴 인식 ${attempt + 1}차 시도 실패, 재시도 중...`);
             await new Promise(resolve => setTimeout(resolve, 300));
           }
+        }
+
+        // confidence를 원래대로 복원
+        if (faceView === 'side' && faceMeshRef.current) {
+          faceMeshRef.current.setOptions({
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+          });
         }
 
         // blob URL 해제 (캔버스에 이미 그렸으므로 불필요)
@@ -795,7 +826,9 @@ export default function FaceAnalysisPage() {
           const imageData = canvas.toDataURL('image/jpeg', 0.9);
           await analyzeWithLandmarks(selectedLandmarks, img.width, img.height, imageData);
         } else {
-          setError('😕 얼굴을 인식할 수 없습니다.\n\n가능한 원인:\n• 얼굴이 너무 작거나 멀리 있음\n• 얼굴이 흐릿하거나 가려져 있음\n• 조명이 너무 어둡거나 역광\n• 모자, 선글라스 등으로 가려짐\n\n💡 팁: 밝은 곳에서 정면을 바라보고 다시 촬영해주세요.');
+          setError(faceView === 'side'
+            ? '😕 옆모습 얼굴을 인식할 수 없습니다.\n\n가능한 원인:\n• 얼굴이 너무 옆으로 돌아가 있음 (45° 정도가 적당)\n• 얼굴이 너무 작거나 멀리 있음\n• 머리카락이 얼굴을 가리고 있음\n\n💡 팁: 얼굴 윤곽이 잘 보이도록 촬영해주세요.'
+            : '😕 얼굴을 인식할 수 없습니다.\n\n가능한 원인:\n• 얼굴이 너무 작거나 멀리 있음\n• 얼굴이 흐릿하거나 가려져 있음\n• 조명이 너무 어둡거나 역광\n• 모자, 선글라스 등으로 가려짐\n\n💡 팁: 밝은 곳에서 정면을 바라보고 다시 촬영해주세요.');
           setIsLoading(false);
         }
       }
