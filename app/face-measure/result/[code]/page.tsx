@@ -1007,12 +1007,12 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
       front: {
         faceWidth: { px: debug.faceWidth, mm: toMm(debug.faceWidth), label: '얼굴 넓이', key: 'A', desc: '양쪽 볼의 가장 넓은 거리' },
         jawWidth: { px: debug.jawWidth, mm: toMm(debug.jawWidth), label: '턱 넓이', key: 'B', desc: '양쪽 턱각 사이 거리' },
-        jawAngle: { value: debug.avgJawAngle, label: '턱 각도', key: 'C', desc: '볼 중앙~턱각 선과 턱끝~턱각 선이 만나는 각도', unit: '°' },
+        jawAngle: { value: debug.avgJawAngle, label: '턱 각도', key: 'C', desc: '관자놀이~턱각 선과 턱끝~턱각 선이 만나는 각도', unit: '°' },
         chinLength: { px: debug.lowerLipChinRatio ? (debug.lowerLipChinRatio * (debug.faceWidth || 0)) : undefined, mm: toMm(debug.lowerLipChinRatio ? (debug.lowerLipChinRatio * (debug.faceWidth || 0)) : undefined), label: '턱 길이', key: 'D', desc: '아랫입술 아래 ~ 턱끝 거리' },
         lipWidth: { px: debug.mouthWidth, mm: lipMm, label: '입술 가로길이', key: 'E', desc: '입술 양 끝 사이 거리 (기준값)' },
         upperLipThickness: { px: debug.upperLipHeight, mm: toMm(debug.upperLipHeight), label: '윗입술 두께', key: 'F', desc: '윗입술 위끝 ~ 입술 경계' },
         lowerLipThickness: { px: debug.lowerLipHeight, mm: toMm(debug.lowerLipHeight), label: '아랫입술 두께', key: 'G', desc: '입술 경계 ~ 아랫입술 아래끝' },
-        eyeWidth: { px: debug.eyeWidth, mm: toMm(debug.eyeWidth), label: '눈 넓이', key: 'H', desc: '눈꼬리 ~ 눈머리 사이 거리' },
+        eyeWidth: { px: debug.eyeWidth, mm: toMm(debug.eyeWidth), label: '눈 넓이', key: 'H', desc: '눈 포인트 중 가장 긴 거리' },
         eyeHeight: { px: debug.eyeHeight, mm: toMm(debug.eyeHeight), label: '눈 높이', key: 'I', desc: '눈 위끝 ~ 눈 아래끝 거리' },
       },
       // 옆모습 측정값 (향후 확장)
@@ -1188,10 +1188,11 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           drawMeasureLine(leftJaw, rightJaw, colors.B, 'B', 8);
         }
 
-        // === C: 턱 각도 ===
+        // === C: 턱 각도 (관자놀이→턱각→턱끝) ===
         const chin = pt(P.jaw.chin);
-        if (leftJaw && chin && leftCheek) {
-          drawAngle(leftJaw, leftCheek, chin, colors.C, 'C');
+        const leftTemple = pt(P.jaw.leftTemple);
+        if (leftJaw && chin && leftTemple) {
+          drawAngle(leftJaw, leftTemple, chin, colors.C, 'C');
         }
 
         // === D: 턱 길이 (아랫입술 아래 ~ 턱끝) ===
@@ -1220,11 +1221,24 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           drawMeasureLine(mouthInnerLower, lowerLip, colors.G, 'G', 20);
         }
 
-        // === H: 눈 넓이 (왼쪽 눈 기준) ===
-        const eyeL = pt(P.eyes.leftOuter);
-        const eyeR = pt(P.eyes.leftInner);
-        if (eyeL && eyeR) {
-          drawMeasureLine(eyeL, eyeR, colors.H, 'H', -8);
+        // === H: 눈 넓이 (왼쪽 눈 포인트 중 가장 긴 거리) ===
+        {
+          const leftEyeIndices = FACE_CONNECTIONS.leftEye.filter((v, i, arr) => arr.indexOf(v) === i);
+          let maxDist = 0;
+          let eyeP1: {x:number,y:number}|null = null, eyeP2: {x:number,y:number}|null = null;
+          for (let i = 0; i < leftEyeIndices.length; i++) {
+            const pi = pt(leftEyeIndices[i]);
+            if (!pi) continue;
+            for (let j = i + 1; j < leftEyeIndices.length; j++) {
+              const pj = pt(leftEyeIndices[j]);
+              if (!pj) continue;
+              const d = Math.sqrt((pi.x - pj.x) ** 2 + (pi.y - pj.y) ** 2);
+              if (d > maxDist) { maxDist = d; eyeP1 = pi; eyeP2 = pj; }
+            }
+          }
+          if (eyeP1 && eyeP2) {
+            drawMeasureLine(eyeP1, eyeP2, colors.H, 'H', -8);
+          }
         }
 
         // === I: 눈 높이 (왼쪽 눈 기준) ===
@@ -1444,16 +1458,16 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           });
         });
 
-        // 2-b. 턱각도 두 직선 (볼중앙→턱각, 턱끝→턱각)
+        // 2-b. 턱각도 두 직선 (관자놀이→턱각, 턱끝→턱각)
         const jawAngleIdx = 172;  // 왼쪽 턱각
-        const cheekIdx = 54;      // 왼쪽 광대 (contour.left4)
+        const cheekIdx = 234;     // 왼쪽 관자놀이
         const chinIdx = 152;      // 턱끝
         if (jawAngleIdx < landmarks.length && cheekIdx < landmarks.length && chinIdx < landmarks.length) {
           const jx = landmarks[jawAngleIdx][0] * canvasSize, jy = landmarks[jawAngleIdx][1] * canvasSize;
           const cx = landmarks[cheekIdx][0] * canvasSize, cy = landmarks[cheekIdx][1] * canvasSize;
           const chx = landmarks[chinIdx][0] * canvasSize, chy = landmarks[chinIdx][1] * canvasSize;
 
-          // 볼→턱각 직선 (연장)
+          // 관자놀이→턱각 직선 (연장)
           const ext = 1.3;
           maskCtx.strokeStyle = '#FF6B6B';
           maskCtx.lineWidth = 2.5;
@@ -1623,9 +1637,9 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         });
         ctx.globalAlpha = 1;
 
-        // 4. 턱각도 두 직선 강조
-        const jawIdx = 172, cheekPt = 54, chinPt = 152;
-        const jawIdxR = 397, cheekPtR = 284, chinPtR = 152;
+        // 4. 턱각도 두 직선 강조 (관자놀이→턱각→턱끝)
+        const jawIdx = 172, cheekPt = 234, chinPt = 152;
+        const jawIdxR = 397, cheekPtR = 454, chinPtR = 152;
         [[jawIdx, cheekPt, chinPt, '왼턱각'], [jawIdxR, cheekPtR, chinPtR, '우턱각']].forEach(([ji, ci, chi, lbl]) => {
           const j = ji as number, c = ci as number, ch = chi as number;
           if (j < landmarks.length && c < landmarks.length && ch < landmarks.length) {
