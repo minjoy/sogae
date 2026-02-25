@@ -1189,63 +1189,122 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
         const P = DEBUG_POINTS;
 
         if (faceDir !== 'front') {
-          // ========== 옆모습: 보이는 쪽 윤곽선에 번호 점 표시 ==========
+          // ========== 옆모습: 살색/배경색 경계 기반 윤곽선 ==========
           const isLeft = faceDir === 'left';
 
-          // 보이는 쪽의 윤곽선 포인트만 (이마 꼭대기 → 앞쪽 이마 → 코 → 턱 순서)
-          // 왼쪽 보일 때: 왼쪽 이마~관자놀이~턱라인 + 코 프로필
-          // 오른쪽 보일 때: 오른쪽 이마~관자놀이~턱라인 + 코 프로필
-          const visibleContour = isLeft
-            ? [
-                // 이마 꼭대기 → 앞쪽 이마 라인 (보이는 쪽)
-                10, 109, 67, 103, 54, 21, 162, 127, 234,
-                // 관자놀이 → 턱라인 (보이는 쪽)
-                93, 132, 58, 172, 136, 150, 149, 176, 148,
-                // 턱끝
-                152,
-              ]
-            : [
-                // 이마 꼭대기 → 앞쪽 이마 라인 (보이는 쪽)
-                10, 338, 297, 332, 284, 251, 389, 356, 454,
-                // 관자놀이 → 턱라인 (보이는 쪽)
-                323, 361, 288, 397, 365, 379, 378, 400, 377,
-                // 턱끝
-                152,
-              ];
+          // 1. 픽셀 데이터 추출
+          const edgeCanvas = document.createElement('canvas');
+          edgeCanvas.width = canvasSize;
+          edgeCanvas.height = canvasSize;
+          const edgeCtx = edgeCanvas.getContext('2d')!;
+          edgeCtx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvasSize, canvasSize);
+          const imgPixels = edgeCtx.getImageData(0, 0, canvasSize, canvasSize);
+          const pxData = imgPixels.data;
 
-          // 코 프로필 (이마→코끝→콧볼)
-          const noseProfile = isLeft
-            ? [168, 6, 197, 195, 5, 4, 1, 2, 98]
-            : [168, 6, 197, 195, 5, 4, 1, 2, 327];
+          // 2. 코 방향 판별 (랜드마크 기반 - 코가 이미지의 어느쪽에 있는지)
+          const noseTipX = landmarks[1]?.[0] ?? 0.5;
+          const faceAvgX = landmarks.reduce((s, [x]) => s + x, 0) / landmarks.length;
+          const nosePointsRight = noseTipX > faceAvgX;
 
-          // 입술 (보이는 쪽)
-          const lipLine = isLeft
-            ? [61, 146, 91, 181, 84, 17, 14, 87, 178, 88, 95]
-            : [291, 375, 321, 405, 314, 17, 14, 317, 402, 318, 324];
+          // 3. 배경색 샘플링 (코 방향 가장자리 + 상하 가장자리)
+          let bgR = 0, bgG = 0, bgB = 0, bgN = 0;
+          const edgeMargin = 6;
+          // 코 방향 가장자리
+          for (let sy = 0; sy < canvasSize; sy += 3) {
+            for (let d = 0; d < edgeMargin; d++) {
+              const sx = nosePointsRight ? (canvasSize - 1 - d) : d;
+              const i = (sy * canvasSize + sx) * 4;
+              bgR += pxData[i]; bgG += pxData[i + 1]; bgB += pxData[i + 2]; bgN++;
+            }
+          }
+          // 상하 가장자리
+          for (let sx = 0; sx < canvasSize; sx += 3) {
+            for (let d = 0; d < edgeMargin; d++) {
+              for (const sy of [d, canvasSize - 1 - d]) {
+                const i = (sy * canvasSize + sx) * 4;
+                bgR += pxData[i]; bgG += pxData[i + 1]; bgB += pxData[i + 2]; bgN++;
+              }
+            }
+          }
+          bgR /= bgN; bgG /= bgN; bgB /= bgN;
 
-          // 눈 (보이는 쪽)
-          const eyeLine = isLeft
-            ? [33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246, 33]
-            : [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398, 362];
+          // 4. 배경과의 색차 계산
+          const colorDiff = (x: number, y: number) => {
+            const i = (y * canvasSize + x) * 4;
+            const dr = pxData[i] - bgR, dg = pxData[i + 1] - bgG, db = pxData[i + 2] - bgB;
+            return Math.sqrt(dr * dr + dg * dg + db * db);
+          };
 
-          // 눈썹 (보이는 쪽)
-          const browLine = isLeft
-            ? [70, 63, 105, 66, 107, 55, 65, 52, 53, 46]
-            : [300, 293, 334, 296, 336, 285, 295, 282, 283, 276];
+          // 5. 얼굴 y범위 (랜드마크 기반 대략적 범위)
+          let yTop = canvasSize, yBot = 0;
+          landmarks.forEach(([, ly]) => {
+            const py = ly * canvasSize;
+            if (py < yTop) yTop = py;
+            if (py > yBot) yBot = py;
+          });
+          yTop = Math.max(0, Math.floor(yTop - 10));
+          yBot = Math.min(canvasSize - 1, Math.ceil(yBot + 5));
 
-          // 윤곽선 연결 + 번호 점 그리기 함수
-          const drawNumberedContour = (
-            indices: number[],
+          // 6. 행별 윤곽 경계 검출 (코 방향에서 바깥→안쪽 스캔)
+          const bgThreshold = 30;
+          const rawEdge: { x: number; y: number }[] = [];
+          for (let y = yTop; y <= yBot; y++) {
+            let edgeX = -1;
+            if (nosePointsRight) {
+              // 코가 오른쪽: 오른쪽 끝에서 왼쪽으로 스캔하여 첫 비배경 픽셀
+              for (let x = canvasSize - 1; x >= 0; x--) {
+                if (colorDiff(x, y) > bgThreshold) { edgeX = x; break; }
+              }
+            } else {
+              // 코가 왼쪽: 왼쪽 끝에서 오른쪽으로 스캔
+              for (let x = 0; x < canvasSize; x++) {
+                if (colorDiff(x, y) > bgThreshold) { edgeX = x; break; }
+              }
+            }
+            if (edgeX >= 0) rawEdge.push({ x: edgeX, y });
+          }
+
+          // 7. 메디안 필터 스무딩 (노이즈 제거)
+          const medianOf = (arr: number[]) => {
+            const sorted = [...arr].sort((a, b) => a - b);
+            return sorted[Math.floor(sorted.length / 2)];
+          };
+          const mRadius = 4;
+          const smoothEdge = rawEdge.map((p, i) => {
+            const xs: number[] = [];
+            for (let j = Math.max(0, i - mRadius); j <= Math.min(rawEdge.length - 1, i + mRadius); j++) {
+              xs.push(rawEdge[j].x);
+            }
+            return { x: medianOf(xs), y: p.y };
+          });
+
+          // 8. 균등 샘플링 (~30개 포인트)
+          const numContourPts = 30;
+          const cStep = Math.max(1, Math.floor(smoothEdge.length / numContourPts));
+          const contourPts: { x: number; y: number }[] = [];
+          for (let i = 0; i < smoothEdge.length && contourPts.length < numContourPts; i += cStep) {
+            contourPts.push(smoothEdge[i]);
+          }
+          if (smoothEdge.length > 0) {
+            const last = smoothEdge[smoothEdge.length - 1];
+            if (contourPts.length === 0 || contourPts[contourPts.length - 1].y !== last.y) {
+              contourPts.push(last);
+            }
+          }
+
+          // 번호 점 + 선 그리기 함수
+          const badgeDir = nosePointsRight ? 1 : -1;
+          const drawNumberedPoints = (
+            points: { x: number; y: number }[],
             color: string,
             lineWidth: number,
             startNum: number,
-            showLine: boolean = true
+            drawLine: boolean = true
           ): number => {
-            const pts = indices.map(i => ({ point: pt(i), idx: i })).filter(p => p.point !== null) as {point: {x:number,y:number}, idx: number}[];
-            if (pts.length < 2) return startNum;
+            if (points.length < 2) return startNum;
 
-            // 선 그리기
-            if (showLine) {
+            // 선 그리기 (베지어 곡선)
+            if (drawLine) {
               ctx.save();
               ctx.strokeStyle = color;
               ctx.lineWidth = lineWidth;
@@ -1254,76 +1313,76 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
               ctx.lineCap = 'round';
               ctx.lineJoin = 'round';
               ctx.beginPath();
-              ctx.moveTo(pts[0].point.x, pts[0].point.y);
-              for (let i = 1; i < pts.length - 1; i++) {
-                const cp = pts[i].point;
-                const next = pts[i + 1].point;
-                const mx = (cp.x + next.x) / 2;
-                const my = (cp.y + next.y) / 2;
-                ctx.quadraticCurveTo(cp.x, cp.y, mx, my);
+              ctx.moveTo(points[0].x, points[0].y);
+              for (let i = 1; i < points.length - 1; i++) {
+                const cp = points[i];
+                const np = points[i + 1];
+                ctx.quadraticCurveTo(cp.x, cp.y, (cp.x + np.x) / 2, (cp.y + np.y) / 2);
               }
-              ctx.lineTo(pts[pts.length - 1].point.x, pts[pts.length - 1].point.y);
+              ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
               ctx.stroke();
               ctx.restore();
             }
 
-            // 번호 점 그리기
+            // 번호 점
             let num = startNum;
-            for (const { point } of pts) {
-              // 점
+            for (const p of points) {
               ctx.beginPath();
-              ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+              ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
               ctx.fillStyle = color;
               ctx.fill();
               ctx.strokeStyle = '#000';
               ctx.lineWidth = 1;
               ctx.stroke();
 
-              // 번호 배지
               const numStr = String(num);
               ctx.font = 'bold 9px -apple-system, sans-serif';
-              const textW = ctx.measureText(numStr).width;
-              const badgeW = Math.max(textW + 6, 14);
-              const badgeH = 13;
-              const bx = point.x + 6;
-              const by = point.y - 8;
-
+              const tw = ctx.measureText(numStr).width;
+              const bw = Math.max(tw + 6, 14);
+              const bx = p.x + badgeDir * 10;
+              const by = p.y - 2;
               ctx.fillStyle = 'rgba(0,0,0,0.7)';
               ctx.beginPath();
-              ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 3);
+              ctx.roundRect(bx - bw / 2, by - 7, bw, 14, 3);
               ctx.fill();
-
               ctx.fillStyle = color;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText(numStr, bx, by);
-
               num++;
             }
             return num;
           };
 
-          // 각 파트별로 번호를 이어서 그리기
+          // 9. 윤곽선 그리기 (살색/배경 경계)
           let nextNum = 1;
-          nextNum = drawNumberedContour(visibleContour, '#4ECDC4', 2.5, nextNum);   // 윤곽선 (청록)
-          nextNum = drawNumberedContour(noseProfile, '#FFFF00', 2, nextNum);        // 코 (노랑)
-          nextNum = drawNumberedContour(lipLine, '#FF6B6B', 1.5, nextNum);          // 입술 (빨강)
-          nextNum = drawNumberedContour(eyeLine, '#00FFFF', 1.5, nextNum);          // 눈 (시안)
-          drawNumberedContour(browLine, '#DA70D6', 1.5, nextNum);                   // 눈썹 (보라)
+          nextNum = drawNumberedPoints(contourPts, '#4ECDC4', 2.5, nextNum);
+
+          // 10. 입술 (MediaPipe 랜드마크 - 비교적 정확)
+          const lipIndices = isLeft
+            ? [61, 146, 91, 181, 84, 17, 14, 87, 178, 88, 95]
+            : [291, 375, 321, 405, 314, 17, 14, 317, 402, 318, 324];
+          const lipPts = lipIndices.map(i => pt(i)).filter(Boolean) as { x: number; y: number }[];
+          nextNum = drawNumberedPoints(lipPts, '#FF6B6B', 1.5, nextNum);
+
+          // 11. 눈썹 (MediaPipe 랜드마크)
+          const browIndices = isLeft
+            ? [70, 63, 105, 66, 107, 55, 65, 52, 53, 46]
+            : [300, 293, 334, 296, 336, 285, 295, 282, 283, 276];
+          const browPts = browIndices.map(i => pt(i)).filter(Boolean) as { x: number; y: number }[];
+          drawNumberedPoints(browPts, '#DA70D6', 1.5, nextNum);
 
           // 범례
           ctx.save();
-          const legendY = canvasSize - 60;
+          const legendY = canvasSize - 55;
           const legendItems = [
-            { color: '#4ECDC4', label: '윤곽선' },
-            { color: '#FFFF00', label: '코' },
+            { color: '#4ECDC4', label: '윤곽 (경계감지)' },
             { color: '#FF6B6B', label: '입술' },
-            { color: '#00FFFF', label: '눈' },
             { color: '#DA70D6', label: '눈썹' },
           ];
           ctx.font = '10px -apple-system, sans-serif';
-          const totalWidth = legendItems.reduce((w, item) => w + ctx.measureText(item.label).width + 20, 0);
-          let lx = (canvasSize - totalWidth) / 2;
+          const totalW = legendItems.reduce((w, item) => w + ctx.measureText(item.label).width + 22, 0);
+          let lx = (canvasSize - totalW) / 2;
           for (const item of legendItems) {
             ctx.fillStyle = item.color;
             ctx.beginPath();
@@ -1333,7 +1392,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
             ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             ctx.fillText(item.label, lx + 12, legendY);
-            lx += ctx.measureText(item.label).width + 24;
+            lx += ctx.measureText(item.label).width + 26;
           }
           ctx.restore();
 
@@ -1341,7 +1400,7 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
           ctx.font = '11px -apple-system, sans-serif';
           ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
           ctx.textAlign = 'center';
-          ctx.fillText(`${isLeft ? '왼쪽' : '오른쪽'} 옆모습 · 번호별 포인트 (보이는 쪽만)`, canvasSize / 2, canvasSize - 15);
+          ctx.fillText(`${isLeft ? '왼쪽' : '오른쪽'} 옆모습 · 경계감지 윤곽선`, canvasSize / 2, canvasSize - 15);
 
         } else {
           // ========== 정면: 기존 측정선 ==========
