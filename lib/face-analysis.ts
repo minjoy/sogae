@@ -294,13 +294,23 @@ export function analyzeFace(
   gender: 'male' | 'female',
   panAngle: number = 0,
   tiltAngle: number = 0,
-  rollAngle: number = 0
+  rollAngle: number = 0,
+  faceView: 'front' | 'side' = 'front'
 ): FaceAnalysisResult {
+  const isSideView = faceView === 'side';
+
+  // 옆모습: 보이는 쪽 판별 (panAngle > 0이면 왼쪽 보임 = 오른쪽 랜드마크 사용)
+  const visibleSide: 'left' | 'right' | 'both' = isSideView
+    ? (panAngle > 0 ? 'right' : 'left')
+    : 'both';
+
   // 얼굴 기울기 보정 적용
   const fp = normalizeRotation(landmarks.all, rollAngle);
 
   // 얼굴 회전 보정 팩터 계산
-  const rotationComp = getRotationCompensation(panAngle, tiltAngle);
+  const rotationComp = isSideView
+    ? { horizontal: 1, vertical: 1 } // 옆모습은 회전 보정 불필요
+    : getRotationCompensation(panAngle, tiltAngle);
 
   // draw.py와 동일하게 facescore 직접 누적
   let facescore = 0;
@@ -322,22 +332,48 @@ export function analyzeFace(
   let r4_respon_sum = 0;
   let r4_since_sum = 0;
 
-  // === 기준 비율 계산 === (draw.py와 동일)
-  // widthratio = 코 너비 (콧볼 너비) - 수평 보정 적용
-  const noseWidthRaw = Math.abs(fp[13].x - fp[14].x) || 1;
-  const noseWidth = noseWidthRaw * rotationComp.horizontal;
-  // widthratio2 = 얼굴 너비 (볼 중앙 간 거리) - 수평 보정 적용
-  const faceWidthRaw = Math.abs(fp[27].x - fp[26].x) || 1;
-  const faceWidth = faceWidthRaw * rotationComp.horizontal;
+  // === 기준 비율 계산 ===
+  let noseWidth: number;
+  let faceWidth: number;
+
+  if (isSideView) {
+    // 옆모습: 코 너비 대신 코 높이(코끝~코밑 수직거리)를 기준 단위로 사용
+    // fp[6] = noseTip, fp[15] = noseBottomCenter
+    const noseHeightRaw = Math.abs(fp[15].y - fp[6].y) || 1;
+    noseWidth = noseHeightRaw; // 기준 단위를 코 높이로 대체
+
+    // 얼굴 너비 대신 보이는 쪽 볼~턱각 거리 사용
+    if (visibleSide === 'right') {
+      faceWidth = Math.sqrt(Math.pow(fp[27].x - fp[31].x, 2) + Math.pow(fp[27].y - fp[31].y, 2)) || 1;
+    } else {
+      faceWidth = Math.sqrt(Math.pow(fp[26].x - fp[30].x, 2) + Math.pow(fp[26].y - fp[30].y, 2)) || 1;
+    }
+  } else {
+    // 정면: 기존 로직
+    const noseWidthRaw = Math.abs(fp[13].x - fp[14].x) || 1;
+    noseWidth = noseWidthRaw * rotationComp.horizontal;
+    const faceWidthRaw = Math.abs(fp[27].x - fp[26].x) || 1;
+    faceWidth = faceWidthRaw * rotationComp.horizontal;
+  }
 
   // === 1. 눈꼬리 각도 분석 ===
-  // 왼쪽 눈의 안쪽-바깥쪽 기울기 계산
-  const leftEyeSlope = (fp[19].y - fp[17].y) / (fp[19].x - fp[17].x || 1);
-  // 오른쪽 눈의 안쪽-바깥쪽 기울기 계산
-  const rightEyeSlope = (fp[21].y - fp[23].y) / (fp[21].x - fp[23].x || 1);
-  // 평균 기울기를 각도로 변환 (라디안 -> 도)
-  const avgSlope = (leftEyeSlope + rightEyeSlope) / 2;
-  const eyeAngleDegrees = Math.atan(avgSlope) * (180 / Math.PI);
+  let eyeAngleDegrees: number;
+  if (isSideView) {
+    // 옆모습: 보이는 쪽 눈만 사용
+    if (visibleSide === 'right') {
+      const slope = (fp[21].y - fp[23].y) / (fp[21].x - fp[23].x || 1);
+      eyeAngleDegrees = Math.atan(slope) * (180 / Math.PI);
+    } else {
+      const slope = (fp[19].y - fp[17].y) / (fp[19].x - fp[17].x || 1);
+      eyeAngleDegrees = Math.atan(slope) * (180 / Math.PI);
+    }
+  } else {
+    // 정면: 양쪽 평균
+    const leftEyeSlope = (fp[19].y - fp[17].y) / (fp[19].x - fp[17].x || 1);
+    const rightEyeSlope = (fp[21].y - fp[23].y) / (fp[21].x - fp[23].x || 1);
+    const avgSlope = (leftEyeSlope + rightEyeSlope) / 2;
+    eyeAngleDegrees = Math.atan(avgSlope) * (180 / Math.PI);
+  }
   const eyeAngleImportance = FEATURE_IMPORTANCE.eyeAngle;
 
   let eyeAngleAnalysis: { label: string; description: string };
@@ -400,15 +436,24 @@ export function analyzeFace(
   }
 
   // === 2. 눈썹-눈 거리 분석 ===
-  // 눈썹 위쪽 중간점과 눈 중심 사이 거리 - 수직 보정 적용
-  const eyebrowEyeDistLeftRaw = Math.abs(fp[0].y - fp[24].y);
-  const eyebrowEyeDistRightRaw = Math.abs(fp[1].y - fp[25].y);
-  const eyebrowEyeDistLeft = eyebrowEyeDistLeftRaw * rotationComp.vertical;
-  const eyebrowEyeDistRight = eyebrowEyeDistRightRaw * rotationComp.vertical;
-  const avgEyebrowDist = (eyebrowEyeDistLeft + eyebrowEyeDistRight) / 2;
-  // 눈 세로 크기 대비 비율로 계산 - 수직 보정 적용
-  const eyeHeightRaw = Math.abs(fp[18].y - fp[16].y) || 1;
-  const eyeHeight = eyeHeightRaw * rotationComp.vertical;
+  let avgEyebrowDist: number;
+  let eyeHeight: number;
+  if (isSideView) {
+    // 옆모습: 보이는 쪽만
+    if (visibleSide === 'right') {
+      avgEyebrowDist = Math.abs(fp[1].y - fp[25].y);
+      eyeHeight = Math.abs(fp[22].y - fp[20].y) || 1;
+    } else {
+      avgEyebrowDist = Math.abs(fp[0].y - fp[24].y);
+      eyeHeight = Math.abs(fp[18].y - fp[16].y) || 1;
+    }
+  } else {
+    // 정면: 양쪽 평균
+    const eyebrowEyeDistLeft = Math.abs(fp[0].y - fp[24].y) * rotationComp.vertical;
+    const eyebrowEyeDistRight = Math.abs(fp[1].y - fp[25].y) * rotationComp.vertical;
+    avgEyebrowDist = (eyebrowEyeDistLeft + eyebrowEyeDistRight) / 2;
+    eyeHeight = (Math.abs(fp[18].y - fp[16].y) || 1) * rotationComp.vertical;
+  }
   const eyebrowRatio = avgEyebrowDist / eyeHeight;
   const eyebrowImportance = FEATURE_IMPORTANCE.eyebrowDistance;
 
@@ -470,50 +515,90 @@ export function analyzeFace(
   facescore += WEIGHTS.r2_spirit * eyebrowLevel * eyebrowImportance; r2_spirit_sum += WEIGHTS.r2_spirit * eyebrowLevel;
   facescore += WEIGHTS.r3_money * eyebrowLevel * eyebrowImportance; r3_money_sum += WEIGHTS.r3_money * eyebrowLevel;
 
-  // === 3. 코 길이 분석 === (draw.py ratio2 공식)
-  // ratio2 = (facepoint[15].y - facepoint[0].y) / widthratio
-  // 코밑 중앙(fp[15])에서 눈 중심(fp[0])까지 / 코 너비 - 수직 보정 적용
-  const noseLengthRaw = (fp[15].y - fp[0].y) * rotationComp.vertical;
-  const noseLengthRatio = noseLengthRaw / noseWidth;
+  // === 3. 코 분석 ===
   const noseImportance = FEATURE_IMPORTANCE.noseLength;
-
   let noseLengthAnalysis: { label: string; description: string };
   let noseLevel: number;
+  let noseLengthRatio: number;
 
-  // draw.py 임계값: >1.55 (긴), 1.28~1.55 (이상적), <1.28 (짧음)
-  if (noseLengthRatio > 1.55) {
-    noseLengthAnalysis = {
-      label: "코가 긴 편",
-      description: "강한 책임감과 성실함을 바탕으로 일에 임합니다. 꼼꼼하며 자존심이 강해, 일단 결정한 바를 끝까지 밀고 나가는 완고한 면모를 가지고 있습니다."
-    };
-    noseLevel = 5;
+  if (isSideView) {
+    // === 옆모습: 콧날 각도 / 코 높이(돌출도) 분석 ===
+    // 코 브릿지(fp[7]=noseBridge)에서 코끝(fp[6]=noseTip)으로의 벡터
+    // fp[7] = noseBridge (미간 근처, 코 시작점)
+    // fp[6] = noseTip (코 끝)
+    // fp[15] = noseBottomCenter (코 아래 중앙)
+    const bridgeToTipDx = fp[6].x - fp[7].x;
+    const bridgeToTipDy = fp[6].y - fp[7].y;
+    // 콧날 각도: 수직선 대비 코 브릿지→코끝 각도 (높을수록 매부리/콧날이 날카로움)
+    const noseBridgeAngle = Math.atan2(Math.abs(bridgeToTipDx), Math.abs(bridgeToTipDy)) * (180 / Math.PI);
+    // 코 돌출도: 코끝이 코밑(fp[15])에서 수평으로 얼마나 돌출되었는지
+    const noseProjection = Math.abs(fp[6].x - fp[15].x);
+    const noseVertical = Math.abs(fp[15].y - fp[7].y) || 1;
+    noseLengthRatio = noseProjection / noseVertical; // 돌출 비율
+
+    if (noseBridgeAngle > 25) {
+      noseLengthAnalysis = {
+        label: "콧날이 날카로운 편 (높은 코)",
+        description: "옆에서 보았을 때 콧날이 뚜렷하고 코가 높습니다. 강한 자존심과 리더십을 갖추고 있으며, 재물운이 좋고 사회적 성공을 이루는 관상입니다."
+      };
+      noseLevel = 5;
+    } else if (noseBridgeAngle > 15) {
+      noseLengthAnalysis = {
+        label: "콧날이 적당히 높은 편",
+        description: "옆모습에서 코의 라인이 자연스럽고 균형 잡혀 있습니다. 안정적인 성격으로 다양한 상황에 잘 적응합니다."
+      };
+      noseLevel = 3;
+    } else {
+      noseLengthAnalysis = {
+        label: "콧날이 낮은 편",
+        description: "옆에서 보았을 때 코가 낮고 부드러운 인상입니다. 낙천적이고 친화력이 좋아 사람들과 잘 어울립니다."
+      };
+      noseLevel = 1;
+    }
     r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
-    r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
+    r2 += WEIGHTS.r2_love * noseLevel; r2_love_sum += WEIGHTS.r2_love * noseLevel;
     r3 += WEIGHTS.r3_social * 3; r3_social_sum += WEIGHTS.r3_social * 3;
-    r4 += WEIGHTS.r4_responsibility * 5; r4_respon_sum += WEIGHTS.r4_responsibility * 5;
-    r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
-  } else if (noseLengthRatio > 1.28) {
-    noseLengthAnalysis = {
-      label: "코 길이가 이상적",
-      description: "균형 잡힌 능력을 지니고 있어 다양한 사회적 상황에서 자신의 역할을 훌륭히 수행합니다. 평온하고 안정적인 성격입니다."
-    };
-    noseLevel = 3;
-    r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
-    r2 += WEIGHTS.r2_love * 4; r2_love_sum += WEIGHTS.r2_love * 4;
-    r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
-    r4 += WEIGHTS.r4_responsibility * 4; r4_respon_sum += WEIGHTS.r4_responsibility * 4;
-    r4 += WEIGHTS.r4_sincere * 4; r4_since_sum += WEIGHTS.r4_sincere * 4;
+    r4 += WEIGHTS.r4_responsibility * noseLevel; r4_respon_sum += WEIGHTS.r4_responsibility * noseLevel;
+    r4 += WEIGHTS.r4_sincere * noseLevel; r4_since_sum += WEIGHTS.r4_sincere * noseLevel;
   } else {
-    noseLengthAnalysis = {
-      label: "코가 짧은 편",
-      description: "낙관적이고 긍정적인 성격입니다. 상대방의 기분을 잘 파악하며 사교성이 좋고 장사도 잘 어울립니다. 재물운이 좋지만 신중함이 필요합니다."
-    };
-    noseLevel = 1;
-    r2 += WEIGHTS.r2_spirit * 4; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
-    r2 += WEIGHTS.r2_love * 2; r2_love_sum += WEIGHTS.r2_love * 2;
-    r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
-    r4 += WEIGHTS.r4_responsibility * 2; r4_respon_sum += WEIGHTS.r4_responsibility * 2;
-    r4 += WEIGHTS.r4_sincere * 3; r4_since_sum += WEIGHTS.r4_sincere * 3;
+    // === 정면: 기존 코 길이 분석 ===
+    const noseLengthRaw = (fp[15].y - fp[0].y) * rotationComp.vertical;
+    noseLengthRatio = noseLengthRaw / noseWidth;
+
+    if (noseLengthRatio > 1.55) {
+      noseLengthAnalysis = {
+        label: "코가 긴 편",
+        description: "강한 책임감과 성실함을 바탕으로 일에 임합니다. 꼼꼼하며 자존심이 강해, 일단 결정한 바를 끝까지 밀고 나가는 완고한 면모를 가지고 있습니다."
+      };
+      noseLevel = 5;
+      r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
+      r2 += WEIGHTS.r2_love * 5; r2_love_sum += WEIGHTS.r2_love * 5;
+      r3 += WEIGHTS.r3_social * 3; r3_social_sum += WEIGHTS.r3_social * 3;
+      r4 += WEIGHTS.r4_responsibility * 5; r4_respon_sum += WEIGHTS.r4_responsibility * 5;
+      r4 += WEIGHTS.r4_sincere * 5; r4_since_sum += WEIGHTS.r4_sincere * 5;
+    } else if (noseLengthRatio > 1.28) {
+      noseLengthAnalysis = {
+        label: "코 길이가 이상적",
+        description: "균형 잡힌 능력을 지니고 있어 다양한 사회적 상황에서 자신의 역할을 훌륭히 수행합니다. 평온하고 안정적인 성격입니다."
+      };
+      noseLevel = 3;
+      r2 += WEIGHTS.r2_spirit * 3; r2_spirit_sum += WEIGHTS.r2_spirit * 3;
+      r2 += WEIGHTS.r2_love * 4; r2_love_sum += WEIGHTS.r2_love * 4;
+      r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
+      r4 += WEIGHTS.r4_responsibility * 4; r4_respon_sum += WEIGHTS.r4_responsibility * 4;
+      r4 += WEIGHTS.r4_sincere * 4; r4_since_sum += WEIGHTS.r4_sincere * 4;
+    } else {
+      noseLengthAnalysis = {
+        label: "코가 짧은 편",
+        description: "낙관적이고 긍정적인 성격입니다. 상대방의 기분을 잘 파악하며 사교성이 좋고 장사도 잘 어울립니다. 재물운이 좋지만 신중함이 필요합니다."
+      };
+      noseLevel = 1;
+      r2 += WEIGHTS.r2_spirit * 4; r2_spirit_sum += WEIGHTS.r2_spirit * 4;
+      r2 += WEIGHTS.r2_love * 2; r2_love_sum += WEIGHTS.r2_love * 2;
+      r3 += WEIGHTS.r3_social * 4; r3_social_sum += WEIGHTS.r3_social * 4;
+      r4 += WEIGHTS.r4_responsibility * 2; r4_respon_sum += WEIGHTS.r4_responsibility * 2;
+      r4 += WEIGHTS.r4_sincere * 3; r4_since_sum += WEIGHTS.r4_sincere * 3;
+    }
   }
   // facescore에 코 분석 점수 추가 - 부위별 가중치 적용
   facescore += WEIGHTS.r2_spirit * noseLevel * noseImportance; r2_spirit_sum += WEIGHTS.r2_spirit * noseLevel;
@@ -597,11 +682,20 @@ export function analyzeFace(
   facescore += WEIGHTS.r2_love * philtrumLevel * philtrumImportance; r2_love_sum += WEIGHTS.r2_love * philtrumLevel;
   facescore += WEIGHTS.r4_sincere * philtrumLevel * philtrumImportance; r4_since_sum += WEIGHTS.r4_sincere * philtrumLevel;
 
-  // === 5. 입 너비 분석 === (draw.py ratio7 공식)
-  // ratio7 = (facepoint[11].x - facepoint[10].x) / widthratio - 수평 보정 적용
-  const mouthWidthRaw = Math.abs(fp[11].x - fp[10].x);
-  const mouthWidthVal = mouthWidthRaw * rotationComp.horizontal;
-  const mouthRatio = mouthWidthVal / noseWidth;
+  // === 5. 입 분석 ===
+  let mouthRatio: number;
+  if (isSideView) {
+    // 옆모습: 입 두께(높이) / 코높이 비율로 분석
+    const mouthHeightRaw = Math.abs(fp[9].y - fp[8].y); // upperLip ~ lowerLip
+    mouthRatio = mouthHeightRaw / noseWidth;
+    // 옆모습에서 mouthRatio 범위가 다르므로 임계값 리매핑 (0.3~0.7 → 0.95~1.25)
+    mouthRatio = 0.95 + (mouthRatio - 0.3) * (0.3 / 0.4);
+  } else {
+    // 정면: 기존 입 너비 분석
+    const mouthWidthRaw = Math.abs(fp[11].x - fp[10].x);
+    const mouthWidthVal = mouthWidthRaw * rotationComp.horizontal;
+    mouthRatio = mouthWidthVal / noseWidth;
+  }
   const mouthImportance = FEATURE_IMPORTANCE.mouthWidth;
 
   let mouthAnalysis: { label: string; description: string };
@@ -655,14 +749,6 @@ export function analyzeFace(
   facescore += WEIGHTS.r3_work * mouthLevel * mouthImportance; r3_work_sum += WEIGHTS.r3_work * mouthLevel;
 
   // === 6. 하관(턱) 분석 ===
-  // 실제 데이터 분석 결과: avgJawAngle이 높을수록 튼튼한 턱
-  // - "하관 발달" → avgJawAngle: 30~32°
-  // - "턱 가늘다/얇음" → avgJawAngle: 24~27°
-
-  // 턱 너비 - 수평 보정 적용
-  const jawWidthRaw = Math.abs(fp[31].x - fp[30].x);
-  const jawWidth = jawWidthRaw * rotationComp.horizontal;
-  const jawRatio = jawWidth / faceWidth;
   const jawImportance = FEATURE_IMPORTANCE.jawWidth;
 
   // 턱각 계산 (볼-턱각-턱끝 사이의 각도)
@@ -674,9 +760,35 @@ export function analyzeFace(
     const mag2 = Math.sqrt(v2x * v2x + v2y * v2y) || 1;
     return Math.acos(Math.min(1, Math.max(-1, dot / (mag1 * mag2)))) * (180 / Math.PI);
   };
-  const leftJawAngle = calcJawAngle(fp[26], fp[30], fp[29]);
-  const rightJawAngle = calcJawAngle(fp[27], fp[31], fp[29]);
-  const avgJawAngle = (leftJawAngle + rightJawAngle) / 2;
+
+  let jawWidth: number;
+  let jawRatio: number;
+  let leftJawAngle: number;
+  let rightJawAngle: number;
+  let avgJawAngle: number;
+
+  if (isSideView) {
+    // 옆모습: 보이는 쪽 턱각만 사용
+    if (visibleSide === 'right') {
+      rightJawAngle = calcJawAngle(fp[27], fp[31], fp[29]);
+      leftJawAngle = rightJawAngle; // 보이지 않는 쪽은 같은 값으로
+      jawWidth = Math.sqrt(Math.pow(fp[29].x - fp[31].x, 2) + Math.pow(fp[29].y - fp[31].y, 2));
+    } else {
+      leftJawAngle = calcJawAngle(fp[26], fp[30], fp[29]);
+      rightJawAngle = leftJawAngle;
+      jawWidth = Math.sqrt(Math.pow(fp[29].x - fp[30].x, 2) + Math.pow(fp[29].y - fp[30].y, 2));
+    }
+    avgJawAngle = (leftJawAngle + rightJawAngle) / 2;
+    jawRatio = jawWidth / faceWidth;
+  } else {
+    // 정면: 양쪽 평균
+    const jawWidthRaw = Math.abs(fp[31].x - fp[30].x);
+    jawWidth = jawWidthRaw * rotationComp.horizontal;
+    jawRatio = jawWidth / faceWidth;
+    leftJawAngle = calcJawAngle(fp[26], fp[30], fp[29]);
+    rightJawAngle = calcJawAngle(fp[27], fp[31], fp[29]);
+    avgJawAngle = (leftJawAngle + rightJawAngle) / 2;
+  }
 
   // 하관 길이 (턱끝 ~ 턱각 거리) - 디버그용으로 유지
   const jawLengthLeft = Math.sqrt(
@@ -740,13 +852,24 @@ export function analyzeFace(
   facescore += WEIGHTS.r3_social * jawLevel * jawImportance; r3_social_sum += WEIGHTS.r3_social * jawLevel;
 
   // === 7. 눈 크기 분석 ===
-  // 눈 너비 - 수평 보정 적용, 눈 높이 - 수직 보정 적용
-  const eyeSizeLeftXRaw = Math.abs(fp[17].x - fp[19].x);
-  const eyeSizeLeftYRaw = Math.abs(fp[18].y - fp[16].y) || 1;
-  const eyeSizeLeftX = eyeSizeLeftXRaw * rotationComp.horizontal;
-  const eyeSizeLeftY = eyeSizeLeftYRaw * rotationComp.vertical;
-  const eyeRatio = eyeSizeLeftX / eyeSizeLeftY;
-  const eyeFaceWidthRatio = faceWidth / eyeSizeLeftX;
+  let eyeSizeX: number;
+  let eyeSizeY: number;
+  if (isSideView) {
+    // 옆모습: 보이는 쪽 눈만 사용
+    if (visibleSide === 'right') {
+      eyeSizeX = Math.abs(fp[21].x - fp[23].x);
+      eyeSizeY = Math.abs(fp[22].y - fp[20].y) || 1;
+    } else {
+      eyeSizeX = Math.abs(fp[17].x - fp[19].x);
+      eyeSizeY = Math.abs(fp[18].y - fp[16].y) || 1;
+    }
+  } else {
+    // 정면: 왼쪽 눈 기준 (기존 동일)
+    eyeSizeX = Math.abs(fp[17].x - fp[19].x) * rotationComp.horizontal;
+    eyeSizeY = (Math.abs(fp[18].y - fp[16].y) || 1) * rotationComp.vertical;
+  }
+  const eyeRatio = eyeSizeX / eyeSizeY;
+  const eyeFaceWidthRatio = faceWidth / eyeSizeX;
   const eyeSizeImportance = FEATURE_IMPORTANCE.eyeSize;
 
   let eyeSizeAnalysis: { label: string; description: string };
@@ -1174,7 +1297,7 @@ export function analyzeFace(
       eyebrowAngle: Math.atan2(fp[3].y - fp[2].y, fp[3].x - fp[2].x) * (180 / Math.PI), // 눈썹 각도
       eyeWidth: Math.abs(fp[17].x - fp[19].x), // 눈 너비
       eyeHeight: eyeHeight, // 눈 높이
-      mouthWidth: mouthWidthVal, // 입 너비
+      mouthWidth: Math.abs(fp[11].x - fp[10].x), // 입 너비
       mouthHeight: Math.abs(fp[9].y - fp[8].y), // 입 높이
       // 추가 값들 (눈썹, 눈, 입술)
       eyebrowGap: Math.abs(fp[3].x - fp[4].x), // 눈썹 사이 거리 (왼눈썹안쪽 ~ 우눈썹안쪽)

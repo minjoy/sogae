@@ -109,7 +109,7 @@ function calculateFaceAngles(landmarks: Array<{ x: number; y: number; z: number 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { landmarks, imageWidth, imageHeight, gender = 'male' } = body;
+    const { landmarks, imageWidth, imageHeight, gender = 'male', faceView = 'front' } = body;
 
     if (!landmarks || !imageWidth || !imageHeight) {
       return NextResponse.json(
@@ -133,7 +133,8 @@ export async function POST(request: NextRequest) {
       gender as 'male' | 'female',
       angles.panAngle,
       angles.tiltAngle,
-      angles.rollAngle
+      angles.rollAngle,
+      faceView as 'front' | 'side'
     );
 
     // 결과 저장 (선택적)
