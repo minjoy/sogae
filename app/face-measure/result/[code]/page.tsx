@@ -1028,28 +1028,37 @@ export default function FaceAnalysisResultPage({ params }: { params: Promise<{ c
   // 얼굴 랜드마크 그리기 - 성형외과 측정선 스타일
   // 얼굴 방향 판단 (랜드마크 기반)
   const detectFaceDirection = useCallback((): 'front' | 'left' | 'right' => {
+    // 1. 사용자가 명시적으로 선택한 faceView 우선 사용
+    const analysis = data?.analysis as Record<string, unknown> | undefined;
+    const savedFaceView = analysis?.faceView as string | undefined;
+    if (savedFaceView === 'side') {
+      // 옆모습으로 선택됨 → 랜드마크로 좌/우 방향 판별
+      if (!data?.landmarks || data.landmarks.length < 470) return 'left'; // 기본값
+      const noseTip = data.landmarks[1][0];
+      const leftEye = data.landmarks[33][0];
+      const rightEye = data.landmarks[263][0];
+      const eyeCenter = (leftEye + rightEye) / 2;
+      return noseTip > eyeCenter ? 'left' : 'right';
+    }
+
+    // 2. faceView가 'front'이면 랜드마크 기반으로 추가 검증
     if (!data?.landmarks) return 'front';
     const landmarks = data.landmarks;
     if (landmarks.length < 470) return 'front';
 
-    // 코끝(1)과 양쪽 눈(33, 263)의 x좌표로 pan 각도 추정
     const noseTip = landmarks[1][0];
     const leftEye = landmarks[33][0];
     const rightEye = landmarks[263][0];
     const eyeCenter = (leftEye + rightEye) / 2;
     const eyeDistance = Math.abs(rightEye - leftEye);
 
-    // 눈 사이 거리가 매우 좁으면 옆모습
-    // pan ratio: 코가 눈 중심에서 벗어난 정도
     if (eyeDistance < 0.04) {
-      // 눈이 거의 겹침 → 완전 옆모습
       return noseTip < eyeCenter ? 'right' : 'left';
     }
 
     const panRatio = (noseTip - eyeCenter) / (eyeDistance * 0.5);
-    // |panRatio| > 0.6 이면 옆모습으로 판단
-    if (panRatio > 0.6) return 'left';  // 코가 오른쪽으로 치우침 → 왼쪽 얼굴 보임
-    if (panRatio < -0.6) return 'right'; // 코가 왼쪽으로 치우침 → 오른쪽 얼굴 보임
+    if (panRatio > 0.6) return 'left';
+    if (panRatio < -0.6) return 'right';
     return 'front';
   }, [data]);
 
